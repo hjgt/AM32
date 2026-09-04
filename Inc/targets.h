@@ -3106,6 +3106,9 @@
 // NEUTRAL_ADC_CHANNEL is DEPRECATED and is not read at runtime; the macro is
 // retained only for legacy compile-time references.
 #define USE_ADC_ZCD
+// The sequential three-rank ADC window does not fit the default startup pulse
+// above 24 kHz; loadEEpromSettings() clamps this target's base carrier.
+#define ADC_ZCD_MAX_BASE_PWM_KHZ 24u
 #define BEMF_A_ADC_CHANNEL  LL_ADC_CHANNEL_1   // PA0
 #define BEMF_B_ADC_CHANNEL  LL_ADC_CHANNEL_2   // PA1
 #define BEMF_C_ADC_CHANNEL  LL_ADC_CHANNEL_3   // PA2

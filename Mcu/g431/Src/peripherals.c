@@ -250,8 +250,8 @@ void MX_TIM1_Init(void)
     /*
      * Route C: TIM1 CH4 (OC4) is used ONLY as an internal ADC injected-group
      * trigger (no GPIO output, no complementary output). PWM1 mode with
-     * preload; the compare value is driven at run time by SET_DUTY_CYCLE_ALL
-     * to duty/2 so the ADC samples the BEMF at the ON-pulse midpoint.
+     * preload; SET_DUTY_CYCLE_ALL keeps the full ADC sequence inside the clean
+     * ON window and suppresses the trigger when that window is too narrow.
      * CH4 has no OCN, so OCNState/OCNPolarity fields are ignored.
      */
     LL_TIM_OC_EnablePreload(TIM1, LL_TIM_CHANNEL_CH4);
@@ -574,9 +574,8 @@ void enableCorePeripherals()
     LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH2N);
     LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH3N);
 #ifdef USE_ADC_ZCD
-    /* Route C: enable CH4 capture/compare so the CC4 compare event fires the
-     * ADC injected group at the ON-pulse midpoint. No GPIO AF is mapped for
-     * CH4, so nothing is driven to a pin; this is an internal trigger only. */
+    /* Route C: enable CH4 so its OC4REF falling edge triggers the ADC injected
+     * group inside the PWM ON window. No GPIO AF is mapped for CH4. */
     LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH4);
 #endif
 

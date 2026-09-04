@@ -489,13 +489,13 @@ void ADC_Init(void)
    *
    * The injected group is independent of the DMA-driven regular group
    * (temp/volts/current), so telemetry is unaffected. It is hardware-triggered
-   * by TIM1 CH4 (JEXTSEL = TIM1_CH4), whose compare value SET_DUTY_CYCLE_ALL
-   * drives to duty/2 -> the conversion happens at the ON-pulse midpoint of the
-   * edge-aligned PWM, i.e. when the high-side FET is ON and the floating-phase
-   * BEMF is clean (no freewheel/off-window noise).
+   * by TIM1 CH4 (JEXTSEL = TIM1_CH4). SET_DUTY_CYCLE_ALL normally places the
+   * trigger near the ON-pulse midpoint, but moves it earlier when necessary so
+   * the complete three-rank sequence finishes before the PWM falling edge.
+   * Pulses too narrow for a clean sequence do not generate a falling trigger.
    *
    * All three phase dividers are sampled every trigger (rank 1/2/3 = A/B/C).
-   * getCompOutputLevel() reads JDR1/2/3, computes the software neutral
+   * getCompOutputSample() reads JDR1/2/3, computes the software neutral
    * (Va+Vb+Vc)/3, and picks the floating phase per the current commutation
    * step. The injected group is armed once (LL_ADC_INJ_StartConversion) in
    * activateADC() after the ADC is enabled; thereafter every TIM1 CH4 event
@@ -508,8 +508,7 @@ void ADC_Init(void)
    * seen by the ADC is OC4REF:
    *   - its RISING edge occurs at CNT ~ 0 (period start, high-side just
    *     switched on -> dead-time + switching ringing -> BEMF reads ~0),
-   *   - its FALLING edge occurs at CNT == CCR4 == duty/2 == ON-pulse
-   *     midpoint, which is the clean sampling instant we want.
+   *   - its FALLING edge occurs at CNT == CCR4 inside the clean ON window.
    * The 1-minute capture with RISING showed va/vb/vc stuck near 0 counts
    * (sampling at the period start), so the injected group never saw real
    * BEMF and the loop never closed. Using FALLING moves the sample to the

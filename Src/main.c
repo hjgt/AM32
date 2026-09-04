@@ -622,6 +622,14 @@ void loadEEpromSettings()
         temp_advance = eepromBuffer.advance_level - 10;
     }
 
+#ifdef ADC_ZCD_MAX_BASE_PWM_KHZ
+    /* Three sequential BEMF ranks need a 2.54 us clean ON window. Keep the
+     * configurable base carrier low enough for the startup duty to provide it.
+     * VARIABLE_PWM may still raise the carrier after the motor is established. */
+    if (eepromBuffer.pwm_frequency > ADC_ZCD_MAX_BASE_PWM_KHZ) {
+        eepromBuffer.pwm_frequency = ADC_ZCD_MAX_BASE_PWM_KHZ;
+    }
+#endif
     if (eepromBuffer.pwm_frequency < 145 && eepromBuffer.pwm_frequency > 7) {
       int divider = eepromBuffer.pwm_frequency * 100 / 6;
       TIMER1_MAX_ARR =   TIM1_AUTORELOAD * 400 / divider;
@@ -1488,6 +1496,14 @@ void tenKhzRoutine()
             if (eepromBuffer.variable_pwm) {
             }
             adjusted_duty_cycle = ((duty_cycle * tim1_arr) / 2000) + 1;
+#ifdef USE_ADC_ZCD
+            /* Sensorless ADC ZCD cannot make a trustworthy three-rank sample
+             * from a shorter pulse. This affects motor drive only; stop,
+             * braking and tone waveforms keep their requested duty. */
+            if (adjusted_duty_cycle < ZCD_MINIMUM_ON_TICKS) {
+                adjusted_duty_cycle = ZCD_MINIMUM_ON_TICKS;
+            }
+#endif
 
         } else {
 

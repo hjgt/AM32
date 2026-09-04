@@ -8,8 +8,6 @@
 #ifndef PERIPHERALS_H_
 #define PERIPHERALS_H_
 
-#endif /* PERIPHERALS_H_ */
-
 #include "ADC.h"
 #include "main.h"
 
@@ -31,51 +29,55 @@
  * Route C (PWM-synchronous BEMF sampling): TIM1 is edge-aligned (COUNTERMODE_UP),
  * so in PWM1 mode the high-side is ON while CNT < CCRx. The centre of the ON
  * pulse is at CNT = CCRx/2. TIM1 CH4 (OC4) is used only as an internal ADC
- * trigger (no GPIO pin); its OC4REF falling edge (at CNT == CCR4) launches the
- * injected BEMF conversion.
+ * trigger (no GPIO pin); its OC4REF falling edge launches the injected BEMF
+ * sequence. The complete three-rank sequence, not just its trigger, must stay
+ * inside the driven phase's ON window.
  *
- * Experiment A (low-throttle jitter fix): CCR4 is no longer a plain duty/2.
- * At low duty the ON window is narrow, so duty/2 lands inside the dead-time /
- * switching-ringing region right after the high-side turns on, and the sampled
- * BEMF is garbage -> the loop cannot lock (observed as sub-20% throttle
- * jitter). zcd_ccr4_from_duty() clamps the sample point to a floor that sits
- * just past the dead time, while still keeping it inside the ON window when the
- * ON window is physically wide enough. See porting notes section 12.15.
+ * zcd_ccr4_from_duty() applies both a start floor (dead time plus gate-driver
+ * settling) and an end limit (ADC trigger latency plus all three conversions).
+ * If the requested pulse is too narrow for a trustworthy sequence, CH4 is held
+ * inactive and comparator.c rejects any residual/off-window result.
  */
 #include "targets.h"   /* DEAD_TIME */
 
 /*
  * ZCD_SAMPLE_FLOOR: earliest CCR4 (in TIM1 ticks) at which the injected sample
- * is allowed to fire. Must clear the dead time plus a small settle margin so
- * the high-side is fully on and the switching ring has decayed.
+ * is allowed to fire. It includes the programmed MCU dead time plus a 92-tick
+ * board-level allowance for FD6288 propagation and switching settling.
  * DEAD_TIME is in the same TIM1-clock ticks as CCR (PSC = 0).
  */
 #ifndef ZCD_SAMPLE_FLOOR
-#define ZCD_SAMPLE_FLOOR ((uint16_t)(DEAD_TIME + 20u))
+#define ZCD_SAMPLE_FLOOR ((uint16_t)(DEAD_TIME + 92u))
 #endif
 
 /*
+ * ADC1 runs at 40 MHz while TIM1 runs at 160 MHz. At the configured 6.5-cycle
+ * sample time, three 12-bit ranks take 3*(6.5+12.5)*4 = 228 TIM1 ticks.
+ * Sixteen more ticks cover worst-case injected-trigger latency and rounding.
+ */
+#ifndef ZCD_ADC_WINDOW_TICKS
+#define ZCD_ADC_WINDOW_TICKS 244u
+#endif
+
+#define ZCD_MINIMUM_ON_TICKS \
+    ((uint16_t)(ZCD_SAMPLE_FLOOR + ZCD_ADC_WINDOW_TICKS))
+
+/*
  * Compute the CCR4 (injected-trigger) position from the requested duty.
- *   duty == 0                      -> 0 (output off, do not sample)
- *   ON window too narrow (duty <=  -> duty/2 (degenerate; open-loop ramp owns
- *     ZCD_SAMPLE_FLOOR)               this regime anyway, keep old behaviour)
- *   normal                         -> max(duty/2, ZCD_SAMPLE_FLOOR), but never
- *                                     later than (duty - 1) so it stays inside
- *                                     the ON window.
+ *   incomplete clean ON window -> 0 (PWM1 CH4 stays low: no falling trigger)
+ *   normal                     -> clamp(duty/2, floor, latest safe trigger)
  */
 static inline uint16_t zcd_ccr4_from_duty(uint16_t duty)
 {
-    if (duty == 0u) {
+    if (duty < ZCD_MINIMUM_ON_TICKS) {
         return 0u;
     }
+
     uint16_t mid = (uint16_t)(duty >> 1);
-    if (duty <= ZCD_SAMPLE_FLOOR) {
-        /* ON window too narrow to place a clamped sample inside it. */
-        return mid;
-    }
     uint16_t ccr4 = (mid < ZCD_SAMPLE_FLOOR) ? ZCD_SAMPLE_FLOOR : mid;
-    if (ccr4 > (uint16_t)(duty - 1u)) {
-        ccr4 = (uint16_t)(duty - 1u);
+    uint16_t latest = (uint16_t)(duty - ZCD_ADC_WINDOW_TICKS);
+    if (ccr4 > latest) {
+        ccr4 = latest;
     }
     return ccr4;
 }
@@ -108,3 +110,5 @@ void setPWMCompare3(uint16_t comparethree);
 void enableCorePeripherals(void);
 void reloadWatchDogCounter(void);
 void generatePwmTimerEvent(void);
+
+#endif /* PERIPHERALS_H_ */
