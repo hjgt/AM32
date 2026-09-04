@@ -3101,11 +3101,10 @@
 // neutral candidate only reaches COMP2 minus. See section 11 of the
 // porting notes.
 //
-// This board has NO physical virtual-neutral node (confirmed by multimeter:
-// PA5 is only a 1.0k pulldown, tied to no phase). The neutral is
-// reconstructed in software as (Va+Vb+Vc)/3 inside getCompOutputLevel(),
-// so NEUTRAL_ADC_CHANNEL below is DEPRECATED and no longer read at runtime.
-// The macro is kept only so legacy references still compile.
+// PA5 is only a 1.0k pulldown, tied to no phase, so it is not a usable
+// neutral input. This route reconstructs the reference as (Va+Vb+Vc)/3.
+// NEUTRAL_ADC_CHANNEL is DEPRECATED and is not read at runtime; the macro is
+// retained only for legacy compile-time references.
 #define USE_ADC_ZCD
 #define BEMF_A_ADC_CHANNEL  LL_ADC_CHANNEL_1   // PA0
 #define BEMF_B_ADC_CHANNEL  LL_ADC_CHANNEL_2   // PA1
@@ -3151,9 +3150,11 @@
 #define VARIABLE_PWM
 #define USE_DSHOT_TELEMETRY
 #define USE_SERIAL_TELEMETRY
-// ADC ZCD noise filtering: require 15 consecutive consistent readings
-// before triggering a zero crossing (PWM noise couples into ADC inputs)
-#define TARGET_MIN_BEMF_COUNTS 30
+// ADC ZCD consumes at most one fresh sample per PWM period. The main-loop
+// comparison is `bemfcounter > TARGET_MIN_BEMF_COUNTS`, so zero accepts the
+// first eligible post-cross sample. Blanking, ON-window validation and an ADC
+// Schmitt band reject artifacts while minimizing extra PWM-period phase lag.
+#define TARGET_MIN_BEMF_COUNTS 0
 #endif
 
 #ifndef FIRMWARE_NAME

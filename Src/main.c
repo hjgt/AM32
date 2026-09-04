@@ -814,7 +814,15 @@ void getBemfState()
         current_state = PHASE_B_EXTI_PORT->IDR & PHASE_B_EXTI_PIN;
     }
 #else
+#ifdef USE_ADC_ZCD
+    uint8_t raw_comp_state;
+    if (!getCompOutputSample(&raw_comp_state)) {
+        return; /* no fresh post-blanking ADC sequence */
+    }
+    current_state = !raw_comp_state; /* common hardware-COMP polarity */
+#else
     current_state = !getCompOutputLevel(); // polarity reversed
+#endif
 #endif
     if (rising) {
         if (current_state) {
@@ -892,11 +900,6 @@ void PeriodElapsedCallback()
     waitTime = (commutation_interval >> 1) - advance;
     if (!old_routine) {
         enableCompInterrupts(); // enable comp interrupt
-    }
-    if (old_routine && zero_crosses < 50) {
-        /* Re-arm COM_TIMER for open-loop commutation while no
-         * BEMF crossing has been detected yet. */
-        SET_AND_ENABLE_COM_INT(waitTime + 1);
     }
     if (zero_crosses < 10000) {
         zero_crosses++;
@@ -1171,16 +1174,14 @@ if (!stepper_sine && armed) {
                 if (!old_routine) {
                     startMotor();
                 } else {
-                    /* USE_ADC_ZCD forces old_routine=1 permanently.
-                     * startMotor() is gated on !old_routine, so it would
-                     * never be called. Call commutate() directly to fire
-                     * the first commutation step and start COM_TIMER
-                     * for open-loop forced commutation. */
+                    /* USE_ADC_ZCD stays in polling mode, so startMotor() is
+                     * gated out. Apply the first step here; the existing
+                     * INTERVAL_TIMER timeout advances the motor if no real
+                     * BEMF crossing is detected. COM_TIMER is intentionally
+                     * not armed: it is reserved for post-ZC phase delay. */
                     commutate();
                     commutation_interval = 10000;
                     SET_INTERVAL_TIMER_COUNT(5000);
-                    waitTime = commutation_interval >> 1;
-                    SET_AND_ENABLE_COM_INT(waitTime + 1);
                 }
                 running = 1;
                 last_duty_cycle = min_startup_duty;
@@ -1583,7 +1584,11 @@ void zcfoundroutine()
     thiszctime = INTERVAL_TIMER_COUNT;
     SET_INTERVAL_TIMER_COUNT(0);
     commutation_interval = (thiszctime + (3 * commutation_interval)) / 4;
-    advance = (temp_advance * commutation_interval) >> 6; //   7.5 degree increments
+    if (!eepromBuffer.auto_advance) {
+        advance = (temp_advance * commutation_interval) >> 6;
+    } else {
+        advance = (auto_advance_level * commutation_interval) >> 6;
+    }
     waitTime = commutation_interval / 2 - advance;
     while ((INTERVAL_TIMER_COUNT) < (waitTime)) {
         if (zero_crosses < 5) {

@@ -20,10 +20,9 @@
  * neutral candidate reaches only COMP2 minus). So we sample the three BEMF
  * phase dividers with ADC1 and detect the zero crossing in software.
  *
- * The board has NO physical virtual-neutral node (confirmed by multimeter:
- * PA5 is only a 1.0k pulldown, not tied to any phase). The neutral is
- * therefore reconstructed in software as the average of the three phase
- * readings inside getCompOutputLevel().
+ * PA5 is only a 1.0k pulldown and is not a usable neutral input. The neutral
+ * used by this route is therefore reconstructed in software as the average
+ * of the three identically-scaled phase readings.
  *
  * adc_zcd_phase: tracks which phase is currently floating
  *   1 or 4 -> phase C floating
@@ -33,38 +32,21 @@
 static uint8_t adc_zcd_phase = 0;
 
 /*
- * Post-commutation blanking (Route C).
- * ------------------------------------
- * Immediately after a commutation the freewheeling diodes and the phase
- * inductance produce a large flyback transient on the just-opened phase.
- * Sampling the BEMF during this window yields false zero crossings. We
- * therefore skip the first ADC_ZCD_BLANK_CALLS getCompOutputLevel() results
- * after each changeCompInput(): during blanking the function returns the last
- * known polarity WITHOUT updating it, so the AM32 zero-cross counter does not
- * advance on transient noise. This complements the existing consecutive-count
- * filter (TARGET_MIN_BEMF_COUNTS).
- *
- * The polling path calls getCompOutputLevel() many times per commutation, so
- * a small count (a few calls) is enough to clear the electrical transient
- * without eating into the real BEMF observation window.
- */
-#ifndef ADC_ZCD_BLANK_CALLS
-#define ADC_ZCD_BLANK_CALLS 2u /* Experiment B: 3 -> 2, widen observation window, see notes 12.15 */
-#endif
-/*
- * Experiment D (see notes 12.20): blanking is measured in FRESH injected
- * samples (real PWM periods) rather than in getCompOutputLevel() call count.
- * The main loop polls getCompOutputLevel() far faster than the ADC injected
- * group is re-triggered (TIM1 CH4 once per PWM period, ~41.6us at 24kHz), so a
- * call-counted blank of 2 covered only a few microseconds - far too short to
- * mask the post-commutation freewheeling transient, which lasts on the order
- * of a PWM period. A too-short blank lets the flyback spike be mistaken for a
- * zero crossing, advancing commutation early -> phase error, extra current,
- * and a speed ceiling. Counting real samples makes the blank a deterministic
- * physical time window regardless of loop speed.
+ * Post-commutation blanking is measured in valid ON-window injected sequences,
+ * not main-loop calls. This keeps its duration tied to real PWM periods.
  */
 #ifndef ADC_ZCD_BLANK_SAMPLES
-#define ADC_ZCD_BLANK_SAMPLES 2u /* fresh PWM-period samples to skip after commutation */
+#define ADC_ZCD_BLANK_SAMPLES 1u
+#endif
+
+/* Small Schmitt band around the reconstructed neutral (12-bit ADC counts). */
+#ifndef ADC_ZCD_HYSTERESIS_COUNTS
+#define ADC_ZCD_HYSTERESIS_COUNTS 8
+#endif
+
+/* Reject conversions that did not observe the driven phase in its ON state. */
+#ifndef ADC_ZCD_MIN_DRIVE_DELTA
+#define ADC_ZCD_MIN_DRIVE_DELTA 64
 #endif
 static volatile uint8_t adc_zcd_blank = 0;
 static uint8_t          adc_zcd_last_out = 0;
@@ -72,14 +54,16 @@ static uint8_t          adc_zcd_last_out = 0;
 /*
  * Diagnostic snapshot (see chapter 12 of the porting notes).
  * These volatile file-scope variables mirror the last values computed inside
- * getCompOutputLevel() so they can be observed live over SWD with GDB
+ * getCompOutputSample() so they can be observed live over SWD with GDB
  * (local variables are not visible after the function returns). They do NOT
  * affect the control logic in any way - remove once debugging is complete.
  *   zcd_dbg_va/vb/vc : last three phase-divider ADC readings
  *   zcd_dbg_neutral  : software neutral = (va+vb+vc)/3
  *   zcd_dbg_bemf     : the floating-phase reading selected this call
- *   zcd_dbg_out      : last returned polarity (1 = bemf>neutral, else 0)
- *   zcd_dbg_calls    : total getCompOutputLevel() call counter
+ *   zcd_dbg_drive_*  : driven-high/low phase readings used as an ON check
+ *   zcd_dbg_out      : raw COMP-equivalent level (1 = neutral>bemf)
+ *   zcd_dbg_valid    : sample passed ON-window check and post-comm blanking
+ *   zcd_dbg_calls    : number of completed injected ADC sequences
  *   zcd_dbg_flips    : number of times the polarity output changed
  */
 volatile uint16_t zcd_dbg_va = 0;
@@ -87,7 +71,10 @@ volatile uint16_t zcd_dbg_vb = 0;
 volatile uint16_t zcd_dbg_vc = 0;
 volatile uint16_t zcd_dbg_neutral = 0;
 volatile uint16_t zcd_dbg_bemf = 0;
+volatile uint16_t zcd_dbg_drive_high = 0;
+volatile uint16_t zcd_dbg_drive_low = 0;
 volatile uint8_t  zcd_dbg_out = 0;
+volatile uint8_t  zcd_dbg_valid = 0;
 volatile uint8_t  zcd_dbg_phase = 0;
 volatile uint32_t zcd_dbg_calls = 0;
 volatile uint32_t zcd_dbg_flips = 0;
@@ -96,7 +83,7 @@ volatile uint32_t zcd_dbg_flips = 0;
 
 /*
  * 5-minute diagnostic capture buffer (see §12).
- * getCompOutputLevel() stores one entry every ~1s so the host can read
+ * getCompOutputSample() stores one entry every ~1s so the host can read
  * the buffer out over SWD post-test without disrupting the running motor.
  *   dbg_buf[DBG_BUF_SIZE]  — circular buffer (volatile to prevent dead-store
  *                             elimination since the host reads via SWD)
@@ -120,48 +107,50 @@ static volatile uint16_t         dbg_idx  = 0;
 static uint32_t                  dbg_skip = 0;
 
 /* Externals from main.c */
-extern uint16_t zero_crosses;
-extern uint32_t commutation_interval;
+extern volatile uint32_t zero_crosses;
+extern volatile uint32_t commutation_interval;
 extern uint8_t  running;
 
 /**
- * getCompOutputLevel()
+ * getCompOutputSample()
  *
- * Returns 1 when the floating BEMF phase voltage is ABOVE the virtual
- * neutral (equivalent to comparator output HIGH), 0 when below.
+ * Writes a raw hardware-COMP-equivalent level to *level: 1 when the virtual
+ * neutral (COMP plus input) is above the floating phase (COMP minus input),
+ * otherwise 0. Returns 1 only when a fresh, post-blanking injected sequence
+ * was consumed. A repeated main-loop poll therefore cannot count the same ADC
+ * conversion more than once.
  *
- * Called repeatedly from the main-loop polling path (old_routine / bemfcounter).
+ * This polarity contract deliberately matches the hardware path below;
+ * main.c performs the common inversion before applying its rising/falling
+ * zero-cross logic.
  */
-uint8_t getCompOutputLevel(void)
+uint8_t getCompOutputSample(uint8_t *level)
 {
     /*
      * PWM-synchronous virtual-neutral zero-cross detection (Route C).
      *
      * The three BEMF phase dividers are sampled by the ADC1 INJECTED group,
-     * hardware-triggered by TIM1 CH4 at the ON-pulse midpoint of the PWM
-     * carrier (see ADC.c / peripherals.c / peripherals.h). We simply read the
-     * most recent injected results here - NON-BLOCKING, no reconfiguration of
-     * the DMA-driven regular group (temp/volts), so telemetry is untouched.
+     * hardware-triggered by TIM1 CH4 inside the clean PWM ON window (see
+     * ADC.c / peripherals.c / peripherals.h). We simply read the most recent
+     * injected results here - NON-BLOCKING, with no reconfiguration of the
+     * DMA-driven regular group (temp/volts), so telemetry is untouched.
      *
      * rank 1/2/3 = BEMF A/B/C (see ADC_Init injected-group setup).
      *
-     * This board has NO physical virtual-neutral node (PA5 is only a 1.0k
-     * pulldown, tied to no phase). The neutral is reconstructed in software as
-     * (Va+Vb+Vc)/3: at the true zero-cross instant the floating phase voltage
-     * equals that average. All three dividers are identical (5.1k/1.0k), so
-     * the reference is independent of divider ratio and bus voltage.
+     * PA5 is only a 1.0k pulldown and is not the neutral reference. The neutral
+     * is reconstructed in software as (Va+Vb+Vc)/3: at the true zero-cross
+     * instant the floating phase voltage equals that average. All three
+     * dividers are identical (5.1k/1.0k), so the reference is independent of
+     * divider ratio and bus voltage.
      */
     /*
-     * Fresh-sample gate (Experiment D, notes 12.20). Only act on a newly
-     * completed injected sequence. JEOS is set by hardware at the end of each
-     * TIM1 CH4 triggered 3-rank conversion and is not auto-cleared. If it is
-     * not set, no new BEMF data has arrived since the previous call, so we
-     * return the last polarity WITHOUT re-reading, WITHOUT touching the
-     * blanking counter, and WITHOUT double-counting the same sample. This
-     * decouples the ZCD from the faster, variable main-loop poll rate.
+     * JEOS is set at the end of the three-rank injected sequence and is not
+     * auto-cleared. Leave blanking and diagnostics untouched until a genuinely
+     * new set of phase samples exists.
      */
     if (!LL_ADC_IsActiveFlag_JEOS(ADC1)) {
-        return adc_zcd_last_out;
+        *level = adc_zcd_last_out;
+        return 0u;
     }
     LL_ADC_ClearFlag_JEOS(ADC1);
 
@@ -171,26 +160,50 @@ uint8_t getCompOutputLevel(void)
 
     uint16_t neutral = (uint16_t)(((uint32_t)va + vb + vc) / 3u);
 
-    uint16_t bemf;
+    uint16_t bemf = 0u;
+    uint16_t drive_high = 0u;
+    uint16_t drive_low = 0u;
+    uint8_t phase_valid = 1u;
     switch (adc_zcd_phase) {
-        case 1: case 4: bemf = vc; break;   /* phase C floating */
-        case 2: case 5: bemf = va; break;   /* phase A floating */
-        case 3: case 6: bemf = vb; break;   /* phase B floating */
-        default:        bemf = va; break;
+        case 1: /* A PWM, B low, C floating */
+            drive_high = va; drive_low = vb; bemf = vc; break;
+        case 2: /* C PWM, B low, A floating */
+            drive_high = vc; drive_low = vb; bemf = va; break;
+        case 3: /* C PWM, A low, B floating */
+            drive_high = vc; drive_low = va; bemf = vb; break;
+        case 4: /* B PWM, A low, C floating */
+            drive_high = vb; drive_low = va; bemf = vc; break;
+        case 5: /* B PWM, C low, A floating */
+            drive_high = vb; drive_low = vc; bemf = va; break;
+        case 6: /* A PWM, C low, B floating */
+            drive_high = va; drive_low = vc; bemf = vb; break;
+        default:
+            phase_valid = 0u;
+            break;
     }
 
-    uint8_t out;
-    if (adc_zcd_blank != 0u) {
+    uint8_t out = adc_zcd_last_out;
+    uint8_t valid = 0u;
+    uint8_t sample_in_on_window = phase_valid &&
+        (((int32_t)drive_high - (int32_t)drive_low) >= ADC_ZCD_MIN_DRIVE_DELTA);
+    if (!sample_in_on_window) {
+        /* An off-window or incomplete sequence cannot represent BEMF. */
+    } else if (adc_zcd_blank != 0u) {
         /*
          * Post-commutation blanking: ignore the flyback transient. Return the
          * last stable polarity WITHOUT updating it, so the AM32 zero-cross
          * counter cannot advance on transient noise during this window.
          */
         adc_zcd_blank--;
-        out = adc_zcd_last_out;
     } else {
-        out = (bemf > neutral) ? 1u : 0u;
+        int32_t margin = (int32_t)bemf - (int32_t)neutral;
+        if (margin > ADC_ZCD_HYSTERESIS_COUNTS) {
+            out = 0u; /* COMP minus (phase) is higher than plus (neutral). */
+        } else if (margin < -ADC_ZCD_HYSTERESIS_COUNTS) {
+            out = 1u; /* COMP plus (neutral) is higher than minus (phase). */
+        }
         adc_zcd_last_out = out;
+        valid = 1u;
     }
 
     /* Diagnostic snapshot for GDB live watch (see chapter 12). No control
@@ -200,7 +213,10 @@ uint8_t getCompOutputLevel(void)
     zcd_dbg_vc      = vc;
     zcd_dbg_neutral = neutral;
     zcd_dbg_bemf    = bemf;
+    zcd_dbg_drive_high = drive_high;
+    zcd_dbg_drive_low  = drive_low;
     zcd_dbg_phase   = adc_zcd_phase;
+    zcd_dbg_valid   = valid;
     zcd_dbg_calls++;
     if (out != zcd_dbg_out) {
         zcd_dbg_flips++;
@@ -217,7 +233,7 @@ uint8_t getCompOutputLevel(void)
             e->vc      = vc;
             e->neutral = neutral;
             e->bemf    = bemf;
-            e->zero_crosses    = zero_crosses;
+            e->zero_crosses    = (uint16_t)zero_crosses;
             e->ci      = (uint16_t)commutation_interval;
             e->step    = step;
             e->running = running;
@@ -226,7 +242,15 @@ uint8_t getCompOutputLevel(void)
         }
     }
 
-    return out;
+    *level = out;
+    return valid;
+}
+
+uint8_t getCompOutputLevel(void)
+{
+    uint8_t level;
+    (void)getCompOutputSample(&level);
+    return level;
 }
 
 
@@ -234,14 +258,17 @@ uint8_t getCompOutputLevel(void)
  * changeCompInput()
  *
  * Called by the commutation routine to inform the ZCD which phase is
- * now floating so getCompOutputLevel() reads the correct ADC channel.
+ * now floating so getCompOutputSample() reads the correct ADC channel.
  * No hardware comparator registers are touched.
  */
 void changeCompInput(void)
 {
     adc_zcd_phase = step;   /* 'step' is the global commutation step (1-6) */
-    adc_zcd_blank = ADC_ZCD_BLANK_SAMPLES; /* re-arm blanking in fresh-sample (PWM-period) units, see 12.20 */
-    LL_ADC_ClearFlag_JEOS(ADC1); /* drop any sample straddling the commutation edge so the blank starts clean */
+    /* Before the expected edge, raw COMP output equals rising. Seeding this
+     * reject state prevents blanking or startup from looking like a crossing. */
+    adc_zcd_last_out = (rising != 0) ? 1u : 0u;
+    adc_zcd_blank = ADC_ZCD_BLANK_SAMPLES;
+    LL_ADC_ClearFlag_JEOS(ADC1); /* drop a sequence straddling commutation */
 }
 
 /**

@@ -8,13 +8,17 @@
 #ifndef COMPARATOR_H_
 #define COMPARATOR_H_
 
-#endif /* COMPARATOR_H_ */
-
 #include "main.h"
 
-void maskPhaseInterrupts();
-void changeCompInput();
-void enableCompInterrupts();
-uint8_t getCompOutputLevel();
+void maskPhaseInterrupts(void);
+void changeCompInput(void);
+void enableCompInterrupts(void);
+uint8_t getCompOutputLevel(void);
+
+/* Returns 1 only when a fresh, post-blanking ADC ZCD sample was produced. */
+uint8_t getCompOutputSample(uint8_t *level);
+
 extern volatile char rising;
 extern char step;
+
+#endif /* COMPARATOR_H_ */
