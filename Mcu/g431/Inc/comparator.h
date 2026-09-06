@@ -18,6 +18,13 @@ uint8_t getCompOutputLevel(void);
 /* Returns 1 only when a fresh, post-blanking ADC ZCD sample was produced. */
 uint8_t getCompOutputSample(uint8_t *level);
 
+#ifdef ADC_ZCD_C01_DIAGNOSTICS
+/* Write a non-zero token over SWD; the next control tick latches one snapshot
+ * and clears the request after all snapshot fields are stable. */
+extern volatile uint32_t zcd_c01_snapshot_request;
+void zcdC01LatchSnapshot(void);
+#endif
+
 extern volatile char rising;
 extern char step;
 

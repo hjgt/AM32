@@ -51,65 +51,130 @@ static uint8_t adc_zcd_phase = 0;
 static volatile uint8_t adc_zcd_blank = 0;
 static uint8_t          adc_zcd_last_out = 0;
 
+#ifdef ADC_ZCD_C01_DIAGNOSTICS
 /*
- * Diagnostic snapshot (see chapter 12 of the porting notes).
- * These volatile file-scope variables mirror the last values computed inside
- * getCompOutputSample() so they can be observed live over SWD with GDB
- * (local variables are not visible after the function returns). They do NOT
- * affect the control logic in any way - remove once debugging is complete.
- *   zcd_dbg_va/vb/vc : last three phase-divider ADC readings
- *   zcd_dbg_neutral  : software neutral = (va+vb+vc)/3
- *   zcd_dbg_bemf     : the floating-phase reading selected this call
- *   zcd_dbg_drive_*  : driven-high/low phase readings used as an ON check
- *   zcd_dbg_out      : raw COMP-equivalent level (1 = neutral>bemf)
- *   zcd_dbg_valid    : sample passed ON-window check and post-comm blanking
- *   zcd_dbg_calls    : number of completed injected ADC sequences
- *   zcd_dbg_flips    : number of times the polarity output changed
+ * C01 low-duty diagnostics. Bucket 0 records an invalid/uninitialised phase;
+ * buckets 1..6 correspond directly to the six commutation steps. These are
+ * event counters, not control inputs. For every bucket:
+ *
+ *   polls = no_fresh_poll + fresh
+ *   fresh = valid + off_window + blank
+ *
+ * ccr4_zero_no_fresh_poll is a subset of no_fresh_poll. It records software
+ * polls made while CH4 was intentionally unable to produce an ADC trigger;
+ * it is not a count of suppressed PWM periods.
  */
-volatile uint16_t zcd_dbg_va = 0;
-volatile uint16_t zcd_dbg_vb = 0;
-volatile uint16_t zcd_dbg_vc = 0;
-volatile uint16_t zcd_dbg_neutral = 0;
-volatile uint16_t zcd_dbg_bemf = 0;
-volatile uint16_t zcd_dbg_drive_high = 0;
-volatile uint16_t zcd_dbg_drive_low = 0;
-volatile uint8_t  zcd_dbg_out = 0;
-volatile uint8_t  zcd_dbg_valid = 0;
-volatile uint8_t  zcd_dbg_phase = 0;
-volatile uint32_t zcd_dbg_calls = 0;
-volatile uint32_t zcd_dbg_flips = 0;
-
-
-
-/*
- * 5-minute diagnostic capture buffer (see §12).
- * getCompOutputSample() stores one entry every ~1s so the host can read
- * the buffer out over SWD post-test without disrupting the running motor.
- *   dbg_buf[DBG_BUF_SIZE]  — circular buffer (volatile to prevent dead-store
- *                             elimination since the host reads via SWD)
- *   dbg_idx                — write index (stops when full)
- *   dbg_skip               — down-counter, stores when it reaches 0
- */
-#define DBG_BUF_SIZE  512
-
-struct dbg_entry {
-    uint16_t va, vb, vc, neutral, bemf;
-    uint16_t zero_crosses;
-    uint16_t ci;        /* commutation_interval */
-    uint8_t  step;
-    uint8_t  running;
-    uint8_t  out;
-    uint8_t  phase;
+struct zcd_c01_step_counts {
+    uint32_t no_fresh_poll;
+    uint32_t ccr4_zero_no_fresh_poll;
+    uint32_t fresh;
+    uint32_t valid;
+    uint32_t off_window;
+    uint32_t blank;
 };
 
-static volatile struct dbg_entry dbg_buf[DBG_BUF_SIZE];
-static volatile uint16_t         dbg_idx  = 0;
-static uint32_t                  dbg_skip = 0;
+struct zcd_c01_snapshot_data {
+    struct zcd_c01_step_counts counts[7];
+    uint32_t arr;
+    uint32_t ccr1;
+    uint32_t ccr4;
+    uint32_t bdtr;
+    uint32_t zero_crosses;
+    uint32_t commutation_interval;
+    uint32_t token;
+    uint16_t minimum_duty_cycle;
+    uint16_t min_startup_duty;
+    uint16_t duty_cycle_setpoint;
+    uint16_t duty_cycle;
+    uint16_t adjusted_duty_cycle;
+    uint16_t duty_cycle_maximum;
+    uint16_t input;
+    uint16_t adjusted_input;
+    uint8_t  bad_count;
+    uint8_t  bemf_timeout_happened;
+    uint8_t  bemf_timeout;
+    uint8_t  commutation_step;
+    uint8_t  adc_zcd_phase;
+    uint8_t  adc_zcd_blank;
+    uint8_t  running;
+    uint8_t  old_routine;
+};
 
-/* Externals from main.c */
+volatile struct zcd_c01_step_counts zcd_c01_counts[7];
+volatile struct zcd_c01_snapshot_data zcd_c01_snapshot;
+volatile uint32_t zcd_c01_snapshot_request = 0u;
+
+/* Snapshot-only inputs from main.c. */
 extern volatile uint32_t zero_crosses;
 extern volatile uint32_t commutation_interval;
-extern uint8_t  running;
+extern uint16_t minimum_duty_cycle;
+extern uint16_t min_startup_duty;
+extern uint16_t duty_cycle_setpoint;
+extern volatile uint16_t duty_cycle;
+extern uint16_t adjusted_duty_cycle;
+extern uint16_t duty_cycle_maximum;
+extern uint8_t bad_count;
+extern uint8_t bemf_timeout_happened;
+extern char bemf_timeout;
+extern char old_routine;
+
+static inline uint8_t zcdC01PhaseBucket(void)
+{
+    uint8_t phase = adc_zcd_phase;
+    return (phase <= 6u) ? phase : 0u;
+}
+
+/* Called only after the host writes a non-zero request token over SWD. */
+void zcdC01LatchSnapshot(void)
+{
+    uint32_t token = zcd_c01_snapshot_request;
+    if (token == 0u) {
+        return;
+    }
+
+    for (uint32_t i = 0u; i < 7u; i++) {
+        zcd_c01_snapshot.counts[i].no_fresh_poll =
+            zcd_c01_counts[i].no_fresh_poll;
+        zcd_c01_snapshot.counts[i].ccr4_zero_no_fresh_poll =
+            zcd_c01_counts[i].ccr4_zero_no_fresh_poll;
+        zcd_c01_snapshot.counts[i].fresh = zcd_c01_counts[i].fresh;
+        zcd_c01_snapshot.counts[i].valid = zcd_c01_counts[i].valid;
+        zcd_c01_snapshot.counts[i].off_window =
+            zcd_c01_counts[i].off_window;
+        zcd_c01_snapshot.counts[i].blank = zcd_c01_counts[i].blank;
+    }
+
+    zcd_c01_snapshot.arr = TIM1->ARR;
+    zcd_c01_snapshot.ccr1 = TIM1->CCR1;
+    zcd_c01_snapshot.ccr4 = TIM1->CCR4;
+    zcd_c01_snapshot.bdtr = TIM1->BDTR;
+    zcd_c01_snapshot.zero_crosses = zero_crosses;
+    zcd_c01_snapshot.commutation_interval = commutation_interval;
+    zcd_c01_snapshot.minimum_duty_cycle = minimum_duty_cycle;
+    zcd_c01_snapshot.min_startup_duty = min_startup_duty;
+    zcd_c01_snapshot.duty_cycle_setpoint = duty_cycle_setpoint;
+    zcd_c01_snapshot.duty_cycle = duty_cycle;
+    zcd_c01_snapshot.adjusted_duty_cycle = adjusted_duty_cycle;
+    zcd_c01_snapshot.duty_cycle_maximum = duty_cycle_maximum;
+    zcd_c01_snapshot.input = input;
+    zcd_c01_snapshot.adjusted_input = adjusted_input;
+    zcd_c01_snapshot.bad_count = bad_count;
+    zcd_c01_snapshot.bemf_timeout_happened = bemf_timeout_happened;
+    zcd_c01_snapshot.bemf_timeout = (uint8_t)bemf_timeout;
+    zcd_c01_snapshot.commutation_step = (uint8_t)step;
+    zcd_c01_snapshot.adc_zcd_phase = adc_zcd_phase;
+    zcd_c01_snapshot.adc_zcd_blank = adc_zcd_blank;
+    zcd_c01_snapshot.running = running;
+    zcd_c01_snapshot.old_routine = (uint8_t)old_routine;
+
+    /* Token and request are completion markers: the host waits for request
+     * to return to zero, then verifies token before reading the stable copy. */
+    __DMB();
+    zcd_c01_snapshot.token = token;
+    __DMB();
+    zcd_c01_snapshot_request = 0u;
+}
+#endif /* ADC_ZCD_C01_DIAGNOSTICS */
 
 /**
  * getCompOutputSample()
@@ -149,6 +214,13 @@ uint8_t getCompOutputSample(uint8_t *level)
      * new set of phase samples exists.
      */
     if (!LL_ADC_IsActiveFlag_JEOS(ADC1)) {
+#ifdef ADC_ZCD_C01_DIAGNOSTICS
+        uint8_t bucket = zcdC01PhaseBucket();
+        zcd_c01_counts[bucket].no_fresh_poll++;
+        if (TIM1->CCR4 == 0u) {
+            zcd_c01_counts[bucket].ccr4_zero_no_fresh_poll++;
+        }
+#endif
         *level = adc_zcd_last_out;
         return 0u;
     }
@@ -157,6 +229,11 @@ uint8_t getCompOutputSample(uint8_t *level)
     uint16_t va = (uint16_t)LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_1);
     uint16_t vb = (uint16_t)LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_2);
     uint16_t vc = (uint16_t)LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_3);
+
+#ifdef ADC_ZCD_C01_DIAGNOSTICS
+    uint8_t bucket = zcdC01PhaseBucket();
+    zcd_c01_counts[bucket].fresh++;
+#endif
 
     uint16_t neutral = (uint16_t)(((uint32_t)va + vb + vc) / 3u);
 
@@ -188,12 +265,18 @@ uint8_t getCompOutputSample(uint8_t *level)
         (((int32_t)drive_high - (int32_t)drive_low) >= ADC_ZCD_MIN_DRIVE_DELTA);
     if (!sample_in_on_window) {
         /* An off-window or incomplete sequence cannot represent BEMF. */
+#ifdef ADC_ZCD_C01_DIAGNOSTICS
+        zcd_c01_counts[bucket].off_window++;
+#endif
     } else if (adc_zcd_blank != 0u) {
         /*
          * Post-commutation blanking: ignore the flyback transient. Return the
          * last stable polarity WITHOUT updating it, so the AM32 zero-cross
          * counter cannot advance on transient noise during this window.
          */
+#ifdef ADC_ZCD_C01_DIAGNOSTICS
+        zcd_c01_counts[bucket].blank++;
+#endif
         adc_zcd_blank--;
     } else {
         int32_t margin = (int32_t)bemf - (int32_t)neutral;
@@ -204,42 +287,9 @@ uint8_t getCompOutputSample(uint8_t *level)
         }
         adc_zcd_last_out = out;
         valid = 1u;
-    }
-
-    /* Diagnostic snapshot for GDB live watch (see chapter 12). No control
-     * effect: only mirrors internal values into observable globals. */
-    zcd_dbg_va      = va;
-    zcd_dbg_vb      = vb;
-    zcd_dbg_vc      = vc;
-    zcd_dbg_neutral = neutral;
-    zcd_dbg_bemf    = bemf;
-    zcd_dbg_drive_high = drive_high;
-    zcd_dbg_drive_low  = drive_low;
-    zcd_dbg_phase   = adc_zcd_phase;
-    zcd_dbg_valid   = valid;
-    zcd_dbg_calls++;
-    if (out != zcd_dbg_out) {
-        zcd_dbg_flips++;
-    }
-    zcd_dbg_out = out;
-
-    /* 5‑minute capture: store one entry per second (~16800 calls at ~16.8k/s) */
-    if (++dbg_skip >= 16800) {
-        dbg_skip = 0;
-        if (dbg_idx < DBG_BUF_SIZE) {
-            volatile struct dbg_entry *e = &dbg_buf[dbg_idx++];
-            e->va      = va;
-            e->vb      = vb;
-            e->vc      = vc;
-            e->neutral = neutral;
-            e->bemf    = bemf;
-            e->zero_crosses    = (uint16_t)zero_crosses;
-            e->ci      = (uint16_t)commutation_interval;
-            e->step    = step;
-            e->running = running;
-            e->out     = out;
-            e->phase   = (uint8_t)adc_zcd_phase;
-        }
+#ifdef ADC_ZCD_C01_DIAGNOSTICS
+        zcd_c01_counts[bucket].valid++;
+#endif
     }
 
     *level = out;

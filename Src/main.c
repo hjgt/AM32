@@ -1536,6 +1536,13 @@ void tenKhzRoutine()
     signaltimeout++;
 
 #endif
+#ifdef ADC_ZCD_C01_DIAGNOSTICS
+    /* C01 diagnostics are normally dormant. A non-zero SWD token requests a
+     * one-shot snapshot after this control tick's PWM registers are written. */
+    if (zcd_c01_snapshot_request != 0u) {
+        zcdC01LatchSnapshot();
+    }
+#endif
 }
 
 void processDshot()

@@ -1,4 +1,5 @@
 obj/
+obj-*/
 downloads/
 tools/windows/
 tools/macos/
