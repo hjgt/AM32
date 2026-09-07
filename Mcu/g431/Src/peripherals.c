@@ -21,6 +21,43 @@
 
 // extern uint16_t DEAD_TIME;
 
+#ifdef USE_ADC_ZCD
+/*
+ * Initial value matches MX_TIM1_Init(). loadEEpromSettings() refreshes it from
+ * the final BDTR value after any runtime dead-time override has been applied.
+ */
+volatile uint16_t zcd_sample_floor_ticks =
+    (uint16_t)(DEAD_TIME + ZCD_SWITCHING_SETTLE_TICKS);
+
+/* Decode the STM32G4 advanced-timer DTG field into tDTS ticks. This target
+ * fixes TIM1 to CKD=DIV1 and PSC=0 during motor operation, so one tDTS tick is
+ * also one CNT/CCR tick. Tone generation may temporarily change PSC, but ADC
+ * ZCD is not used for those deliberately short sound pulses. */
+static uint16_t decodeTim1DeadTimeTicks(uint8_t code)
+{
+    if ((code & 0x80u) == 0u) {
+        return code;
+    }
+    if ((code & 0xC0u) == 0x80u) {
+        return (uint16_t)((64u + (code & 0x3Fu)) * 2u);
+    }
+    if ((code & 0xE0u) == 0xC0u) {
+        return (uint16_t)((32u + (code & 0x1Fu)) * 8u);
+    }
+    return (uint16_t)((32u + (code & 0x1Fu)) * 16u);
+}
+
+void refreshZcdTimingFromBdtr(void)
+{
+    const uint8_t code =
+        (uint8_t)((TIM1->BDTR & TIM_BDTR_DTG_Msk) >> TIM_BDTR_DTG_Pos);
+    const uint16_t dead_time_ticks = decodeTim1DeadTimeTicks(code);
+
+    zcd_sample_floor_ticks =
+        (uint16_t)(dead_time_ticks + ZCD_SWITCHING_SETTLE_TICKS);
+}
+#endif
+
 void initCorePeripherals(void)
 {
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_SYSCFG);
@@ -275,6 +312,9 @@ void MX_TIM1_Init(void)
     TIM_BDTRInitStruct.Break2AFMode = LL_TIM_BREAK_AFMODE_INPUT;
     TIM_BDTRInitStruct.AutomaticOutput = LL_TIM_AUTOMATICOUTPUT_DISABLE;
     LL_TIM_BDTR_Init(TIM1, &TIM_BDTRInitStruct);
+#ifdef USE_ADC_ZCD
+    refreshZcdTimingFromBdtr();
+#endif
     /* USER CODE BEGIN TIM1_Init 2 */
 
     /* USER CODE END TIM1_Init 2 */
