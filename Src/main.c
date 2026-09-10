@@ -691,6 +691,21 @@ void loadEEpromSettings()
             eepromBuffer.driving_brake_strength = 10;
         }
 
+#ifdef TARGET_FIXED_DEAD_TIME_CODE
+        /* This target decouples hardware-safe bridge timing from the legacy
+         * Running/Driving brake setting while preserving its known-good
+         * DRIVE duty chain exactly. Replace DTG only; retain every other BDTR
+         * bit written by the timer initialisation. */
+        dead_time_override = TARGET_FIXED_DEAD_TIME_COMPENSATION;
+        min_startup_duty = min_startup_duty + dead_time_override;
+        minimum_duty_cycle = minimum_duty_cycle + dead_time_override;
+        throttle_max_at_low_rpm = throttle_max_at_low_rpm + dead_time_override;
+        startup_max_duty_cycle = startup_max_duty_cycle + dead_time_override;
+#ifdef STMICRO
+        MODIFY_REG(TIM1->BDTR, TIM_BDTR_DTG_Msk,
+            ((uint32_t)TARGET_FIXED_DEAD_TIME_CODE << TIM_BDTR_DTG_Pos));
+#endif
+#else
         if(eepromBuffer.driving_brake_strength < 10){
             dead_time_override = DEAD_TIME + (150 - (eepromBuffer.driving_brake_strength * 10));
             if (dead_time_override > 200) {
@@ -713,6 +728,7 @@ void loadEEpromSettings()
             TIM1->BDTR |= dead_time_override;
 #endif
         }
+#endif
         if (eepromBuffer.limits.temperature < 70 || eepromBuffer.limits.temperature > 140) {
             eepromBuffer.limits.temperature = 255;
         }

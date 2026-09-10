@@ -3153,6 +3153,15 @@
 #define PHASE_C_GPIO_PORT_LOW GPIOF
 #define AF_C_LOW LL_GPIO_AF_6
 #define DEAD_TIME 70
+/*
+ * C03: keep the empirically validated DRIVE behaviour independent of the
+ * configurator's Running/Driving brake field. 0xCE is the exact final DTG
+ * code produced by the previous 0x46 | 0xC8 path; 200 is the matching duty,
+ * startup and low-RPM compensation. This does not implement zero-throttle
+ * Coast -- that is a separate target state and must not retune bridge timing.
+ */
+#define TARGET_FIXED_DEAD_TIME_CODE 0xCEu
+#define TARGET_FIXED_DEAD_TIME_COMPENSATION 200u
 #define VARIABLE_PWM
 #define USE_DSHOT_TELEMETRY
 #define USE_SERIAL_TELEMETRY
