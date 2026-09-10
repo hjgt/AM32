@@ -86,6 +86,15 @@ static inline uint16_t zcd_ccr4_from_duty(uint16_t duty)
     (TIM1->CCR1 = (newdc), TIM1->CCR2 = (newdc), TIM1->CCR3 = (newdc), \
         TIM1->CCR4 = zcd_ccr4_from_duty((uint16_t)(newdc)))
 
+#ifdef HELI_COAST_ON_ZERO
+/* Six bridge commands are already forced to GPIO-off by allOff(). Keep the
+ * power-channel compare registers at zero, but leave CH4 running at the quiet
+ * middle of the carrier so ADC-ZCD can observe the freely rotating motor. */
+#define SET_HELI_COAST_HIGH_Z_SAMPLE(period) \
+    (TIM1->CCR1 = 0u, TIM1->CCR2 = 0u, TIM1->CCR3 = 0u, \
+        TIM1->CCR4 = (uint16_t)((period) >> 1))
+#endif
+
 void initAfterJump(void);
 void initCorePeripherals(void);
 void SystemClock_Config(void);

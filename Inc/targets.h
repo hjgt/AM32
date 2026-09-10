@@ -3162,6 +3162,19 @@
  */
 #define TARGET_FIXED_DEAD_TIME_CODE 0xCEu
 #define TARGET_FIXED_DEAD_TIME_COMPENSATION 200u
+/*
+ * C04: helicopter zero-throttle Coast for this six-PWM FD6288 bridge.
+ * All six MOSFET commands are disabled while the rotor is still tracked.
+ * ADC sampling continues at a fixed quiet point in the PWM period and uses
+ * phase-span validation instead of the DRIVE-only high-minus-low test.
+ *
+ * Bailout is deliberately not enabled in C04. A positive command during the
+ * first Coast experiment remains high impedance until tracking times out, then
+ * requires the command to return to zero before a normal cold start. C05 may
+ * enable sector-aligned pickup only after the C04 tracking data is accepted.
+ */
+#define HELI_COAST_ON_ZERO
+#define HELI_COAST_ADC_MIN_SPAN 64u
 #define VARIABLE_PWM
 #define USE_DSHOT_TELEMETRY
 #define USE_SERIAL_TELEMETRY

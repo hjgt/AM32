@@ -250,6 +250,15 @@ an settings option)
 
 void zcfoundroutine(void);
 
+/* A helicopter main rotor must never fall through to the generic prop/active
+ * brake paths. Keep the EEPROM field for 2.20 configurator compatibility, but
+ * make its effective output behavior target-specific and unambiguously Off. */
+#ifdef HELI_COAST_ON_ZERO
+#define EFFECTIVE_BRAKE_ON_STOP 0u
+#else
+#define EFFECTIVE_BRAKE_ON_STOP (eepromBuffer.brake_on_stop)
+#endif
+
 // firmware build options !! fixed speed and duty cycle modes are not to be used
 // with sinusoidal startup !!
 
@@ -562,6 +571,79 @@ volatile uint32_t commutation_interval = 12500;
 volatile uint16_t waitTime = 0;
 uint16_t signaltimeout = 0;
 uint8_t ubAnalogWatchdogStatus = RESET;
+
+#ifdef HELI_COAST_ON_ZERO
+/* C04 keeps the bridge high impedance while the existing six-step observer
+ * tracks a freely rotating helicopter rotor. C05 will consume the request flag
+ * only after the measured Coast sequence is proven suitable for bailout. */
+volatile uint8_t heli_coast_active;
+volatile uint8_t heli_coast_bailout_requested;
+volatile uint8_t heli_coast_restart_inhibit;
+volatile uint16_t heli_coast_valid_crossings;
+volatile uint32_t heli_coast_entry_count;
+volatile uint32_t heli_coast_tracking_timeout_count;
+
+static void heliCoastEnter(void)
+{
+    if (heli_coast_active != 0u) {
+        return;
+    }
+
+    /* Gate commutation output before changing any GPIO. If COM_TIMER preempts
+     * after this store it will advance only the observer, never the bridge. */
+    heli_coast_active = 1u;
+    heli_coast_bailout_requested = 0u;
+    heli_coast_restart_inhibit = 0u;
+    heli_coast_valid_crossings = 0u;
+    heli_coast_entry_count++;
+    prop_brake_active = 0;
+    duty_cycle_setpoint = 0u;
+    duty_cycle = 0u;
+    adjusted_duty_cycle = 0u;
+    last_duty_cycle = 0u;
+    allOff();
+    SET_HELI_COAST_HIGH_Z_SAMPLE(tim1_arr);
+    heliCoastResetAdcDiagnostics();
+    changeCompInput();
+}
+
+static void heliCoastTrackingLost(uint8_t inhibit_restart)
+{
+    /* Keep the output gate active until every scheduled commutation is disabled
+     * and all six commands are off. Only then publish the non-Coast state. */
+    DISABLE_COM_TIMER_INT();
+    maskPhaseInterrupts();
+    running = 0u;
+    allOff();
+    SET_DUTY_CYCLE_ALL(0u);
+    duty_cycle_setpoint = 0u;
+    duty_cycle = 0u;
+    adjusted_duty_cycle = 0u;
+    last_duty_cycle = 0u;
+    zero_crosses = 0u;
+    zcfound = 0u;
+    bemfcounter = 0u;
+    bad_count = 0u;
+    old_routine = 1;
+    commutation_interval = 5000u;
+    SET_INTERVAL_TIMER_COUNT(0u);
+    heli_coast_bailout_requested = 0u;
+    if (inhibit_restart != 0u) {
+        /* A failed rotating pickup must not fall through into blind cold start.
+         * Returning the command to zero explicitly clears this latch. */
+        heli_coast_restart_inhibit = 1u;
+    }
+    heli_coast_active = 0u;
+}
+
+static inline void heliCoastRecordZeroCross(void)
+{
+    if ((heli_coast_active != 0u) &&
+        (heli_coast_valid_crossings != UINT16_MAX)) {
+        heli_coast_valid_crossings++;
+    }
+}
+#endif
 
 #ifdef NEED_INPUT_READY
 volatile char input_ready = 0;
@@ -890,7 +972,11 @@ void commutate()
     rising = !rising;
 #endif
     __disable_irq(); // don't let dshot interrupt
-    if (!prop_brake_active) {
+    if (!prop_brake_active
+#ifdef HELI_COAST_ON_ZERO
+        && (heli_coast_active == 0u)
+#endif
+    ) {
         comStep(step);
     }
     __enable_irq();
@@ -1193,6 +1279,11 @@ void setInput()
 #ifndef BRUSHED_MODE
 if (!stepper_sine && armed) {
         if (input >= 47 + (80 * eepromBuffer.use_sine_start)) {
+#ifdef HELI_COAST_ON_ZERO
+            if (heli_coast_restart_inhibit != 0u) {
+                duty_cycle_setpoint = 0u;
+            } else {
+#endif
             if (running == 0) {
                 allOff();
                 if (!old_routine) {
@@ -1220,10 +1311,23 @@ if (!stepper_sine && armed) {
             if (!eepromBuffer.rc_car_reverse) {
                 prop_brake_active = 0;
             }
+#ifdef HELI_COAST_ON_ZERO
+            }
+#endif
         }
 
         if (input < 47 + (80 * eepromBuffer.use_sine_start)) {
-            if (play_tone_flag != 0) {
+#ifdef HELI_COAST_ON_ZERO
+            if ((heli_coast_active == 0u) &&
+                (heli_coast_restart_inhibit != 0u)) {
+                heli_coast_restart_inhibit = 0u;
+            }
+#endif
+            if ((play_tone_flag != 0)
+#ifdef HELI_COAST_ON_ZERO
+                && (heli_coast_active == 0u)
+#endif
+            ) {
                 switch (play_tone_flag) {
 									
                 case 1:
@@ -1245,12 +1349,20 @@ if (!stepper_sine && armed) {
                 play_tone_flag = 0;
             }
 
+#ifdef HELI_COAST_ON_ZERO
+            /* No generic stop, reverse or brake branch may touch GPIO while
+             * the high-impedance observer owns the rotating motor. */
+            if (heli_coast_active != 0u) {
+                duty_cycle_setpoint = 0u;
+                return;
+            }
+#endif
             if (!eepromBuffer.comp_pwm) {
                 duty_cycle_setpoint = 0;
                 if (!running) {
                     old_routine = 1;
                     zero_crosses = 0;
-                    if (eepromBuffer.brake_on_stop) {
+                    if (EFFECTIVE_BRAKE_ON_STOP) {
                         fullBrake();
                     } else {
                         if (!prop_brake_active) {
@@ -1280,10 +1392,10 @@ if (!stepper_sine && armed) {
                     old_routine = 1;
                     zero_crosses = 0;
                     bad_count = 0;
-                    if (eepromBuffer.brake_on_stop > 0) {
+                    if (EFFECTIVE_BRAKE_ON_STOP > 0) {
                         if (!eepromBuffer.use_sine_start) {
 #ifndef PWM_ENABLE_BRIDGE
-                          if(eepromBuffer.brake_on_stop == 1){
+                          if(EFFECTIVE_BRAKE_ON_STOP == 1){
                              prop_brake_duty_cycle =  eepromBuffer.drag_brake_strength * 200;
                               if (prop_brake_duty_cycle >= (1999)) {
                                 fullBrake();
@@ -1352,6 +1464,21 @@ if (!stepper_sine && armed) {
 void tenKhzRoutine()
 { // 20khz as of 2.00 to be renamed
     duty_cycle = duty_cycle_setpoint;
+#ifdef HELI_COAST_ON_ZERO
+    if (heli_coast_active != 0u) {
+        if (!armed || !running) {
+            heliCoastTrackingLost((input >= 47u) ? 1u : 0u);
+        } else if (input >= 47u) {
+            /* C04 records but intentionally does not execute a rotating pickup.
+             * The bridge remains high impedance until C05 is enabled. */
+            heli_coast_bailout_requested = 1u;
+        } else {
+            heli_coast_bailout_requested = 0u;
+        }
+    } else if (armed && running && (input < 47u)) {
+        heliCoastEnter();
+    }
+#endif
     tenkhzcounter++;
     ledcounter++;
     ramp_count++;
@@ -1424,11 +1551,17 @@ void tenKhzRoutine()
                 if (rising) {
                     if (bemfcounter > min_bemf_counts_up) {
                         zcfound = 1;
+#ifdef HELI_COAST_ON_ZERO
+                        heliCoastRecordZeroCross();
+#endif
                         zcfoundroutine();
                     }
                 } else {
                     if (bemfcounter > min_bemf_counts_down) {
                         zcfound = 1;
+#ifdef HELI_COAST_ON_ZERO
+                        heliCoastRecordZeroCross();
+#endif
                         zcfoundroutine();
                     }
                 }
@@ -1438,7 +1571,11 @@ void tenKhzRoutine()
         if (one_khz_loop_counter > PID_LOOP_DIVIDER) { // 1khz PID loop
             PROCESS_ADC_FLAG = 1; // set flag to do new adc read at lower priority
             one_khz_loop_counter = 0;
-            if (use_current_limit && running) {
+            if (use_current_limit && running
+#ifdef HELI_COAST_ON_ZERO
+                && (heli_coast_active == 0u)
+#endif
+            ) {
                 use_current_limit_adjust -= (int16_t)(doPidCalculations(&currentPid, actual_current,
                                                           eepromBuffer.limits.current * 2 * 100)
                     / 10000);
@@ -1449,7 +1586,11 @@ void tenKhzRoutine()
                     use_current_limit_adjust = 2000;
                 }
             }
-            if (eepromBuffer.stall_protection && running) { // this boosts throttle as the rpm gets lower, for crawlers
+            if (eepromBuffer.stall_protection && running
+#ifdef HELI_COAST_ON_ZERO
+                && (heli_coast_active == 0u)
+#endif
+            ) { // this boosts throttle as the rpm gets lower, for crawlers
                                                // and rc cars only, do not use for multirotors.
                 stall_protection_adjust += (doPidCalculations(&stallPid, commutation_interval,
                                                stall_protect_target_interval));
@@ -1460,7 +1601,11 @@ void tenKhzRoutine()
                     stall_protection_adjust = 0;
                 }
             }
-            if (use_speed_control_loop && running) {
+            if (use_speed_control_loop && running
+#ifdef HELI_COAST_ON_ZERO
+                && (heli_coast_active == 0u)
+#endif
+            ) {
                 input_override += doPidCalculations(&speedPid, e_com_time, target_e_com_time);
                 if (input_override > 2047 * 10000) {
                     input_override = 2047 * 10000;
@@ -1508,6 +1653,11 @@ void tenKhzRoutine()
              duty_cycle = last_duty_cycle;
             }
 
+#ifdef HELI_COAST_ON_ZERO
+        if (heli_coast_active != 0u) {
+            adjusted_duty_cycle = 0u;
+        } else
+#endif
         if ((armed && running) && input > 47) {
             if (eepromBuffer.variable_pwm) {
             }
@@ -1526,7 +1676,7 @@ void tenKhzRoutine()
             if (prop_brake_active) {
               adjusted_duty_cycle =  tim1_arr - ((prop_brake_duty_cycle * tim1_arr) / 2000);
             } else {
-              if((eepromBuffer.brake_on_stop == 2) && armed){  // require arming for active brake
+              if((EFFECTIVE_BRAKE_ON_STOP == 2) && armed){  // require arming for active brake
                 comStep(2);
                 adjusted_duty_cycle = DEAD_TIME + ((eepromBuffer.active_brake_power * tim1_arr) / 2000)* 10;
             }else{
@@ -1534,9 +1684,18 @@ void tenKhzRoutine()
             }
             }
         }
-        last_duty_cycle = duty_cycle;
         SET_AUTO_RELOAD_PWM(tim1_arr);
-        SET_DUTY_CYCLE_ALL(adjusted_duty_cycle);
+#ifdef HELI_COAST_ON_ZERO
+        if (heli_coast_active != 0u) {
+            /* Do not let the hidden duty ramp wind up while power is gated. */
+            last_duty_cycle = 0u;
+            SET_HELI_COAST_HIGH_Z_SAMPLE(tim1_arr);
+        } else
+#endif
+        {
+            last_duty_cycle = duty_cycle;
+            SET_DUTY_CYCLE_ALL(adjusted_duty_cycle);
+        }
     }
 #endif // ndef brushed_mode
 #if defined(FIXED_DUTY_MODE) || defined(FIXED_SPEED_MODE)
@@ -1623,6 +1782,13 @@ void zcfoundroutine()
     thiszctime = INTERVAL_TIMER_COUNT;
     SET_INTERVAL_TIMER_COUNT(0);
     commutation_interval = (thiszctime + (3 * commutation_interval)) / 4;
+#ifdef HELI_COAST_ON_ZERO
+    if (heli_coast_active != 0u) {
+        /* With no applied torque there is nothing to advance. Move the
+         * observer sector at the physical 30-degree boundary after the ZC. */
+        advance = 0u;
+    } else
+#endif
     if (!eepromBuffer.auto_advance) {
         advance = (temp_advance * commutation_interval) >> 6;
     } else {
@@ -2191,11 +2357,17 @@ if(zero_crosses < 5){
                     if (rising) {
                         if (bemfcounter > min_bemf_counts_up) {
                             zcfound = 1;
+#ifdef HELI_COAST_ON_ZERO
+                            heliCoastRecordZeroCross();
+#endif
                             zcfoundroutine();
                         }
                     } else {
                         if (bemfcounter > min_bemf_counts_down) {
                             zcfound = 1;
+#ifdef HELI_COAST_ON_ZERO
+                            heliCoastRecordZeroCross();
+#endif
                             zcfoundroutine();
                         }
                     }
@@ -2203,6 +2375,13 @@ if(zero_crosses < 5){
             }
 #endif
             if (INTERVAL_TIMER_COUNT > 45000 && running == 1) {
+#ifdef HELI_COAST_ON_ZERO
+                if (heli_coast_active != 0u) {
+                    heli_coast_tracking_timeout_count++;
+                    heliCoastTrackingLost((input >= 47u) ? 1u : 0u);
+                } else
+#endif
+                {
                 bemf_timeout_happened++;
 
                 maskPhaseInterrupts();
@@ -2213,6 +2392,7 @@ if(zero_crosses < 5){
                 }
                 zero_crosses = 0;
                 zcfoundroutine();
+                }
             }
         } else { // stepper sine
 
@@ -2287,7 +2467,7 @@ if(zero_crosses < 5){
 
             } else {
                 do_once_sinemode = 1;
-                if (eepromBuffer.brake_on_stop == 1) {
+                if (EFFECTIVE_BRAKE_ON_STOP == 1) {
 #ifndef PWM_ENABLE_BRIDGE
                     prop_brake_duty_cycle =  eepromBuffer.drag_brake_strength * 200;
                     adjusted_duty_cycle =  tim1_arr - ((prop_brake_duty_cycle * tim1_arr) / 2000);
@@ -2301,7 +2481,7 @@ if(zero_crosses < 5){
 #else
                     // todo add braking for PWM /enable style bridges.
 #endif
-                } else if (eepromBuffer.brake_on_stop == 2){
+                } else if (EFFECTIVE_BRAKE_ON_STOP == 2){
                   comStep(2);
                   SET_DUTY_CYCLE_ALL(DEAD_TIME + ((eepromBuffer.active_brake_power * tim1_arr) / 2000)* 10);
                 }else{
