@@ -42,27 +42,12 @@
 
 /*
  * ZCD_SAMPLE_FLOOR: earliest CCR4 (in TIM1 ticks) at which the injected sample
- * is allowed to fire. It includes the actual programmed MCU dead time plus a
+ * is allowed to fire. It includes the programmed MCU dead time plus a 92-tick
  * board-level allowance for FD6288 propagation and switching settling.
+ * DEAD_TIME is in the same TIM1-clock ticks as CCR (PSC = 0).
  */
-#ifndef ZCD_SWITCHING_SETTLE_TICKS
-#define ZCD_SWITCHING_SETTLE_TICKS 92u
-#endif
-
-#ifdef USE_ADC_ZCD
-/*
- * The G4 DTG field is non-linear. loadEEpromSettings() can also change it at
- * runtime, so this single cached value is refreshed from the final BDTR value
- * before motor operation. Keeping one 16-bit cache avoids a partially updated
- * floor/minimum pair if the control interrupt happens during settings load.
- */
-extern volatile uint16_t zcd_sample_floor_ticks;
-void refreshZcdTimingFromBdtr(void);
-#else
 #ifndef ZCD_SAMPLE_FLOOR
-#define ZCD_SAMPLE_FLOOR \
-    ((uint16_t)(DEAD_TIME + ZCD_SWITCHING_SETTLE_TICKS))
-#endif
+#define ZCD_SAMPLE_FLOOR ((uint16_t)(DEAD_TIME + 92u))
 #endif
 
 /*
@@ -74,20 +59,8 @@ void refreshZcdTimingFromBdtr(void);
 #define ZCD_ADC_WINDOW_TICKS 244u
 #endif
 
-static inline uint16_t zcd_sample_floor(void)
-{
-#ifdef USE_ADC_ZCD
-    return zcd_sample_floor_ticks;
-#else
-    return ZCD_SAMPLE_FLOOR;
-#endif
-}
-
-static inline uint16_t zcd_minimum_on_ticks(void)
-{
-    const uint16_t floor = zcd_sample_floor();
-    return (uint16_t)(floor + ZCD_ADC_WINDOW_TICKS);
-}
+#define ZCD_MINIMUM_ON_TICKS \
+    ((uint16_t)(ZCD_SAMPLE_FLOOR + ZCD_ADC_WINDOW_TICKS))
 
 /*
  * Compute the CCR4 (injected-trigger) position from the requested duty.
@@ -96,16 +69,12 @@ static inline uint16_t zcd_minimum_on_ticks(void)
  */
 static inline uint16_t zcd_ccr4_from_duty(uint16_t duty)
 {
-    const uint16_t floor = zcd_sample_floor();
-    const uint16_t minimum_on =
-        (uint16_t)(floor + ZCD_ADC_WINDOW_TICKS);
-
-    if (duty < minimum_on) {
+    if (duty < ZCD_MINIMUM_ON_TICKS) {
         return 0u;
     }
 
     uint16_t mid = (uint16_t)(duty >> 1);
-    uint16_t ccr4 = (mid < floor) ? floor : mid;
+    uint16_t ccr4 = (mid < ZCD_SAMPLE_FLOOR) ? ZCD_SAMPLE_FLOOR : mid;
     uint16_t latest = (uint16_t)(duty - ZCD_ADC_WINDOW_TICKS);
     if (ccr4 > latest) {
         ccr4 = latest;

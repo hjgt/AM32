@@ -7,7 +7,6 @@
 
 #include "comparator.h"
 #include "common.h"
-#include "peripherals.h"
 #include "targets.h"
 
 #ifdef USE_ADC_ZCD
@@ -91,9 +90,6 @@ struct zcd_c01_snapshot_data {
     uint16_t duty_cycle_maximum;
     uint16_t input;
     uint16_t adjusted_input;
-    uint16_t zcd_deadtime_ticks;
-    uint16_t zcd_sample_floor_ticks;
-    uint16_t zcd_minimum_on_ticks;
     uint8_t  bad_count;
     uint8_t  bemf_timeout_happened;
     uint8_t  bemf_timeout;
@@ -162,12 +158,6 @@ void zcdC01LatchSnapshot(void)
     zcd_c01_snapshot.duty_cycle_maximum = duty_cycle_maximum;
     zcd_c01_snapshot.input = input;
     zcd_c01_snapshot.adjusted_input = adjusted_input;
-    const uint16_t sample_floor = zcd_sample_floor();
-    zcd_c01_snapshot.zcd_deadtime_ticks =
-        (uint16_t)(sample_floor - ZCD_SWITCHING_SETTLE_TICKS);
-    zcd_c01_snapshot.zcd_sample_floor_ticks = sample_floor;
-    zcd_c01_snapshot.zcd_minimum_on_ticks =
-        (uint16_t)(sample_floor + ZCD_ADC_WINDOW_TICKS);
     zcd_c01_snapshot.bad_count = bad_count;
     zcd_c01_snapshot.bemf_timeout_happened = bemf_timeout_happened;
     zcd_c01_snapshot.bemf_timeout = (uint8_t)bemf_timeout;

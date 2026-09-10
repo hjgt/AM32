@@ -623,10 +623,9 @@ void loadEEpromSettings()
     }
 
 #ifdef ADC_ZCD_MAX_BASE_PWM_KHZ
-    /* Three sequential BEMF ranks need a complete clean ON window after the
-     * actual dead time and switching-settle interval. Keep the configurable
-     * base carrier low enough for the startup duty to provide it. VARIABLE_PWM
-     * may still raise the carrier after the motor is established. */
+    /* Three sequential BEMF ranks need a 2.54 us clean ON window. Keep the
+     * configurable base carrier low enough for the startup duty to provide it.
+     * VARIABLE_PWM may still raise the carrier after the motor is established. */
     if (eepromBuffer.pwm_frequency > ADC_ZCD_MAX_BASE_PWM_KHZ) {
         eepromBuffer.pwm_frequency = ADC_ZCD_MAX_BASE_PWM_KHZ;
     }
@@ -703,9 +702,6 @@ void loadEEpromSettings()
         startup_max_duty_cycle = startup_max_duty_cycle + dead_time_override;
 #ifdef STMICRO
         TIM1->BDTR |= dead_time_override;
-#ifdef USE_ADC_ZCD
-        refreshZcdTimingFromBdtr();
-#endif
 #endif
 #ifdef ARTERY
         TMR1->brk |= dead_time_override;
@@ -1504,9 +1500,8 @@ void tenKhzRoutine()
             /* Sensorless ADC ZCD cannot make a trustworthy three-rank sample
              * from a shorter pulse. This affects motor drive only; stop,
              * braking and tone waveforms keep their requested duty. */
-            const uint16_t minimum_on_ticks = zcd_minimum_on_ticks();
-            if (adjusted_duty_cycle < minimum_on_ticks) {
-                adjusted_duty_cycle = minimum_on_ticks;
+            if (adjusted_duty_cycle < ZCD_MINIMUM_ON_TICKS) {
+                adjusted_duty_cycle = ZCD_MINIMUM_ON_TICKS;
             }
 #endif
 
