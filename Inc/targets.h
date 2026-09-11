@@ -3168,13 +3168,20 @@
  * ADC sampling continues at a fixed quiet point in the PWM period and uses
  * phase-span validation instead of the DRIVE-only high-minus-low test.
  *
- * Bailout is deliberately not enabled in C04. A positive command during the
- * first Coast experiment remains high impedance until tracking times out, then
- * requires the command to return to zero before a normal cold start. C05 may
- * enable sector-aligned pickup only after the C04 tracking data is accepted.
+ * C05 enables a deliberately conservative sector-aligned pickup after the C04
+ * observer was accepted on hardware. It requires two electrical revolutions of
+ * forward-sequence tracking plus six bounded, reasonably consistent sector
+ * intervals. A rejected pickup remains high impedance and never falls through
+ * to the blind cold-start path while the throttle command is positive.
  */
 #define HELI_COAST_ON_ZERO
 #define HELI_COAST_ADC_MIN_SPAN 64u
+#define HELI_COAST_BAILOUT
+#define HELI_COAST_BAILOUT_MIN_CROSSINGS 12u
+/* INTERVAL_TIMER is 2 MHz on G431: these are 0.5 us counts. */
+#define HELI_COAST_BAILOUT_MIN_INTERVAL 80u
+#define HELI_COAST_BAILOUT_MAX_INTERVAL 6000u
+#define HELI_COAST_BAILOUT_MAX_INTERVAL_RATIO 3u
 #define VARIABLE_PWM
 #define USE_DSHOT_TELEMETRY
 #define USE_SERIAL_TELEMETRY

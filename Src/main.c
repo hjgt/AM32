@@ -582,6 +582,129 @@ volatile uint8_t heli_coast_restart_inhibit;
 volatile uint16_t heli_coast_valid_crossings;
 volatile uint32_t heli_coast_entry_count;
 volatile uint32_t heli_coast_tracking_timeout_count;
+#ifdef HELI_COAST_BAILOUT
+volatile uint32_t heli_coast_bailout_success_count;
+volatile uint32_t heli_coast_bailout_reject_count;
+volatile uint16_t heli_coast_bailout_last_crossings;
+volatile uint16_t heli_coast_bailout_last_interval;
+volatile uint16_t heli_coast_bailout_last_interval_min;
+volatile uint16_t heli_coast_bailout_last_interval_max;
+volatile uint16_t heli_coast_bailout_last_entry_duty;
+volatile uint8_t heli_coast_bailout_last_step;
+#endif
+
+#ifdef HELI_COAST_BAILOUT
+/* Convert the injected-ADC clean-window requirement back into AM32's 0..2000
+ * duty units. The -1 mirrors adjusted = duty*ARR/2000 + 1. */
+static uint16_t heliCoastMinimumDriveDuty(void)
+{
+    uint32_t numerator = ((uint32_t)ZCD_MINIMUM_ON_TICKS - 1u) * 2000u;
+    return (uint16_t)((numerator + (uint32_t)tim1_arr - 1u) /
+        (uint32_t)tim1_arr);
+}
+
+/* Called only at an observer commutation boundary, after the step has advanced.
+ * Twelve crossings ensure that every interval slot contains Coast data. */
+static uint8_t heliCoastBailoutReady(uint16_t *entry_duty,
+    uint16_t *interval_min, uint16_t *interval_max)
+{
+    if (heli_coast_valid_crossings < HELI_COAST_BAILOUT_MIN_CROSSINGS) {
+        return 0u;
+    }
+
+    uint16_t min_value = UINT16_MAX;
+    uint16_t max_value = 0u;
+    for (uint32_t i = 0u; i < 6u; i++) {
+        uint16_t value = commutation_intervals[i];
+        if ((value < HELI_COAST_BAILOUT_MIN_INTERVAL) ||
+            (value > HELI_COAST_BAILOUT_MAX_INTERVAL)) {
+            return 0u;
+        }
+        if (value < min_value) {
+            min_value = value;
+        }
+        if (value > max_value) {
+            max_value = value;
+        }
+    }
+    if ((uint32_t)max_value >
+        ((uint32_t)min_value * HELI_COAST_BAILOUT_MAX_INTERVAL_RATIO)) {
+        return 0u;
+    }
+    if ((commutation_interval < HELI_COAST_BAILOUT_MIN_INTERVAL) ||
+        (commutation_interval > HELI_COAST_BAILOUT_MAX_INTERVAL)) {
+        return 0u;
+    }
+
+    uint16_t minimum_entry = heliCoastMinimumDriveDuty();
+    if (minimum_entry < minimum_duty_cycle) {
+        minimum_entry = minimum_duty_cycle;
+    }
+    if (duty_cycle_maximum < minimum_entry) {
+        return 0u;
+    }
+    if (use_current_limit && (use_current_limit_adjust < (int16_t)minimum_entry)) {
+        return 0u;
+    }
+
+    *entry_duty = minimum_entry;
+    *interval_min = min_value;
+    *interval_max = max_value;
+    return 1u;
+}
+
+/* Prepare a non-zero compare value while all six gate commands are still GPIO
+ * low. A forced TIM1 update transfers the preloaded compares before comStep()
+ * exposes the PWM pins, avoiding a one-carrier two-low-side braking pulse. */
+static uint8_t heliCoastBailoutAtBoundary(void)
+{
+    if ((heli_coast_active == 0u) ||
+        (heli_coast_bailout_requested == 0u)) {
+        return 0u;
+    }
+
+    uint16_t entry_duty;
+    uint16_t interval_min;
+    uint16_t interval_max;
+    if (!heliCoastBailoutReady(&entry_duty, &interval_min, &interval_max)) {
+        return 0u;
+    }
+
+    uint16_t entry_ticks = (uint16_t)
+        ((((uint32_t)entry_duty * tim1_arr) / 2000u) + 1u);
+    if (entry_ticks < ZCD_MINIMUM_ON_TICKS) {
+        entry_ticks = ZCD_MINIMUM_ON_TICKS;
+    }
+    SET_DUTY_CYCLE_ALL(entry_ticks);
+    generatePwmTimerEvent();
+
+    duty_cycle = entry_duty;
+    adjusted_duty_cycle = entry_ticks;
+    last_duty_cycle = entry_duty;
+    prop_brake_active = 0;
+    bemf_timeout_happened = 0u;
+    bad_count = 0u;
+    desync_check = 0u;
+
+    uint32_t interval_sum = 0u;
+    for (uint32_t i = 0u; i < 6u; i++) {
+        interval_sum += commutation_intervals[i];
+    }
+    average_interval = (interval_sum + 3u) / 6u;
+    last_average_interval = average_interval;
+
+    heli_coast_bailout_last_crossings = heli_coast_valid_crossings;
+    heli_coast_bailout_last_interval = (uint16_t)commutation_interval;
+    heli_coast_bailout_last_interval_min = interval_min;
+    heli_coast_bailout_last_interval_max = interval_max;
+    heli_coast_bailout_last_entry_duty = entry_duty;
+    heli_coast_bailout_last_step = (uint8_t)step;
+    heli_coast_bailout_success_count++;
+    heli_coast_bailout_requested = 0u;
+    heli_coast_active = 0u;
+    return 1u;
+}
+#endif
 
 static void heliCoastEnter(void)
 {
@@ -627,6 +750,12 @@ static void heliCoastTrackingLost(uint8_t inhibit_restart)
     old_routine = 1;
     commutation_interval = 5000u;
     SET_INTERVAL_TIMER_COUNT(0u);
+#ifdef HELI_COAST_BAILOUT
+    if ((inhibit_restart != 0u) &&
+        (heli_coast_bailout_requested != 0u)) {
+        heli_coast_bailout_reject_count++;
+    }
+#endif
     heli_coast_bailout_requested = 0u;
     if (inhibit_restart != 0u) {
         /* A failed rotating pickup must not fall through into blind cold start.
@@ -972,6 +1101,9 @@ void commutate()
     rising = !rising;
 #endif
     __disable_irq(); // don't let dshot interrupt
+#ifdef HELI_COAST_BAILOUT
+    (void)heliCoastBailoutAtBoundary();
+#endif
     if (!prop_brake_active
 #ifdef HELI_COAST_ON_ZERO
         && (heli_coast_active == 0u)
@@ -1469,8 +1601,8 @@ void tenKhzRoutine()
         if (!armed || !running) {
             heliCoastTrackingLost((input >= 47u) ? 1u : 0u);
         } else if (input >= 47u) {
-            /* C04 records but intentionally does not execute a rotating pickup.
-             * The bridge remains high impedance until C05 is enabled. */
+            /* commutate() consumes this only at the next observed sector
+             * boundary and only after all C05 confidence gates pass. */
             heli_coast_bailout_requested = 1u;
         } else {
             heli_coast_bailout_requested = 0u;
