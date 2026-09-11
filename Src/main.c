@@ -572,6 +572,68 @@ volatile uint16_t waitTime = 0;
 uint16_t signaltimeout = 0;
 uint8_t ubAnalogWatchdogStatus = RESET;
 
+#ifdef DRIVE_SAFETY_LIMIT_PRIORITY
+volatile uint8_t drive_safety_limit_inhibit;
+volatile uint32_t drive_safety_limit_trip_count;
+volatile uint16_t drive_safety_limit_last_cap;
+volatile uint16_t drive_safety_limit_last_required;
+
+/* Minimum AM32 0..2000 duty whose mapped compare can contain the complete
+ * injected ADC sequence. A lower requested duty is allowed only when the
+ * effective protection cap still leaves room for this hardware floor. */
+static uint16_t driveZcdMinimumDuty(void)
+{
+    uint32_t numerator = ((uint32_t)ZCD_MINIMUM_ON_TICKS - 1u) * 2000u;
+    return (uint16_t)((numerator + (uint32_t)tim1_arr - 1u) /
+        (uint32_t)tim1_arr);
+}
+
+static uint16_t driveEffectiveDutyLimit(void)
+{
+    uint16_t limit = duty_cycle_maximum;
+    if (use_current_limit) {
+        uint16_t current_limit = (use_current_limit_adjust > 0) ?
+            (uint16_t)use_current_limit_adjust : 0u;
+        if (current_limit < limit) {
+            limit = current_limit;
+        }
+    }
+    return limit;
+}
+
+static uint8_t driveSafetyLimitAllowsZcd(void)
+{
+    return driveEffectiveDutyLimit() >= driveZcdMinimumDuty();
+}
+
+/* Publish the inhibit before touching timers/GPIO so a pending commutation can
+ * no longer expose a phase. Recovery always requires an explicit zero command. */
+static void driveSafetyLimitStop(void)
+{
+    drive_safety_limit_inhibit = 1u;
+    drive_safety_limit_last_cap = driveEffectiveDutyLimit();
+    drive_safety_limit_last_required = driveZcdMinimumDuty();
+    drive_safety_limit_trip_count++;
+    DISABLE_COM_TIMER_INT();
+    maskPhaseInterrupts();
+    running = 0u;
+    prop_brake_active = 0u;
+    allOff();
+    SET_DUTY_CYCLE_ALL(0u);
+    duty_cycle_setpoint = 0u;
+    duty_cycle = 0u;
+    adjusted_duty_cycle = 0u;
+    last_duty_cycle = 0u;
+    zero_crosses = 0u;
+    zcfound = 0u;
+    bemfcounter = 0u;
+    bad_count = 0u;
+    old_routine = 1;
+    commutation_interval = 5000u;
+    SET_INTERVAL_TIMER_COUNT(0u);
+}
+#endif
+
 #ifdef HELI_COAST_ON_ZERO
 /* C04 keeps the bridge high impedance while the existing six-step observer
  * tracks a freely rotating helicopter rotor. C05 will consume the request flag
@@ -594,15 +656,6 @@ volatile uint8_t heli_coast_bailout_last_step;
 #endif
 
 #ifdef HELI_COAST_BAILOUT
-/* Convert the injected-ADC clean-window requirement back into AM32's 0..2000
- * duty units. The -1 mirrors adjusted = duty*ARR/2000 + 1. */
-static uint16_t heliCoastMinimumDriveDuty(void)
-{
-    uint32_t numerator = ((uint32_t)ZCD_MINIMUM_ON_TICKS - 1u) * 2000u;
-    return (uint16_t)((numerator + (uint32_t)tim1_arr - 1u) /
-        (uint32_t)tim1_arr);
-}
-
 /* Called only at an observer commutation boundary, after the step has advanced.
  * Twelve crossings ensure that every interval slot contains Coast data. */
 static uint8_t heliCoastBailoutReady(uint16_t *entry_duty,
@@ -636,7 +689,7 @@ static uint8_t heliCoastBailoutReady(uint16_t *entry_duty,
         return 0u;
     }
 
-    uint16_t minimum_entry = heliCoastMinimumDriveDuty();
+    uint16_t minimum_entry = driveZcdMinimumDuty();
     if (minimum_entry < minimum_duty_cycle) {
         minimum_entry = minimum_duty_cycle;
     }
@@ -1105,6 +1158,9 @@ void commutate()
     (void)heliCoastBailoutAtBoundary();
 #endif
     if (!prop_brake_active
+#ifdef DRIVE_SAFETY_LIMIT_PRIORITY
+        && (drive_safety_limit_inhibit == 0u)
+#endif
 #ifdef HELI_COAST_ON_ZERO
         && (heli_coast_active == 0u)
 #endif
@@ -1416,6 +1472,15 @@ if (!stepper_sine && armed) {
                 duty_cycle_setpoint = 0u;
             } else {
 #endif
+#ifdef DRIVE_SAFETY_LIMIT_PRIORITY
+            if ((drive_safety_limit_inhibit == 0u) &&
+                !driveSafetyLimitAllowsZcd()) {
+                driveSafetyLimitStop();
+            }
+            if (drive_safety_limit_inhibit != 0u) {
+                duty_cycle_setpoint = 0u;
+            } else {
+#endif
             if (running == 0) {
                 allOff();
                 if (!old_routine) {
@@ -1443,6 +1508,9 @@ if (!stepper_sine && armed) {
             if (!eepromBuffer.rc_car_reverse) {
                 prop_brake_active = 0;
             }
+#ifdef DRIVE_SAFETY_LIMIT_PRIORITY
+            }
+#endif
 #ifdef HELI_COAST_ON_ZERO
             }
 #endif
@@ -1453,6 +1521,11 @@ if (!stepper_sine && armed) {
             if ((heli_coast_active == 0u) &&
                 (heli_coast_restart_inhibit != 0u)) {
                 heli_coast_restart_inhibit = 0u;
+            }
+#endif
+#ifdef DRIVE_SAFETY_LIMIT_PRIORITY
+            if (drive_safety_limit_inhibit != 0u) {
+                drive_safety_limit_inhibit = 0u;
             }
 #endif
             if ((play_tone_flag != 0)
@@ -1575,6 +1648,26 @@ if (!stepper_sine && armed) {
                 }
             }
 
+#ifdef DRIVE_SAFETY_LIMIT_PRIORITY
+            if (stall_protection_adjust > 0 && input > 47) {
+                uint32_t boosted_duty = (uint32_t)duty_cycle_setpoint +
+                    (uint32_t)(stall_protection_adjust / 10000);
+                duty_cycle_setpoint = (boosted_duty > 2000u) ?
+                    2000u : (uint16_t)boosted_duty;
+            }
+
+            /* All torque-producing adjustments precede the protection caps. */
+            if (duty_cycle_setpoint > duty_cycle_maximum) {
+                duty_cycle_setpoint = duty_cycle_maximum;
+            }
+            if (use_current_limit) {
+                uint16_t current_limit = (use_current_limit_adjust > 0) ?
+                    (uint16_t)use_current_limit_adjust : 0u;
+                if (duty_cycle_setpoint > current_limit) {
+                    duty_cycle_setpoint = current_limit;
+                }
+            }
+#else
             if (duty_cycle_setpoint > duty_cycle_maximum) {
                 duty_cycle_setpoint = duty_cycle_maximum;
             }
@@ -1585,9 +1678,10 @@ if (!stepper_sine && armed) {
             }
 
             if (stall_protection_adjust > 0 && input > 47) {
-
-                duty_cycle_setpoint = duty_cycle_setpoint + (uint16_t)(stall_protection_adjust/10000);
+                duty_cycle_setpoint = duty_cycle_setpoint +
+                    (uint16_t)(stall_protection_adjust / 10000);
             }
+#endif
         }
     }
 #endif
@@ -1596,6 +1690,12 @@ if (!stepper_sine && armed) {
 void tenKhzRoutine()
 { // 20khz as of 2.00 to be renamed
     duty_cycle = duty_cycle_setpoint;
+#ifdef DRIVE_SAFETY_LIMIT_PRIORITY
+    if ((drive_safety_limit_inhibit == 0u) && armed && running &&
+        (input >= 47u) && !driveSafetyLimitAllowsZcd()) {
+        driveSafetyLimitStop();
+    }
+#endif
 #ifdef HELI_COAST_ON_ZERO
     if (heli_coast_active != 0u) {
         if (!armed || !running) {
@@ -1708,15 +1808,29 @@ void tenKhzRoutine()
                 && (heli_coast_active == 0u)
 #endif
             ) {
-                use_current_limit_adjust -= (int16_t)(doPidCalculations(&currentPid, actual_current,
-                                                          eepromBuffer.limits.current * 2 * 100)
-                    / 10000);
+#ifdef DRIVE_SAFETY_LIMIT_PRIORITY
+                int32_t next_current_limit =
+                    (int32_t)use_current_limit_adjust -
+                    (doPidCalculations(&currentPid, actual_current,
+                        eepromBuffer.limits.current * 2 * 100) / 10000);
+                if (next_current_limit < 0) {
+                    next_current_limit = 0;
+                }
+                if (next_current_limit > 2000) {
+                    next_current_limit = 2000;
+                }
+                use_current_limit_adjust = (int16_t)next_current_limit;
+#else
+                use_current_limit_adjust -= (int16_t)
+                    (doPidCalculations(&currentPid, actual_current,
+                         eepromBuffer.limits.current * 2 * 100) / 10000);
                 if (use_current_limit_adjust < minimum_duty_cycle) {
                     use_current_limit_adjust = minimum_duty_cycle;
                 }
                 if (use_current_limit_adjust > 2000) {
                     use_current_limit_adjust = 2000;
                 }
+#endif
             }
             if (eepromBuffer.stall_protection && running
 #ifdef HELI_COAST_ON_ZERO
@@ -1785,6 +1899,15 @@ void tenKhzRoutine()
              duty_cycle = last_duty_cycle;
             }
 
+#ifdef DRIVE_SAFETY_LIMIT_PRIORITY
+        /* A protection cap is a hard ceiling, not a ramp target. Acceleration
+         * still follows the configured ramp, but safety-driven reductions take
+         * effect in this control tick. */
+        uint16_t effective_duty_limit = driveEffectiveDutyLimit();
+        if (duty_cycle > effective_duty_limit) {
+            duty_cycle = effective_duty_limit;
+        }
+#endif
 #ifdef HELI_COAST_ON_ZERO
         if (heli_coast_active != 0u) {
             adjusted_duty_cycle = 0u;
@@ -1796,8 +1919,9 @@ void tenKhzRoutine()
             adjusted_duty_cycle = ((duty_cycle * tim1_arr) / 2000) + 1;
 #ifdef USE_ADC_ZCD
             /* Sensorless ADC ZCD cannot make a trustworthy three-rank sample
-             * from a shorter pulse. This affects motor drive only; stop,
-             * braking and tone waveforms keep their requested duty. */
+             * from a shorter pulse. C06 verifies above that every active
+             * protection cap permits this floor; otherwise the bridge is
+             * latched off before this output path. */
             if (adjusted_duty_cycle < ZCD_MINIMUM_ON_TICKS) {
                 adjusted_duty_cycle = ZCD_MINIMUM_ON_TICKS;
             }

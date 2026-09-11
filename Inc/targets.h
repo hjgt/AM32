@@ -3182,6 +3182,9 @@
 #define HELI_COAST_BAILOUT_MIN_INTERVAL 80u
 #define HELI_COAST_BAILOUT_MAX_INTERVAL 6000u
 #define HELI_COAST_BAILOUT_MAX_INTERVAL_RATIO 3u
+/* C06: a protection cap below the ADC-ZCD clean-window minimum must stop and
+ * latch the bridge off; no later duty floor or stall boost may override it. */
+#define DRIVE_SAFETY_LIMIT_PRIORITY
 #define VARIABLE_PWM
 #define USE_DSHOT_TELEMETRY
 #define USE_SERIAL_TELEMETRY
