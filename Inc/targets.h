@@ -3125,6 +3125,8 @@
 #define VOLTAGE_ADC_PIN     LL_GPIO_PIN_5
 #define VOLTAGE_ADC_CHANNEL LL_ADC_CHANNEL_13
 #define TARGET_VOLTAGE_DIVIDER 61
+// C09: STM32G431 internal temperature sensor requires at least 5 us sampling.
+#define ADC_INTERNAL_TEMP_SAMPLING_TIME LL_ADC_SAMPLINGTIME_247CYCLES_5
 
 // Dummy COMP defines (comparator.c still compiles; USE_ADC_ZCD bypasses them at runtime)
 #define PHASE_A_COMP        LL_COMP_INPUT_MINUS_IO1
