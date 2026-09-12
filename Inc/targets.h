@@ -3130,7 +3130,7 @@
 #define USE_CURRENT_SENSE
 #define CURRENT_ADC_PIN     LL_GPIO_PIN_6
 #define CURRENT_ADC_CHANNEL LL_ADC_CHANNEL_3
-#define CURRENT_OFFSET 4
+#define CURRENT_OFFSET 4       // mV, equivalent to about 5 ADC counts
 #define MILLIVOLT_PER_AMP 95
 // C09: STM32G431 internal temperature sensor requires at least 5 us sampling.
 #define ADC_INTERNAL_TEMP_SAMPLING_TIME LL_ADC_SAMPLINGTIME_247CYCLES_5
