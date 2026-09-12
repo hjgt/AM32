@@ -3106,9 +3106,6 @@
 // NEUTRAL_ADC_CHANNEL is DEPRECATED and is not read at runtime; the macro is
 // retained only for legacy compile-time references.
 #define USE_ADC_ZCD
-// Temporary C01 instrumentation: per-step ADC-ZCD outcome counters plus an
-// SWD-requested coherent snapshot. Remove for the final production image.
-#define ADC_ZCD_C01_DIAGNOSTICS
 // The sequential three-rank ADC window does not fit the default startup pulse
 // above 24 kHz; loadEEpromSettings() clamps this target's base carrier.
 #define ADC_ZCD_MAX_BASE_PWM_KHZ 24u

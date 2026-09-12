@@ -53,224 +53,7 @@ static uint8_t          adc_zcd_last_out = 0;
 
 #ifdef HELI_COAST_ON_ZERO
 extern volatile uint8_t heli_coast_active;
-
-/* Reset on every Coast entry. These are observation-only counters read over
- * SWD; none of them participates in commutation decisions. */
-volatile uint32_t heli_coast_adc_fresh;
-volatile uint32_t heli_coast_adc_valid;
-volatile uint32_t heli_coast_adc_rejected;
-volatile uint32_t heli_coast_adc_blank;
-volatile uint16_t heli_coast_adc_last_span;
-volatile uint16_t heli_coast_adc_min_span;
-volatile uint16_t heli_coast_adc_max_span;
-volatile uint16_t heli_coast_adc_last_va;
-volatile uint16_t heli_coast_adc_last_vb;
-volatile uint16_t heli_coast_adc_last_vc;
-volatile int16_t heli_coast_adc_last_margin;
 #endif
-
-#ifdef ADC_ZCD_C01_DIAGNOSTICS
-/*
- * C01 low-duty diagnostics. Bucket 0 records an invalid/uninitialised phase;
- * buckets 1..6 correspond directly to the six commutation steps. These are
- * event counters, not control inputs. For every bucket:
- *
- *   polls = no_fresh_poll + fresh
- *   fresh = valid + off_window + blank
- *
- * ccr4_zero_no_fresh_poll is a subset of no_fresh_poll. It records software
- * polls made while CH4 was intentionally unable to produce an ADC trigger;
- * it is not a count of suppressed PWM periods.
- */
-struct zcd_c01_step_counts {
-    uint32_t no_fresh_poll;
-    uint32_t ccr4_zero_no_fresh_poll;
-    uint32_t fresh;
-    uint32_t valid;
-    uint32_t off_window;
-    uint32_t blank;
-};
-
-struct zcd_c01_snapshot_data {
-    struct zcd_c01_step_counts counts[7];
-    uint32_t arr;
-    uint32_t ccr1;
-    uint32_t ccr4;
-    uint32_t bdtr;
-    uint32_t zero_crosses;
-    uint32_t commutation_interval;
-    uint32_t token;
-    uint16_t minimum_duty_cycle;
-    uint16_t min_startup_duty;
-    uint16_t duty_cycle_setpoint;
-    uint16_t duty_cycle;
-    uint16_t adjusted_duty_cycle;
-    uint16_t duty_cycle_maximum;
-    uint16_t input;
-    uint16_t adjusted_input;
-    uint8_t  bad_count;
-    uint8_t  bemf_timeout_happened;
-    uint8_t  bemf_timeout;
-    uint8_t  commutation_step;
-    uint8_t  adc_zcd_phase;
-    uint8_t  adc_zcd_blank;
-    uint8_t  running;
-    uint8_t  old_routine;
-#ifdef HELI_COAST_ON_ZERO
-    uint32_t heli_coast_adc_fresh;
-    uint32_t heli_coast_adc_valid;
-    uint32_t heli_coast_adc_rejected;
-    uint32_t heli_coast_adc_blank;
-    uint32_t heli_coast_entry_count;
-    uint32_t heli_coast_tracking_timeout_count;
-    uint16_t heli_coast_adc_last_span;
-    uint16_t heli_coast_adc_min_span;
-    uint16_t heli_coast_adc_max_span;
-    uint16_t heli_coast_valid_crossings;
-    uint16_t heli_coast_adc_last_va;
-    uint16_t heli_coast_adc_last_vb;
-    uint16_t heli_coast_adc_last_vc;
-    int16_t  heli_coast_adc_last_margin;
-    uint8_t  heli_coast_active;
-    uint8_t  heli_coast_bailout_requested;
-    uint8_t  heli_coast_restart_inhibit;
-#endif
-};
-
-volatile struct zcd_c01_step_counts zcd_c01_counts[7];
-volatile struct zcd_c01_snapshot_data zcd_c01_snapshot;
-volatile uint32_t zcd_c01_snapshot_request = 0u;
-
-#ifdef HELI_COAST_ON_ZERO
-void heliCoastResetAdcDiagnostics(void)
-{
-    heli_coast_adc_fresh = 0u;
-    heli_coast_adc_valid = 0u;
-    heli_coast_adc_rejected = 0u;
-    heli_coast_adc_blank = 0u;
-    heli_coast_adc_last_span = 0u;
-    heli_coast_adc_min_span = UINT16_MAX;
-    heli_coast_adc_max_span = 0u;
-    heli_coast_adc_last_va = 0u;
-    heli_coast_adc_last_vb = 0u;
-    heli_coast_adc_last_vc = 0u;
-    heli_coast_adc_last_margin = 0;
-
-    /* C01 counters are diagnostic-only. Restart them here so buckets 1..6 in
-     * the next coherent snapshot describe this Coast interval alone. */
-    for (uint32_t i = 0u; i < 7u; i++) {
-        zcd_c01_counts[i].no_fresh_poll = 0u;
-        zcd_c01_counts[i].ccr4_zero_no_fresh_poll = 0u;
-        zcd_c01_counts[i].fresh = 0u;
-        zcd_c01_counts[i].valid = 0u;
-        zcd_c01_counts[i].off_window = 0u;
-        zcd_c01_counts[i].blank = 0u;
-    }
-}
-#endif
-
-/* Snapshot-only inputs from main.c. */
-extern volatile uint32_t zero_crosses;
-extern volatile uint32_t commutation_interval;
-extern uint16_t minimum_duty_cycle;
-extern uint16_t min_startup_duty;
-extern uint16_t duty_cycle_setpoint;
-extern volatile uint16_t duty_cycle;
-extern uint16_t adjusted_duty_cycle;
-extern uint16_t duty_cycle_maximum;
-extern uint8_t bad_count;
-extern uint8_t bemf_timeout_happened;
-extern char bemf_timeout;
-extern char old_routine;
-#ifdef HELI_COAST_ON_ZERO
-extern volatile uint8_t heli_coast_bailout_requested;
-extern volatile uint8_t heli_coast_restart_inhibit;
-extern volatile uint16_t heli_coast_valid_crossings;
-extern volatile uint32_t heli_coast_entry_count;
-extern volatile uint32_t heli_coast_tracking_timeout_count;
-#endif
-
-static inline uint8_t zcdC01PhaseBucket(void)
-{
-    uint8_t phase = adc_zcd_phase;
-    return (phase <= 6u) ? phase : 0u;
-}
-
-/* Called only after the host writes a non-zero request token over SWD. */
-void zcdC01LatchSnapshot(void)
-{
-    uint32_t token = zcd_c01_snapshot_request;
-    if (token == 0u) {
-        return;
-    }
-
-    for (uint32_t i = 0u; i < 7u; i++) {
-        zcd_c01_snapshot.counts[i].no_fresh_poll =
-            zcd_c01_counts[i].no_fresh_poll;
-        zcd_c01_snapshot.counts[i].ccr4_zero_no_fresh_poll =
-            zcd_c01_counts[i].ccr4_zero_no_fresh_poll;
-        zcd_c01_snapshot.counts[i].fresh = zcd_c01_counts[i].fresh;
-        zcd_c01_snapshot.counts[i].valid = zcd_c01_counts[i].valid;
-        zcd_c01_snapshot.counts[i].off_window =
-            zcd_c01_counts[i].off_window;
-        zcd_c01_snapshot.counts[i].blank = zcd_c01_counts[i].blank;
-    }
-
-    zcd_c01_snapshot.arr = TIM1->ARR;
-    zcd_c01_snapshot.ccr1 = TIM1->CCR1;
-    zcd_c01_snapshot.ccr4 = TIM1->CCR4;
-    zcd_c01_snapshot.bdtr = TIM1->BDTR;
-    zcd_c01_snapshot.zero_crosses = zero_crosses;
-    zcd_c01_snapshot.commutation_interval = commutation_interval;
-    zcd_c01_snapshot.minimum_duty_cycle = minimum_duty_cycle;
-    zcd_c01_snapshot.min_startup_duty = min_startup_duty;
-    zcd_c01_snapshot.duty_cycle_setpoint = duty_cycle_setpoint;
-    zcd_c01_snapshot.duty_cycle = duty_cycle;
-    zcd_c01_snapshot.adjusted_duty_cycle = adjusted_duty_cycle;
-    zcd_c01_snapshot.duty_cycle_maximum = duty_cycle_maximum;
-    zcd_c01_snapshot.input = input;
-    zcd_c01_snapshot.adjusted_input = adjusted_input;
-    zcd_c01_snapshot.bad_count = bad_count;
-    zcd_c01_snapshot.bemf_timeout_happened = bemf_timeout_happened;
-    zcd_c01_snapshot.bemf_timeout = (uint8_t)bemf_timeout;
-    zcd_c01_snapshot.commutation_step = (uint8_t)step;
-    zcd_c01_snapshot.adc_zcd_phase = adc_zcd_phase;
-    zcd_c01_snapshot.adc_zcd_blank = adc_zcd_blank;
-    zcd_c01_snapshot.running = running;
-    zcd_c01_snapshot.old_routine = (uint8_t)old_routine;
-#ifdef HELI_COAST_ON_ZERO
-    zcd_c01_snapshot.heli_coast_adc_fresh = heli_coast_adc_fresh;
-    zcd_c01_snapshot.heli_coast_adc_valid = heli_coast_adc_valid;
-    zcd_c01_snapshot.heli_coast_adc_rejected = heli_coast_adc_rejected;
-    zcd_c01_snapshot.heli_coast_adc_blank = heli_coast_adc_blank;
-    zcd_c01_snapshot.heli_coast_entry_count = heli_coast_entry_count;
-    zcd_c01_snapshot.heli_coast_tracking_timeout_count =
-        heli_coast_tracking_timeout_count;
-    zcd_c01_snapshot.heli_coast_adc_last_span = heli_coast_adc_last_span;
-    zcd_c01_snapshot.heli_coast_adc_min_span = heli_coast_adc_min_span;
-    zcd_c01_snapshot.heli_coast_adc_max_span = heli_coast_adc_max_span;
-    zcd_c01_snapshot.heli_coast_valid_crossings =
-        heli_coast_valid_crossings;
-    zcd_c01_snapshot.heli_coast_adc_last_va = heli_coast_adc_last_va;
-    zcd_c01_snapshot.heli_coast_adc_last_vb = heli_coast_adc_last_vb;
-    zcd_c01_snapshot.heli_coast_adc_last_vc = heli_coast_adc_last_vc;
-    zcd_c01_snapshot.heli_coast_adc_last_margin =
-        heli_coast_adc_last_margin;
-    zcd_c01_snapshot.heli_coast_active = heli_coast_active;
-    zcd_c01_snapshot.heli_coast_bailout_requested =
-        heli_coast_bailout_requested;
-    zcd_c01_snapshot.heli_coast_restart_inhibit =
-        heli_coast_restart_inhibit;
-#endif
-
-    /* Token and request are completion markers: the host waits for request
-     * to return to zero, then verifies token before reading the stable copy. */
-    __DMB();
-    zcd_c01_snapshot.token = token;
-    __DMB();
-    zcd_c01_snapshot_request = 0u;
-}
-#endif /* ADC_ZCD_C01_DIAGNOSTICS */
 
 /**
  * getCompOutputSample()
@@ -293,8 +76,8 @@ uint8_t getCompOutputSample(uint8_t *level)
      * The three BEMF phase dividers are sampled by the ADC1 INJECTED group,
      * hardware-triggered by TIM1 CH4 inside the clean PWM ON window (see
      * ADC.c / peripherals.c / peripherals.h). We simply read the most recent
-     * injected results here - NON-BLOCKING, with no reconfiguration of the
-     * DMA-driven regular group (temp/volts), so telemetry is untouched.
+     * injected results here - NON-BLOCKING, with no reconfiguration of ADC1's
+     * temperature rank or ADC2's voltage/current ranks.
      *
      * rank 1/2/3 = BEMF A/B/C (see ADC_Init injected-group setup).
      *
@@ -306,17 +89,10 @@ uint8_t getCompOutputSample(uint8_t *level)
      */
     /*
      * JEOS is set at the end of the three-rank injected sequence and is not
-     * auto-cleared. Leave blanking and diagnostics untouched until a genuinely
-     * new set of phase samples exists.
+     * auto-cleared. Do not consume blanking until a genuinely new set of phase
+     * samples exists.
      */
     if (!LL_ADC_IsActiveFlag_JEOS(ADC1)) {
-#ifdef ADC_ZCD_C01_DIAGNOSTICS
-        uint8_t bucket = zcdC01PhaseBucket();
-        zcd_c01_counts[bucket].no_fresh_poll++;
-        if (TIM1->CCR4 == 0u) {
-            zcd_c01_counts[bucket].ccr4_zero_no_fresh_poll++;
-        }
-#endif
         *level = adc_zcd_last_out;
         return 0u;
     }
@@ -341,23 +117,7 @@ uint8_t getCompOutputSample(uint8_t *level)
             phase_min = vc;
         }
         phase_span = (uint16_t)(phase_max - phase_min);
-        heli_coast_adc_fresh++;
-        heli_coast_adc_last_span = phase_span;
-        heli_coast_adc_last_va = va;
-        heli_coast_adc_last_vb = vb;
-        heli_coast_adc_last_vc = vc;
-        if (phase_span < heli_coast_adc_min_span) {
-            heli_coast_adc_min_span = phase_span;
-        }
-        if (phase_span > heli_coast_adc_max_span) {
-            heli_coast_adc_max_span = phase_span;
-        }
     }
-#endif
-
-#ifdef ADC_ZCD_C01_DIAGNOSTICS
-    uint8_t bucket = zcdC01PhaseBucket();
-    zcd_c01_counts[bucket].fresh++;
 #endif
 
     uint16_t neutral = (uint16_t)(((uint32_t)va + vb + vc) / 3u);
@@ -386,12 +146,6 @@ uint8_t getCompOutputSample(uint8_t *level)
 
     uint8_t out = adc_zcd_last_out;
     uint8_t valid = 0u;
-#ifdef HELI_COAST_ON_ZERO
-    if ((coast_sample != 0u) && phase_valid) {
-        heli_coast_adc_last_margin =
-            (int16_t)((int32_t)bemf - (int32_t)neutral);
-    }
-#endif
     uint8_t sample_valid;
 #ifdef HELI_COAST_ON_ZERO
     if (coast_sample != 0u) {
@@ -407,32 +161,14 @@ uint8_t getCompOutputSample(uint8_t *level)
             (((int32_t)drive_high - (int32_t)drive_low) >=
                 ADC_ZCD_MIN_DRIVE_DELTA);
     }
-    if (!sample_valid) {
-        /* An off-window, low-span or incomplete sequence cannot represent BEMF. */
-#ifdef HELI_COAST_ON_ZERO
-        if (coast_sample != 0u) {
-            heli_coast_adc_rejected++;
-        }
-#endif
-#ifdef ADC_ZCD_C01_DIAGNOSTICS
-        zcd_c01_counts[bucket].off_window++;
-#endif
-    } else if (adc_zcd_blank != 0u) {
+    if (sample_valid && (adc_zcd_blank != 0u)) {
         /*
          * Post-commutation blanking: ignore the flyback transient. Return the
          * last stable polarity WITHOUT updating it, so the AM32 zero-cross
          * counter cannot advance on transient noise during this window.
          */
-#ifdef ADC_ZCD_C01_DIAGNOSTICS
-        zcd_c01_counts[bucket].blank++;
-#endif
-#ifdef HELI_COAST_ON_ZERO
-        if (coast_sample != 0u) {
-            heli_coast_adc_blank++;
-        }
-#endif
         adc_zcd_blank--;
-    } else {
+    } else if (sample_valid) {
         int32_t margin = (int32_t)bemf - (int32_t)neutral;
         if (margin > ADC_ZCD_HYSTERESIS_COUNTS) {
             out = 0u; /* COMP minus (phase) is higher than plus (neutral). */
@@ -441,14 +177,6 @@ uint8_t getCompOutputSample(uint8_t *level)
         }
         adc_zcd_last_out = out;
         valid = 1u;
-#ifdef HELI_COAST_ON_ZERO
-        if (coast_sample != 0u) {
-            heli_coast_adc_valid++;
-        }
-#endif
-#ifdef ADC_ZCD_C01_DIAGNOSTICS
-        zcd_c01_counts[bucket].valid++;
-#endif
     }
 
     *level = out;

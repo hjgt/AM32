@@ -659,24 +659,11 @@ volatile uint8_t heli_coast_active;
 volatile uint8_t heli_coast_bailout_requested;
 volatile uint8_t heli_coast_restart_inhibit;
 volatile uint16_t heli_coast_valid_crossings;
-volatile uint32_t heli_coast_entry_count;
-volatile uint32_t heli_coast_tracking_timeout_count;
-#ifdef HELI_COAST_BAILOUT
-volatile uint32_t heli_coast_bailout_success_count;
-volatile uint32_t heli_coast_bailout_reject_count;
-volatile uint16_t heli_coast_bailout_last_crossings;
-volatile uint16_t heli_coast_bailout_last_interval;
-volatile uint16_t heli_coast_bailout_last_interval_min;
-volatile uint16_t heli_coast_bailout_last_interval_max;
-volatile uint16_t heli_coast_bailout_last_entry_duty;
-volatile uint8_t heli_coast_bailout_last_step;
-#endif
 
 #ifdef HELI_COAST_BAILOUT
 /* Called only at an observer commutation boundary, after the step has advanced.
  * Twelve crossings ensure that every interval slot contains Coast data. */
-static uint8_t heliCoastBailoutReady(uint16_t *entry_duty,
-    uint16_t *interval_min, uint16_t *interval_max)
+static uint8_t heliCoastBailoutReady(uint16_t *entry_duty)
 {
     if (heli_coast_valid_crossings < HELI_COAST_BAILOUT_MIN_CROSSINGS) {
         return 0u;
@@ -718,8 +705,6 @@ static uint8_t heliCoastBailoutReady(uint16_t *entry_duty,
     }
 
     *entry_duty = minimum_entry;
-    *interval_min = min_value;
-    *interval_max = max_value;
     return 1u;
 }
 
@@ -734,9 +719,7 @@ static uint8_t heliCoastBailoutAtBoundary(void)
     }
 
     uint16_t entry_duty;
-    uint16_t interval_min;
-    uint16_t interval_max;
-    if (!heliCoastBailoutReady(&entry_duty, &interval_min, &interval_max)) {
+    if (!heliCoastBailoutReady(&entry_duty)) {
         return 0u;
     }
 
@@ -763,13 +746,6 @@ static uint8_t heliCoastBailoutAtBoundary(void)
     average_interval = (interval_sum + 3u) / 6u;
     last_average_interval = average_interval;
 
-    heli_coast_bailout_last_crossings = heli_coast_valid_crossings;
-    heli_coast_bailout_last_interval = (uint16_t)commutation_interval;
-    heli_coast_bailout_last_interval_min = interval_min;
-    heli_coast_bailout_last_interval_max = interval_max;
-    heli_coast_bailout_last_entry_duty = entry_duty;
-    heli_coast_bailout_last_step = (uint8_t)step;
-    heli_coast_bailout_success_count++;
     heli_coast_bailout_requested = 0u;
     heli_coast_active = 0u;
     return 1u;
@@ -788,7 +764,6 @@ static void heliCoastEnter(void)
     heli_coast_bailout_requested = 0u;
     heli_coast_restart_inhibit = 0u;
     heli_coast_valid_crossings = 0u;
-    heli_coast_entry_count++;
     prop_brake_active = 0;
     duty_cycle_setpoint = 0u;
     duty_cycle = 0u;
@@ -796,7 +771,6 @@ static void heliCoastEnter(void)
     last_duty_cycle = 0u;
     allOff();
     SET_HELI_COAST_HIGH_Z_SAMPLE(tim1_arr);
-    heliCoastResetAdcDiagnostics();
     changeCompInput();
 }
 
@@ -820,12 +794,6 @@ static void heliCoastTrackingLost(uint8_t inhibit_restart)
     old_routine = 1;
     commutation_interval = 5000u;
     SET_INTERVAL_TIMER_COUNT(0u);
-#ifdef HELI_COAST_BAILOUT
-    if ((inhibit_restart != 0u) &&
-        (heli_coast_bailout_requested != 0u)) {
-        heli_coast_bailout_reject_count++;
-    }
-#endif
     heli_coast_bailout_requested = 0u;
     if (inhibit_restart != 0u) {
         /* A failed rotating pickup must not fall through into blind cold start.
@@ -1999,13 +1967,6 @@ void tenKhzRoutine()
     signaltimeout++;
 
 #endif
-#ifdef ADC_ZCD_C01_DIAGNOSTICS
-    /* C01 diagnostics are normally dormant. A non-zero SWD token requests a
-     * one-shot snapshot after this control tick's PWM registers are written. */
-    if (zcd_c01_snapshot_request != 0u) {
-        zcdC01LatchSnapshot();
-    }
-#endif
 }
 
 void processDshot()
@@ -2669,7 +2630,6 @@ if(zero_crosses < 5){
             if (INTERVAL_TIMER_COUNT > 45000 && running == 1) {
 #ifdef HELI_COAST_ON_ZERO
                 if (heli_coast_active != 0u) {
-                    heli_coast_tracking_timeout_count++;
                     heliCoastTrackingLost((input >= 47u) ? 1u : 0u);
                 } else
 #endif
