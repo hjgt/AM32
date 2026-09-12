@@ -3125,6 +3125,13 @@
 #define VOLTAGE_ADC_PIN     LL_GPIO_PIN_5
 #define VOLTAGE_ADC_CHANNEL LL_ADC_CHANNEL_13
 #define TARGET_VOLTAGE_DIVIDER 61
+// C10: measured shunt/current-amplifier output is PA6 = ADC2_IN3.
+#define USE_ADC2_CURRENT_SENSE
+#define USE_CURRENT_SENSE
+#define CURRENT_ADC_PIN     LL_GPIO_PIN_6
+#define CURRENT_ADC_CHANNEL LL_ADC_CHANNEL_3
+#define CURRENT_OFFSET 4
+#define MILLIVOLT_PER_AMP 95
 // C09: STM32G431 internal temperature sensor requires at least 5 us sampling.
 #define ADC_INTERNAL_TEMP_SAMPLING_TIME LL_ADC_SAMPLINGTIME_247CYCLES_5
 
