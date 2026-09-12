@@ -259,6 +259,23 @@ void zcfoundroutine(void);
 #define EFFECTIVE_BRAKE_ON_STOP (eepromBuffer.brake_on_stop)
 #endif
 
+/* Some legacy protection fields remain in EEPROM so existing configurators
+ * can keep using the unmodified AM32 2.20 layout. Targets may nevertheless
+ * make their runtime policy explicit where a generic mode is inappropriate
+ * or has not yet passed the target's hardware fault tests. */
+#ifdef TARGET_DISABLE_STALL_PROTECTION
+#define EFFECTIVE_STALL_PROTECTION 0u
+#else
+#define EFFECTIVE_STALL_PROTECTION (eepromBuffer.stall_protection)
+#endif
+
+#ifdef TARGET_DISABLE_STUCK_ROTOR_PROTECTION
+#define EFFECTIVE_STUCK_ROTOR_PROTECTION 0u
+#else
+#define EFFECTIVE_STUCK_ROTOR_PROTECTION \
+    (eepromBuffer.stuck_rotor_protection)
+#endif
+
 // firmware build options !! fixed speed and duty cycle modes are not to be used
 // with sinusoidal startup !!
 
@@ -860,6 +877,11 @@ int32_t doPidCalculations(struct fastPID* pidnow, int actual, int target)
 void loadEEpromSettings()
 {
     read_flash_bin(eepromBuffer.buffer, eeprom_address, sizeof(eepromBuffer.buffer));
+    /* A settings reload must also clear the derived runtime state. Without
+     * this reset, changing the current limit from enabled to Off can leave the
+     * old limiter active until a power cycle. */
+    use_current_limit = 0;
+    use_current_limit_adjust = 2000;
     if(eepromBuffer.eeprom_version < EEPROM_VERSION){
       eepromBuffer.max_ramp = 160;    // 0.1% per ms to 25% per ms 
       eepromBuffer.minimum_duty_cycle = 1; // 0.2% to 51 percent
@@ -1062,6 +1084,16 @@ void loadEEpromSettings()
         low_rpm_level = motor_kv / 100 / (32 / eepromBuffer.motor_poles);
         high_rpm_level = motor_kv / 12 / (32 / eepromBuffer.motor_poles);				
     }
+#ifdef TARGET_DISABLE_STALL_PROTECTION
+    /* Preserve the EEPROM layout/protocol, but report the target's effective
+     * safe value after every load. A live configurator write may still appear
+     * in RAM until restart; EFFECTIVE_STALL_PROTECTION keeps it inert. */
+    eepromBuffer.stall_protection = 0;
+    stall_protection_adjust = 0;
+#endif
+#ifdef TARGET_DISABLE_STUCK_ROTOR_PROTECTION
+    eepromBuffer.stuck_rotor_protection = 0;
+#endif
     reverse_speed_threshold = map(motor_kv, 300, 3000, 1000, 500);
     if (eepromBuffer.bi_direction){
       polling_mode_changeover = POLLING_MODE_THRESHOLD / 2;
@@ -1405,7 +1437,7 @@ void setInput()
         adjusted_input = newinput;
     }
 #ifndef BRUSHED_MODE
-    if ((bemf_timeout_happened > bemf_timeout) && eepromBuffer.stuck_rotor_protection) {
+    if ((bemf_timeout_happened > bemf_timeout) && EFFECTIVE_STUCK_ROTOR_PROTECTION) {
         allOff();
         maskPhaseInterrupts();
         input = 0;
@@ -1639,7 +1671,7 @@ if (!stepper_sine && armed) {
             }
         }
         if (!prop_brake_active) {
-            if (input >= 47 && (zero_crosses < (uint32_t)(30 >> eepromBuffer.stall_protection))) {
+            if (input >= 47 && (zero_crosses < (uint32_t)(30 >> EFFECTIVE_STALL_PROTECTION))) {
                 if (duty_cycle_setpoint < min_startup_duty) {
                     duty_cycle_setpoint = min_startup_duty;
                 }
@@ -1832,7 +1864,7 @@ void tenKhzRoutine()
                 }
 #endif
             }
-            if (eepromBuffer.stall_protection && running
+            if (EFFECTIVE_STALL_PROTECTION && running
 #ifdef HELI_COAST_ON_ZERO
                 && (heli_coast_active == 0u)
 #endif
@@ -2076,7 +2108,7 @@ void zcfoundroutine()
             enableCompInterrupts(); // enable interrupt
         }
 #else
-    if (eepromBuffer.stall_protection || eepromBuffer.rc_car_reverse) {
+    if (EFFECTIVE_STALL_PROTECTION || eepromBuffer.rc_car_reverse) {
         if (zero_crosses >= 20 && commutation_interval <= 2000) {
             old_routine = 0;
             enableCompInterrupts(); // enable interrupt
@@ -2717,7 +2749,7 @@ if(zero_crosses < 5){
                         prop_brake_active = 0;
                         step = changeover_step;
                         // comStep(step);// rising bemf on a same as position 0.
-                        if (eepromBuffer.stall_protection) {
+                        if (EFFECTIVE_STALL_PROTECTION) {
                             last_duty_cycle = stall_protect_minimum_duty;
                         }
                         commutate();

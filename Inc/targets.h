@@ -3198,6 +3198,12 @@
 /* C06: a protection cap below the ADC-ZCD clean-window minimum must stop and
  * latch the bridge off; no later duty floor or stall boost may override it. */
 #define DRIVE_SAFETY_LIMIT_PRIORITY
+/* C11: this is a helicopter main ESC, not a crawler. Stall protection adds
+ * torque as speed falls and is therefore the wrong failure response here.
+ * The generic stuck-rotor timeout also remains disabled until its shutdown
+ * and Coast/bailout interactions have been deliberately tested on hardware. */
+#define TARGET_DISABLE_STALL_PROTECTION
+#define TARGET_DISABLE_STUCK_ROTOR_PROTECTION
 #define VARIABLE_PWM
 #define USE_DSHOT_TELEMETRY
 #define USE_SERIAL_TELEMETRY

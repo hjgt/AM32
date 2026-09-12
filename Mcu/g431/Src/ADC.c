@@ -442,9 +442,8 @@ void ADC_Init(void)
   LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_ADC12);
 
   LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_GPIOA);
-  /**ADC1 GPIO Configuration
-  PA3   ------> ADC1_IN4
-  */
+  /* Target-selected board-sensor GPIOs. CUSTOM_FD6288_G431 uses
+   * PA5=ADC2_IN13 for bus voltage and PA6=ADC2_IN3 for current. */
   GPIO_InitStruct.Pin = VOLTAGE_ADC_PIN;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
@@ -457,7 +456,8 @@ void ADC_Init(void)
 #endif
 
 #ifdef USE_ADC_ZCD
-  /* BEMF A=PA0, B=PA1, C=PA2, Neutral=PA5 — configure as analog inputs */
+  /* BEMF A=PA0, B=PA1, C=PA2. PA5 may also be the target's ADC2 voltage
+   * input; configuring an analog pin twice is harmless. */
   GPIO_InitStruct.Pin = LL_GPIO_PIN_0 | LL_GPIO_PIN_1 | LL_GPIO_PIN_2 | LL_GPIO_PIN_5;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
@@ -655,9 +655,10 @@ void ADC_Init(void)
  * (the requested BEMF/neutral channel), triggers a software conversion,
  * waits for end-of-conversion, then returns the 12-bit result.
  *
- * The DMA-driven background scan (temp + voltage) uses LL_ADC_REG_DMA_TRANSFER_LIMITED,
- * so DMA stops after each sequence; it is safe to retrigger with a different
- * single-channel sequence between DMA callbacks.
+ * The DMA-driven ADC1 background scan contains the internal-temperature rank
+ * on CUSTOM_FD6288_G431; PA5 voltage and PA6 current stay on ADC2. DMA stops
+ * after each sequence, so it is safe to retrigger ADC1 around this legacy
+ * one-shot helper.
  *
  * @param channel  LL_ADC_CHANNEL_x (e.g. BEMF_A_ADC_CHANNEL)
  * @return         12-bit ADC result
