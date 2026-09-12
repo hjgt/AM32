@@ -2534,7 +2534,11 @@ if(zero_crosses < 5){
                 }
             }
             if (eepromBuffer.low_voltage_cut_off == 2 ){   // absolute cut off
-              if (battery_voltage <  eepromBuffer.absolute_voltage_cutoff) {
+              /* battery_voltage is in 0.01 V; the EEPROM/configurator field
+               * is encoded in 0.5 V steps. Keep the odd half-volt levels. */
+              uint16_t absolute_cutoff_centivolts =
+                  (uint16_t)eepromBuffer.absolute_voltage_cutoff * 50u;
+              if (battery_voltage < absolute_cutoff_centivolts) {
                 low_voltage_count++;    
                 } else {
                   if(!LOW_VOLTAGE_CUTOFF){
