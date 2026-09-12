@@ -28,6 +28,117 @@
 #define ADC_DELAY_CALIB_ENABLE_CPU_CYCLES \
     (LL_ADC_DELAY_CALIB_ENABLE_ADC_CYCLES * 64)
 
+#ifdef ADC_PIN_DISCOVERY
+/*
+ * UFQFPN32 candidates not already used by this target:
+ *   [0] PA4 = ADC2_IN17
+ *   [1] PA5 = ADC2_IN13 (known 1 kOhm pulldown; retained as a control)
+ *   [2] PA6 = ADC2_IN3
+ *   [3] PA7 = ADC2_IN4
+ *   [4] PB0 = ADC1_IN15
+ *
+ * ADC2 completes one non-blocking conversion per 1 kHz background callback,
+ * so each PA candidate updates at about 250 Hz. PB0 is the third rank of the
+ * existing ADC1 regular conversion and updates at about 1 kHz. ADC1's
+ * PWM-synchronous injected BEMF sequence is not reconfigured here.
+ */
+#define ADC_PIN_DISCOVERY_COUNT 5u
+#define ADC_PIN_DISCOVERY_ADC2_COUNT 4u
+#define ADC_PIN_DISCOVERY_NONE 0xffu
+
+volatile uint32_t adc_pin_discovery_magic = 0xadc51005u;
+volatile uint32_t adc_pin_discovery_epoch;
+volatile uint32_t adc_pin_discovery_reset_request;
+volatile uint32_t adc_pin_discovery_sample_count;
+volatile uint32_t adc_pin_discovery_updates[ADC_PIN_DISCOVERY_COUNT];
+/* Reset before every measurement point. The sums provide a stable mean over
+ * the short SWD capture window and intentionally use cheap 32-bit arithmetic. */
+volatile uint32_t adc_pin_discovery_sum[ADC_PIN_DISCOVERY_COUNT];
+volatile uint16_t adc_pin_discovery_latest[ADC_PIN_DISCOVERY_COUNT];
+volatile uint16_t adc_pin_discovery_min[ADC_PIN_DISCOVERY_COUNT];
+volatile uint16_t adc_pin_discovery_max[ADC_PIN_DISCOVERY_COUNT];
+volatile uint8_t adc_pin_discovery_valid_mask;
+
+static const uint32_t adc_pin_discovery_adc2_channels[
+    ADC_PIN_DISCOVERY_ADC2_COUNT] = {
+    LL_ADC_CHANNEL_17,
+    LL_ADC_CHANNEL_13,
+    LL_ADC_CHANNEL_3,
+    LL_ADC_CHANNEL_4,
+};
+static uint8_t adc_pin_discovery_adc1_primed;
+static uint8_t adc_pin_discovery_adc2_pending = ADC_PIN_DISCOVERY_NONE;
+static uint8_t adc_pin_discovery_adc2_next;
+
+static void adcPinDiscoveryReset(uint32_t epoch)
+{
+    for (uint32_t i = 0u; i < ADC_PIN_DISCOVERY_COUNT; i++) {
+        adc_pin_discovery_updates[i] = 0u;
+        adc_pin_discovery_sum[i] = 0u;
+        adc_pin_discovery_latest[i] = 0u;
+        adc_pin_discovery_min[i] = UINT16_MAX;
+        adc_pin_discovery_max[i] = 0u;
+    }
+    adc_pin_discovery_sample_count = 0u;
+    adc_pin_discovery_valid_mask = 0u;
+    adc_pin_discovery_epoch = epoch;
+    adc_pin_discovery_reset_request = 0u;
+}
+
+static void adcPinDiscoveryRecord(uint8_t index, uint16_t value)
+{
+    adc_pin_discovery_latest[index] = value;
+    if (value < adc_pin_discovery_min[index]) {
+        adc_pin_discovery_min[index] = value;
+    }
+    if (value > adc_pin_discovery_max[index]) {
+        adc_pin_discovery_max[index] = value;
+    }
+    adc_pin_discovery_updates[index]++;
+    adc_pin_discovery_sum[index] += value;
+    adc_pin_discovery_sample_count++;
+    adc_pin_discovery_valid_mask |= (uint8_t)(1u << index);
+}
+
+static void adcPinDiscoveryService(void)
+{
+    uint32_t reset_token = adc_pin_discovery_reset_request;
+    if (reset_token != 0u) {
+        adcPinDiscoveryReset(reset_token);
+    }
+
+    if (adc_pin_discovery_adc1_primed != 0u) {
+        adcPinDiscoveryRecord(4u, ADCDataDMA[2]);
+    } else {
+        adc_pin_discovery_adc1_primed = 1u;
+    }
+
+    if (adc_pin_discovery_adc2_pending != ADC_PIN_DISCOVERY_NONE) {
+        if (LL_ADC_IsActiveFlag_EOC(ADC2) == 0u) {
+            return;
+        }
+        adcPinDiscoveryRecord(adc_pin_discovery_adc2_pending,
+            LL_ADC_REG_ReadConversionData12(ADC2));
+        adc_pin_discovery_adc2_pending = ADC_PIN_DISCOVERY_NONE;
+    }
+
+    if (LL_ADC_REG_IsConversionOngoing(ADC2) != 0u) {
+        return;
+    }
+
+    uint8_t next = adc_pin_discovery_adc2_next;
+    LL_ADC_REG_SetSequencerRanks(ADC2, LL_ADC_REG_RANK_1,
+        adc_pin_discovery_adc2_channels[next]);
+    LL_ADC_ClearFlag_EOC(ADC2);
+    LL_ADC_ClearFlag_EOS(ADC2);
+    LL_ADC_ClearFlag_OVR(ADC2);
+    LL_ADC_REG_StartConversion(ADC2);
+    adc_pin_discovery_adc2_pending = next;
+    adc_pin_discovery_adc2_next =
+        (uint8_t)((next + 1u) % ADC_PIN_DISCOVERY_ADC2_COUNT);
+}
+#endif
+
  void ADC_DMA_Callback()
 { // read dma buffer and set extern variables
  #ifdef USE_ADC_1_2
@@ -40,7 +151,13 @@
 
      ADC_raw_temp = ADCDataDMA[0];
      ADC_raw_volts = ADCDataDMA[1];
+#ifdef ADC_PIN_DISCOVERY
+     /* Rank 3 is PB0 only for discovery. Do not let an unidentified signal
+      * masquerade as current telemetry or feed the current-control path. */
+     adcPinDiscoveryService();
+#else
      ADC_raw_current = ADCDataDMA[2];
+#endif
  #endif
  }
 
@@ -84,7 +201,9 @@
         (uint32_t)&ADCDataDMA, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
 
     /* Set DMA transfer size */
- #ifdef USE_ADC_INPUT
+ #ifdef ADC_PIN_DISCOVERY
+    LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_2, 3);
+ #elif defined(USE_ADC_INPUT)
     LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_2, 4);
  #else
   #ifdef USE_CURRENT_SENSE
@@ -215,6 +334,26 @@ void activateADC(void)
    * without any further software start. See ADC_Init for the edge rationale.
    */
   LL_ADC_INJ_StartConversion(ADC1);
+#endif
+#ifdef ADC_PIN_DISCOVERY
+  if (LL_ADC_IsEnabled(ADC2) == 0u) {
+    wait_loop_index = ((LL_ADC_DELAY_INTERNAL_REGUL_STAB_US *
+        (SystemCoreClock / (100000 * 2))) / 10);
+    while (wait_loop_index != 0u) {
+      wait_loop_index--;
+    }
+    LL_ADC_StartCalibration(ADC2, LL_ADC_SINGLE_ENDED);
+    while (LL_ADC_IsCalibrationOnGoing(ADC2) != 0u) {
+    }
+    wait_loop_index = (ADC_DELAY_CALIB_ENABLE_CPU_CYCLES >> 1);
+    while (wait_loop_index != 0u) {
+      wait_loop_index--;
+    }
+    LL_ADC_Enable(ADC2);
+    while (LL_ADC_IsActiveFlag_ADRDY(ADC2) == 0u) {
+    }
+  }
+  adcPinDiscoveryReset(0u);
 #endif
 #endif
 }
@@ -406,6 +545,19 @@ void ADC_Init(void)
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 #endif
+#ifdef ADC_PIN_DISCOVERY
+  /* PA4..PA7 and PB0 are the only otherwise-unused ADC-capable pins present
+   * on this target's UFQFPN32 package. PA13/PA14 remain dedicated to SWD. */
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_4 | LL_GPIO_PIN_5 |
+      LL_GPIO_PIN_6 | LL_GPIO_PIN_7;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_GPIOB);
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_0;
+  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+#endif
   /* ADC1 DMA Init */
 
   /* ADC1 Init */
@@ -436,7 +588,11 @@ void ADC_Init(void)
   ADC_InitStruct.LowPowerMode = LL_ADC_LP_MODE_NONE;
   LL_ADC_Init(ADC1, &ADC_InitStruct);
   ADC_REG_InitStruct.TriggerSource = LL_ADC_REG_TRIG_SOFTWARE;
+#ifdef ADC_PIN_DISCOVERY
+  ADC_REG_InitStruct.SequencerLength = LL_ADC_REG_SEQ_SCAN_ENABLE_3RANKS;
+#else
   ADC_REG_InitStruct.SequencerLength = LL_ADC_REG_SEQ_SCAN_ENABLE_2RANKS;
+#endif
   ADC_REG_InitStruct.SequencerDiscont = LL_ADC_REG_SEQ_DISCONT_DISABLE;
   ADC_REG_InitStruct.ContinuousMode = LL_ADC_REG_CONV_SINGLE;
   ADC_REG_InitStruct.DMATransfer = LL_ADC_REG_DMA_TRANSFER_LIMITED;
@@ -481,6 +637,30 @@ void ADC_Init(void)
   LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_3, CURRENT_ADC_CHANNEL);
   LL_ADC_SetChannelSamplingTime(ADC1, CURRENT_ADC_CHANNEL, LL_ADC_SAMPLINGTIME_47CYCLES_5);
   LL_ADC_SetChannelSingleDiff(ADC1, CURRENT_ADC_CHANNEL, LL_ADC_SINGLE_ENDED);
+#endif
+#ifdef ADC_PIN_DISCOVERY
+  LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_3, LL_ADC_CHANNEL_15);
+  LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_15,
+      LL_ADC_SAMPLINGTIME_47CYCLES_5);
+  LL_ADC_SetChannelSingleDiff(ADC1, LL_ADC_CHANNEL_15, LL_ADC_SINGLE_ENDED);
+
+  /* ADC2 is otherwise unused by this target. Keep it independent, one-rank,
+   * software-triggered and without DMA so scanning cannot alter ADC1 ZCD. */
+  LL_ADC_Init(ADC2, &ADC_InitStruct);
+  ADC_REG_InitStruct.SequencerLength = LL_ADC_REG_SEQ_SCAN_DISABLE;
+  ADC_REG_InitStruct.DMATransfer = LL_ADC_REG_DMA_TRANSFER_NONE;
+  LL_ADC_REG_Init(ADC2, &ADC_REG_InitStruct);
+  LL_ADC_SetGainCompensation(ADC2, 0);
+  LL_ADC_SetOverSamplingScope(ADC2, LL_ADC_OVS_DISABLE);
+  LL_ADC_DisableDeepPowerDown(ADC2);
+  LL_ADC_EnableInternalRegulator(ADC2);
+
+  for (uint32_t i = 0u; i < ADC_PIN_DISCOVERY_ADC2_COUNT; i++) {
+    uint32_t channel = adc_pin_discovery_adc2_channels[i];
+    LL_ADC_SetChannelSamplingTime(ADC2, channel,
+        LL_ADC_SAMPLINGTIME_47CYCLES_5);
+    LL_ADC_SetChannelSingleDiff(ADC2, channel, LL_ADC_SINGLE_ENDED);
+  }
 #endif
 
 #ifdef USE_ADC_ZCD
@@ -574,14 +754,23 @@ uint16_t readADC_ZCD(uint32_t channel)
 
     uint16_t result = LL_ADC_REG_ReadConversionData12(ADC1);
 
-    /* Restore DMA-scan sequence: 2 ranks, DMA_LIMITED */
+    /* Restore the background DMA scan. Discovery adds PB0 as rank 3; keep
+     * that rank if this legacy helper is ever called by diagnostic code. */
+#ifdef ADC_PIN_DISCOVERY
+    LL_ADC_REG_SetSequencerLength(ADC1, LL_ADC_REG_SEQ_SCAN_ENABLE_3RANKS);
+#else
     LL_ADC_REG_SetSequencerLength(ADC1, LL_ADC_REG_SEQ_SCAN_ENABLE_2RANKS);
+#endif
     LL_ADC_REG_SetDMATransfer(ADC1, LL_ADC_REG_DMA_TRANSFER_LIMITED);
     /* Restore rank-1 to temperature sensor */
     LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_1, LL_ADC_CHANNEL_TEMPSENSOR_ADC1);
     LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_TEMPSENSOR_ADC1, LL_ADC_SAMPLINGTIME_47CYCLES_5);
     LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_2, VOLTAGE_ADC_CHANNEL);
     LL_ADC_SetChannelSamplingTime(ADC1, VOLTAGE_ADC_CHANNEL, LL_ADC_SAMPLINGTIME_47CYCLES_5);
+#ifdef ADC_PIN_DISCOVERY
+    LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_3, LL_ADC_CHANNEL_15);
+    LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_15, LL_ADC_SAMPLINGTIME_47CYCLES_5);
+#endif
 
     /* 重新触发 DMA 扫描转换（DMA_TRANSFER_LIMITED 模式下每次序列结束后 DMA 停止，
      * 必须重新 StartConversion 才能继续向 ADCDataDMA 更新温度/电压数据） */

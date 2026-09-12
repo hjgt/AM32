@@ -3185,6 +3185,11 @@
 /* C06: a protection cap below the ADC-ZCD clean-window minimum must stop and
  * latch the bridge off; no later duty floor or stall boost may override it. */
 #define DRIVE_SAFETY_LIMIT_PRIORITY
+/* Temporary C10 discovery image: sample every otherwise-unused ADC-capable
+ * pin present on the STM32G431KBU6 UFQFPN32 package. PA4/5/6/7 are scanned
+ * by otherwise-idle ADC2; PB0 is appended to the low-rate ADC1 regular group.
+ * The PWM-synchronous ADC1 injected ZCD sequence is deliberately unchanged. */
+#define ADC_PIN_DISCOVERY
 #define VARIABLE_PWM
 #define USE_DSHOT_TELEMETRY
 #define USE_SERIAL_TELEMETRY
