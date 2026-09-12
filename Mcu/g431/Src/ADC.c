@@ -17,6 +17,9 @@
  #else
  uint16_t ADCDataDMA[3];
  #endif
+#ifdef USE_ADC2_VOLTAGE_SENSE
+ uint16_t ADC2SensorDataDMA[2];
+#endif
  #endif
  
  extern uint16_t ADC_raw_temp;
@@ -39,8 +42,17 @@
  #else
 
      ADC_raw_temp = ADCDataDMA[0];
+#ifdef USE_ADC2_VOLTAGE_SENSE
+     ADC_raw_volts = ADC2SensorDataDMA[0];
+#ifdef USE_ADC2_CURRENT_SENSE
+     ADC_raw_current = ADC2SensorDataDMA[1];
+#else
+     ADC_raw_current = 0u;
+#endif
+#else
      ADC_raw_volts = ADCDataDMA[1];
      ADC_raw_current = ADCDataDMA[2];
+#endif
  #endif
  }
 
@@ -83,8 +95,22 @@
         LL_ADC_DMA_GetRegAddr(ADC1, LL_ADC_DMA_REG_REGULAR_DATA),
         (uint32_t)&ADCDataDMA, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
 
+#ifdef USE_ADC2_VOLTAGE_SENSE
+    LL_DMA_ConfigAddresses(
+        DMA1, LL_DMA_CHANNEL_4,
+        LL_ADC_DMA_GetRegAddr(ADC2, LL_ADC_DMA_REG_REGULAR_DATA),
+        (uint32_t)&ADC2SensorDataDMA, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
+#endif
+
     /* Set DMA transfer size */
- #ifdef USE_ADC_INPUT
+#ifdef USE_ADC2_VOLTAGE_SENSE
+    LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_2, 1);
+#ifdef USE_ADC2_CURRENT_SENSE
+    LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_4, 2);
+#else
+    LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_4, 1);
+#endif
+ #elif defined(USE_ADC_INPUT)
     LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_2, 4);
  #else
   #ifdef USE_CURRENT_SENSE
@@ -95,6 +121,9 @@
  #endif
 
     LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_2);
+#ifdef USE_ADC2_VOLTAGE_SENSE
+    LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_4);
+#endif
     
     #endif
 }
@@ -205,6 +234,30 @@ void activateADC(void)
     {
     }
   }
+#ifdef USE_ADC2_VOLTAGE_SENSE
+  if (LL_ADC_IsEnabled(ADC2) == 0u)
+  {
+    wait_loop_index = ((LL_ADC_DELAY_INTERNAL_REGUL_STAB_US *
+        (SystemCoreClock / (100000 * 2))) / 10);
+    while (wait_loop_index != 0u)
+    {
+      wait_loop_index--;
+    }
+    LL_ADC_StartCalibration(ADC2, LL_ADC_SINGLE_ENDED);
+    while (LL_ADC_IsCalibrationOnGoing(ADC2) != 0u)
+    {
+    }
+    wait_loop_index = (ADC_DELAY_CALIB_ENABLE_CPU_CYCLES >> 1);
+    while (wait_loop_index != 0u)
+    {
+      wait_loop_index--;
+    }
+    LL_ADC_Enable(ADC2);
+    while (LL_ADC_IsActiveFlag_ADRDY(ADC2) == 0u)
+    {
+    }
+  }
+#endif
 #ifdef USE_ADC_ZCD
   /*
    * Route C: arm the ADC1 injected group once here (after the ADC is enabled).
@@ -280,7 +333,6 @@ void ADC_Init(void){
   LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_CHANNEL_2, LL_DMA_MEMORY_INCREMENT);
   LL_DMA_SetPeriphSize(DMA1, LL_DMA_CHANNEL_2, LL_DMA_PDATAALIGN_WORD);
   LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_2, LL_DMA_MDATAALIGN_HALFWORD);
-
 
   ADC_InitStruct.Resolution = LL_ADC_RESOLUTION_12B;
   ADC_InitStruct.DataAlignment = LL_ADC_DATA_ALIGN_RIGHT;
@@ -425,6 +477,23 @@ void ADC_Init(void)
 
   LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_2, LL_DMA_MDATAALIGN_HALFWORD);
 
+#ifdef USE_ADC2_VOLTAGE_SENSE
+  LL_DMA_SetPeriphRequest(DMA1, LL_DMA_CHANNEL_4, LL_DMAMUX_REQ_ADC2);
+  LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_CHANNEL_4,
+      LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
+  LL_DMA_SetChannelPriorityLevel(DMA1, LL_DMA_CHANNEL_4,
+      LL_DMA_PRIORITY_LOW);
+  LL_DMA_SetMode(DMA1, LL_DMA_CHANNEL_4, LL_DMA_MODE_CIRCULAR);
+  LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_CHANNEL_4,
+      LL_DMA_PERIPH_NOINCREMENT);
+  LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_CHANNEL_4,
+      LL_DMA_MEMORY_INCREMENT);
+  LL_DMA_SetPeriphSize(DMA1, LL_DMA_CHANNEL_4,
+      LL_DMA_PDATAALIGN_WORD);
+  LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_4,
+      LL_DMA_MDATAALIGN_HALFWORD);
+#endif
+
   /* USER CODE BEGIN ADC1_Init 1 */
 
   /* USER CODE END ADC1_Init 1 */
@@ -436,7 +505,11 @@ void ADC_Init(void)
   ADC_InitStruct.LowPowerMode = LL_ADC_LP_MODE_NONE;
   LL_ADC_Init(ADC1, &ADC_InitStruct);
   ADC_REG_InitStruct.TriggerSource = LL_ADC_REG_TRIG_SOFTWARE;
+#ifdef USE_ADC2_VOLTAGE_SENSE
+  ADC_REG_InitStruct.SequencerLength = LL_ADC_REG_SEQ_SCAN_DISABLE;
+#else
   ADC_REG_InitStruct.SequencerLength = LL_ADC_REG_SEQ_SCAN_ENABLE_2RANKS;
+#endif
   ADC_REG_InitStruct.SequencerDiscont = LL_ADC_REG_SEQ_DISCONT_DISABLE;
   ADC_REG_InitStruct.ContinuousMode = LL_ADC_REG_CONV_SINGLE;
   ADC_REG_InitStruct.DMATransfer = LL_ADC_REG_DMA_TRANSFER_LIMITED;
@@ -472,15 +545,49 @@ void ADC_Init(void)
   LL_ADC_SetChannelSingleDiff(ADC1, LL_ADC_CHANNEL_TEMPSENSOR_ADC1, LL_ADC_SINGLE_ENDED);
   LL_ADC_SetCommonPathInternalCh(__LL_ADC_COMMON_INSTANCE(ADC1), LL_ADC_PATH_INTERNAL_TEMPSENSOR);
 
-  /** Configure Regular Channel
-  */
+#ifndef USE_ADC2_VOLTAGE_SENSE
+  /** Configure Regular Channel */
   LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_2, VOLTAGE_ADC_CHANNEL);
   LL_ADC_SetChannelSamplingTime(ADC1, VOLTAGE_ADC_CHANNEL, LL_ADC_SAMPLINGTIME_47CYCLES_5);
   LL_ADC_SetChannelSingleDiff(ADC1, VOLTAGE_ADC_CHANNEL, LL_ADC_SINGLE_ENDED);
+#endif
 #ifdef USE_CURRENT_SENSE
+#ifndef USE_ADC2_CURRENT_SENSE
   LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_3, CURRENT_ADC_CHANNEL);
   LL_ADC_SetChannelSamplingTime(ADC1, CURRENT_ADC_CHANNEL, LL_ADC_SAMPLINGTIME_47CYCLES_5);
   LL_ADC_SetChannelSingleDiff(ADC1, CURRENT_ADC_CHANNEL, LL_ADC_SINGLE_ENDED);
+#endif
+#endif
+
+#ifdef USE_ADC2_VOLTAGE_SENSE
+  /* Board sensors use ADC2 so ADC1's PWM-synchronous injected BEMF group is
+   * left byte-for-byte on its proven control path. */
+  LL_ADC_Init(ADC2, &ADC_InitStruct);
+  ADC_REG_InitStruct.SequencerLength = LL_ADC_REG_SEQ_SCAN_DISABLE;
+#ifdef USE_ADC2_CURRENT_SENSE
+  ADC_REG_InitStruct.SequencerLength = LL_ADC_REG_SEQ_SCAN_ENABLE_2RANKS;
+#endif
+  ADC_REG_InitStruct.DMATransfer = LL_ADC_REG_DMA_TRANSFER_LIMITED;
+  LL_ADC_REG_Init(ADC2, &ADC_REG_InitStruct);
+  LL_ADC_SetGainCompensation(ADC2, 0);
+  LL_ADC_SetOverSamplingScope(ADC2, LL_ADC_OVS_DISABLE);
+  LL_ADC_DisableDeepPowerDown(ADC2);
+  LL_ADC_EnableInternalRegulator(ADC2);
+
+  LL_ADC_REG_SetSequencerRanks(ADC2, LL_ADC_REG_RANK_1,
+      VOLTAGE_ADC_CHANNEL);
+  LL_ADC_SetChannelSamplingTime(ADC2, VOLTAGE_ADC_CHANNEL,
+      LL_ADC_SAMPLINGTIME_47CYCLES_5);
+  LL_ADC_SetChannelSingleDiff(ADC2, VOLTAGE_ADC_CHANNEL,
+      LL_ADC_SINGLE_ENDED);
+#ifdef USE_ADC2_CURRENT_SENSE
+  LL_ADC_REG_SetSequencerRanks(ADC2, LL_ADC_REG_RANK_2,
+      CURRENT_ADC_CHANNEL);
+  LL_ADC_SetChannelSamplingTime(ADC2, CURRENT_ADC_CHANNEL,
+      LL_ADC_SAMPLINGTIME_47CYCLES_5);
+  LL_ADC_SetChannelSingleDiff(ADC2, CURRENT_ADC_CHANNEL,
+      LL_ADC_SINGLE_ENDED);
+#endif
 #endif
 
 #ifdef USE_ADC_ZCD
@@ -574,14 +681,23 @@ uint16_t readADC_ZCD(uint32_t channel)
 
     uint16_t result = LL_ADC_REG_ReadConversionData12(ADC1);
 
+#ifdef USE_ADC2_VOLTAGE_SENSE
+    /* ADC1 only carries the internal-temperature regular rank on this target. */
+    LL_ADC_REG_SetSequencerLength(ADC1, LL_ADC_REG_SEQ_SCAN_DISABLE);
+#else
     /* Restore DMA-scan sequence: 2 ranks, DMA_LIMITED */
     LL_ADC_REG_SetSequencerLength(ADC1, LL_ADC_REG_SEQ_SCAN_ENABLE_2RANKS);
+#endif
     LL_ADC_REG_SetDMATransfer(ADC1, LL_ADC_REG_DMA_TRANSFER_LIMITED);
     /* Restore rank-1 to temperature sensor */
     LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_1, LL_ADC_CHANNEL_TEMPSENSOR_ADC1);
     LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_TEMPSENSOR_ADC1, LL_ADC_SAMPLINGTIME_47CYCLES_5);
-    LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_2, VOLTAGE_ADC_CHANNEL);
-    LL_ADC_SetChannelSamplingTime(ADC1, VOLTAGE_ADC_CHANNEL, LL_ADC_SAMPLINGTIME_47CYCLES_5);
+#ifndef USE_ADC2_VOLTAGE_SENSE
+    LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_2,
+        VOLTAGE_ADC_CHANNEL);
+    LL_ADC_SetChannelSamplingTime(ADC1, VOLTAGE_ADC_CHANNEL,
+        LL_ADC_SAMPLINGTIME_47CYCLES_5);
+#endif
 
     /* 重新触发 DMA 扫描转换（DMA_TRANSFER_LIMITED 模式下每次序列结束后 DMA 停止，
      * 必须重新 StartConversion 才能继续向 ADCDataDMA 更新温度/电压数据） */

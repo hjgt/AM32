@@ -2493,7 +2493,7 @@ if(zero_crosses < 5){
 #if defined(STMICRO)
             ADC_DMA_Callback();
             LL_ADC_REG_StartConversion(ADC1);
-#ifdef USE_ADC_1_2
+#if defined(USE_ADC_1_2) || defined(USE_ADC2_VOLTAGE_SENSE)
           LL_ADC_REG_StartConversion(ADC2);
 #endif          
             converted_degrees = __LL_ADC_CALC_TEMPERATURE(3300, ADC_raw_temp, LL_ADC_RESOLUTION_12B);

@@ -3115,12 +3115,16 @@
 #define BEMF_A_ADC_CHANNEL  LL_ADC_CHANNEL_1   // PA0
 #define BEMF_B_ADC_CHANNEL  LL_ADC_CHANNEL_2   // PA1
 #define BEMF_C_ADC_CHANNEL  LL_ADC_CHANNEL_3   // PA2
-#define NEUTRAL_ADC_CHANNEL LL_ADC_CHANNEL_13  // PA5 - DEPRECATED, empty pin, not used
+#define NEUTRAL_ADC_CHANNEL LL_ADC_CHANNEL_13  // PA5 - DEPRECATED as neutral; C07 uses it on ADC2 for bus voltage
 
 
-// Voltage sense: PA3 = ADC1_IN4 (repurpose, no hardware comp conflict)
-#define VOLTAGE_ADC_PIN     LL_GPIO_PIN_3
-#define VOLTAGE_ADC_CHANNEL LL_ADC_CHANNEL_4   // PA3
+// C07: measured bus-voltage divider output is PA5 = ADC2_IN13.
+// Keep ADC1's regular group for temperature and its injected group for ZCD;
+// ADC2 samples board sensors independently at the existing 1 kHz cadence.
+#define USE_ADC2_VOLTAGE_SENSE
+#define VOLTAGE_ADC_PIN     LL_GPIO_PIN_5
+#define VOLTAGE_ADC_CHANNEL LL_ADC_CHANNEL_13
+#define TARGET_VOLTAGE_DIVIDER 61
 
 // Dummy COMP defines (comparator.c still compiles; USE_ADC_ZCD bypasses them at runtime)
 #define PHASE_A_COMP        LL_COMP_INPUT_MINUS_IO1
