@@ -11,6 +11,9 @@
 
 #ifdef USE_ADC_ZCD
 #include "ADC.h"
+#ifdef TARGET_ADC_ZCD_GUARD
+#include "peripherals.h"
+#endif
 
 /*
  * ADC-based Zero Crossing Detection
@@ -20,9 +23,8 @@
  * neutral candidate reaches only COMP2 minus). So we sample the three BEMF
  * phase dividers with ADC1 and detect the zero crossing in software.
  *
- * PA5 is only a 1.0k pulldown and is not a usable neutral input. The neutral
- * used by this route is therefore reconstructed in software as the average
- * of the three identically-scaled phase readings.
+ * PA5 is the separately measured bus-voltage input, not a neutral reference.
+ * This route reconstructs neutral from the three phase readings.
  *
  * adc_zcd_phase: tracks which phase is currently floating
  *   1 or 4 -> phase C floating
@@ -55,6 +57,106 @@ static uint8_t          adc_zcd_last_out = 0;
 extern volatile uint8_t heli_coast_active;
 #endif
 
+#ifdef TARGET_ADC_ZCD_GUARD
+extern volatile uint32_t commutation_interval;
+extern volatile uint32_t polling_mode_changeover;
+
+volatile AdcZcdDiagnostics adc_zcd_diag;
+volatile AdcZcdTrace adc_zcd_trace[ADC_ZCD_TRACE_LENGTH];
+static uint8_t adc_zcd_before_seen;
+static uint8_t adc_zcd_confirmations;
+static uint8_t adc_zcd_reported;
+static uint8_t adc_zcd_drive_crossings;
+static uint8_t adc_zcd_required_samples;
+static uint32_t adc_zcd_earliest;
+static uint32_t adc_zcd_last_real_interval;
+
+void adcZcdResetAcquisition(uint8_t reason)
+{
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    adc_zcd_drive_crossings = 0u;
+    adc_zcd_before_seen = 0u;
+    adc_zcd_confirmations = 0u;
+    adc_zcd_reported = 0u;
+    adc_zcd_earliest = 0u;
+    adc_zcd_last_real_interval = 0u;
+    if (reason < ADC_ZCD_RESET_COUNT) {
+        adc_zcd_diag.resets[reason]++;
+    }
+    if (reason == ADC_ZCD_RESET_FAULT) {
+        adc_zcd_diag.trace_frozen = 1u;
+    }
+    __set_PRIMASK(primask);
+}
+
+/* Called ONCE per fresh, valid, post-blank DRIVE sequence, never from Coast.
+ * A seeded Schmitt state is not an observed pre-crossing sample. In particular
+ * a rail-clamped demagnetization plateau must not arm this detector.
+ *
+ * Once five real DRIVE crossings have been acquired, restore the native G431
+ * IRQ's earliest-event gate. INTERVAL_TIMER measures from the previous ZC,
+ * NOT from commutation. Startup/forced steps do not provide a trusted period.
+ * Two fresh confirmations are affordable only in the native low-speed polling
+ * range. Faster sectors use one post sample after an observed pre sample,
+ * rather than imposing multiple PWM periods of additional phase lag. */
+static uint8_t adcZcdQualifyDrive(int32_t margin)
+{
+    int32_t directed_margin = rising ? margin : -margin;
+    if (adc_zcd_reported != 0u) {
+        return 0u;
+    }
+    if (directed_margin < -ADC_ZCD_HYSTERESIS_COUNTS) {
+        adc_zcd_before_seen = 1u;
+        adc_zcd_confirmations = 0u;
+        return 0u;
+    }
+    if (directed_margin <= ADC_ZCD_HYSTERESIS_COUNTS) {
+        adc_zcd_confirmations = 0u;
+        return 0u;
+    }
+
+    uint32_t elapsed = INTERVAL_TIMER_COUNT;
+    if ((adc_zcd_earliest != 0u) && (elapsed <= adc_zcd_earliest)) {
+        /* Do not let a rejected early pulse remain armed and turn into a
+         * synthetic edge merely because time later advances past the gate. */
+        adc_zcd_before_seen = 0u;
+        adc_zcd_confirmations = 0u;
+        adc_zcd_diag.rejected_early++;
+        return 0u;
+    }
+    if (adc_zcd_before_seen == 0u) {
+        adc_zcd_diag.rejected_unarmed++;
+        return 0u;
+    }
+    adc_zcd_confirmations++;
+    if (adc_zcd_confirmations < adc_zcd_required_samples) {
+        adc_zcd_diag.waiting_confirmation++;
+        return 0u;
+    }
+
+    adc_zcd_reported = 1u;
+    adc_zcd_last_real_interval = elapsed;
+    if (adc_zcd_drive_crossings < 5u) {
+        adc_zcd_drive_crossings++;
+    }
+    adc_zcd_diag.accepted++;
+    if (adc_zcd_diag.trace_frozen == 0u) {
+        uint32_t sequence = adc_zcd_diag.trace_sequence + 1u;
+        volatile AdcZcdTrace *entry =
+            &adc_zcd_trace[(sequence - 1u) % ADC_ZCD_TRACE_LENGTH];
+        entry->elapsed = (uint16_t)elapsed;
+        entry->interval = (uint16_t)commutation_interval;
+        entry->margin = (int16_t)margin;
+        entry->step = adc_zcd_phase;
+        entry->confirmations = adc_zcd_confirmations;
+        entry->sequence = sequence;
+        adc_zcd_diag.trace_sequence = sequence;
+    }
+    return 1u;
+}
+#endif
+
 /**
  * getCompOutputSample()
  *
@@ -81,7 +183,7 @@ uint8_t getCompOutputSample(uint8_t *level)
      *
      * rank 1/2/3 = BEMF A/B/C (see ADC_Init injected-group setup).
      *
-     * PA5 is only a 1.0k pulldown and is not the neutral reference. The neutral
+     * PA5 measures bus voltage and is not the neutral reference. Neutral
      * is reconstructed in software as (Va+Vb+Vc)/3: at the true zero-cross
      * instant the floating phase voltage equals that average. All three
      * dividers are identical (5.1k/1.0k), so the reference is independent of
@@ -177,7 +279,22 @@ uint8_t getCompOutputSample(uint8_t *level)
         }
         adc_zcd_last_out = out;
         valid = 1u;
+#ifdef TARGET_ADC_ZCD_GUARD
+#ifdef HELI_COAST_ON_ZERO
+        if (coast_sample == 0u)
+#endif
+        {
+            valid = adcZcdQualifyDrive(margin);
+        }
+#endif
     }
+#ifdef TARGET_ADC_ZCD_GUARD
+    if (!sample_valid) {
+        /* An invalid fresh conversion breaks a consecutive confirmation;
+         * simply polling again without a conversion does not add a vote. */
+        adc_zcd_confirmations = 0u;
+    }
+#endif
 
     *level = out;
     return valid;
@@ -200,12 +317,39 @@ uint8_t getCompOutputLevel(void)
  */
 void changeCompInput(void)
 {
+#ifdef TARGET_ADC_ZCD_GUARD
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+#endif
     adc_zcd_phase = step;   /* 'step' is the global commutation step (1-6) */
     /* Before the expected edge, raw COMP output equals rising. Seeding this
      * reject state prevents blanking or startup from looking like a crossing. */
     adc_zcd_last_out = (rising != 0) ? 1u : 0u;
     adc_zcd_blank = ADC_ZCD_BLANK_SAMPLES;
     LL_ADC_ClearFlag_JEOS(ADC1); /* drop a sequence straddling commutation */
+#ifdef TARGET_ADC_ZCD_GUARD
+    adc_zcd_before_seen = 0u;
+    adc_zcd_confirmations = 0u;
+    adc_zcd_reported = 0u;
+#ifdef HELI_COAST_ON_ZERO
+    if (heli_coast_active != 0u) {
+        adc_zcd_drive_crossings = 0u;
+        adc_zcd_last_real_interval = 0u;
+    }
+#endif
+    /* Startup/timeout seed the native smoothed interval with artificial time.
+     * Never let that seed impose a gate later than half the most recent REAL
+     * measured crossing interval, including during rapid acceleration. */
+    uint32_t gate_interval = commutation_interval;
+    if (adc_zcd_last_real_interval < gate_interval) {
+        gate_interval = adc_zcd_last_real_interval;
+    }
+    adc_zcd_earliest = (adc_zcd_drive_crossings >= 5u) ?
+        (gate_interval >> 1) : 0u;
+    adc_zcd_required_samples =
+        (commutation_interval >= polling_mode_changeover) ? 2u : 1u;
+    __set_PRIMASK(primask);
+#endif
 }
 
 /**

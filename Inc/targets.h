@@ -3200,13 +3200,17 @@
  * Keep the standard AM32 stuck-rotor timeout available through its existing
  * EEPROM/configurator switch now that the target's ZCD path is validated. */
 #define TARGET_DISABLE_STALL_PROTECTION
+/* Loaded-ZCD candidate: target-local ADC qualification and native stuck-rotor
+ * stop integration. No EEPROM/configurator or bridge timing changes. */
+#define TARGET_ADC_ZCD_GUARD
+#define TARGET_STUCK_ROTOR_LATCH
 #define VARIABLE_PWM
 #define USE_DSHOT_TELEMETRY
 #define USE_SERIAL_TELEMETRY
 // ADC ZCD consumes at most one fresh sample per PWM period. The main-loop
 // comparison is `bemfcounter > TARGET_MIN_BEMF_COUNTS`, so zero accepts the
-// first eligible post-cross sample. Blanking, ON-window validation and an ADC
-// Schmitt band reject artifacts while minimizing extra PWM-period phase lag.
+// first QUALIFIED post-cross sample. comparator.c now owns fresh-sample
+// confirmation; do not add the same delay again in the common polling counter.
 #define TARGET_MIN_BEMF_COUNTS 0
 #endif
 

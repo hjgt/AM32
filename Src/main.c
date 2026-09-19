@@ -589,6 +589,14 @@ volatile uint16_t waitTime = 0;
 uint16_t signaltimeout = 0;
 uint8_t ubAnalogWatchdogStatus = RESET;
 
+#ifdef TARGET_STUCK_ROTOR_LATCH
+#if !defined(HELI_COAST_ON_ZERO) || !defined(TARGET_ADC_ZCD_GUARD)
+#error "Target stuck-rotor latch requires the FD6288 Coast/ADC path"
+#endif
+volatile uint8_t stuck_rotor_inhibit;
+volatile uint32_t stuck_rotor_trip_count;
+#endif
+
 #ifdef DRIVE_SAFETY_LIMIT_PRIORITY
 volatile uint8_t drive_safety_limit_inhibit;
 volatile uint32_t drive_safety_limit_trip_count;
@@ -809,6 +817,48 @@ static inline void heliCoastRecordZeroCross(void)
         (heli_coast_valid_crossings != UINT16_MAX)) {
         heli_coast_valid_crossings++;
     }
+}
+#endif
+
+#ifdef TARGET_STUCK_ROTOR_LATCH
+/* Keep AM32's timeout threshold and configurator switch. Only adapt its STOP
+ * action: an internal input=0 is a fault, not an operator Coast/bailout request.
+ * Publish the inhibit first; even an already-pending commutation cannot expose
+ * the bridge. Preserve the caller's interrupt state. */
+static void stuckRotorStop(void)
+{
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    stuck_rotor_inhibit = 1u;
+    stuck_rotor_trip_count++;
+    heliCoastTrackingLost(1u);
+    input = 0u;
+    bemf_timeout_happened = 102u;
+    adcZcdResetAcquisition(ADC_ZCD_RESET_FAULT);
+    __set_PRIMASK(primask);
+}
+
+/* adjusted_input is the decoded operator command, before protection overrides
+ * input. A positive command cannot clear this latch, even if the EEPROM switch
+ * is subsequently disabled. Only an explicit zero command releases it. */
+static uint8_t stuckRotorGuardInput(void)
+{
+    if (adjusted_input == 0u) {
+        stuck_rotor_inhibit = 0u;
+        bemf_timeout_happened = 0u;
+        return 0u;
+    }
+    if ((stuck_rotor_inhibit == 0u) &&
+        (bemf_timeout_happened > bemf_timeout) &&
+        EFFECTIVE_STUCK_ROTOR_PROTECTION) {
+        stuckRotorStop();
+    }
+    if (stuck_rotor_inhibit != 0u) {
+        input = 0u;
+        duty_cycle_setpoint = 0u;
+        return 1u;
+    }
+    return 0u;
 }
 #endif
 
@@ -1135,6 +1185,18 @@ void getBemfState()
 
 void commutate()
 {
+#ifdef TARGET_ADC_ZCD_GUARD
+    /* Publish the bridge step, expected edge and ADC detector state together.
+     * A polling IRQ must not see a new rising/step with the old ADC phase. */
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+#endif
+#ifdef TARGET_STUCK_ROTOR_LATCH
+    if (stuck_rotor_inhibit != 0u) {
+        __set_PRIMASK(primask);
+        return;
+    }
+#endif
     if (forward == 1) {
         step++;
         if (step > 6) {
@@ -1158,6 +1220,9 @@ void commutate()
     (void)heliCoastBailoutAtBoundary();
 #endif
     if (!prop_brake_active
+#ifdef TARGET_STUCK_ROTOR_LATCH
+        && (stuck_rotor_inhibit == 0u)
+#endif
 #ifdef DRIVE_SAFETY_LIMIT_PRIORITY
         && (drive_safety_limit_inhibit == 0u)
 #endif
@@ -1167,7 +1232,9 @@ void commutate()
     ) {
         comStep(step);
     }
+#ifndef TARGET_ADC_ZCD_GUARD
     __enable_irq();
+#endif
     changeCompInput();
 #ifndef NO_POLLING_START
 	if (average_interval > polling_mode_changeover + 500) {
@@ -1182,6 +1249,9 @@ void commutate()
 	if(step == 1 || step == 4  ){
     WRITE_REG(RPM_PULSE_PORT->ODR, READ_REG(RPM_PULSE_PORT->ODR) ^ RPM_PULSE_PIN);
 	}
+#endif
+#ifdef TARGET_ADC_ZCD_GUARD
+    __set_PRIMASK(primask);
 #endif
 }
 
@@ -1405,6 +1475,11 @@ void setInput()
         adjusted_input = newinput;
     }
 #ifndef BRUSHED_MODE
+#ifdef TARGET_STUCK_ROTOR_LATCH
+    if (stuckRotorGuardInput()) {
+        return; /* No ordinary zero-input, tone or Coast path after a fault. */
+    }
+#endif
     if ((bemf_timeout_happened > bemf_timeout) && EFFECTIVE_STUCK_ROTOR_PROTECTION) {
         allOff();
         maskPhaseInterrupts();
@@ -1483,6 +1558,9 @@ if (!stepper_sine && armed) {
 #endif
             if (running == 0) {
                 allOff();
+#ifdef TARGET_ADC_ZCD_GUARD
+                adcZcdResetAcquisition(ADC_ZCD_RESET_START);
+#endif
                 if (!old_routine) {
                     startMotor();
                 } else {
@@ -1941,6 +2019,17 @@ void tenKhzRoutine()
             }
         }
         SET_AUTO_RELOAD_PWM(tim1_arr);
+#ifdef TARGET_STUCK_ROTOR_LATCH
+        if (stuck_rotor_inhibit != 0u) {
+            /* Also catch a fault that preempted this control tick after its
+             * initial running/input checks. No stale ramp value reaches PWM. */
+            duty_cycle_setpoint = 0u;
+            duty_cycle = 0u;
+            adjusted_duty_cycle = 0u;
+            last_duty_cycle = 0u;
+            SET_DUTY_CYCLE_ALL(0u);
+        } else
+#endif
 #ifdef HELI_COAST_ON_ZERO
         if (heli_coast_active != 0u) {
             /* Do not let the hidden duty ramp wind up while power is gated. */
@@ -2028,6 +2117,11 @@ void advanceincrement()
 
 void zcfoundroutine()
 { // only used in polling mode, blocking routine.
+#ifdef TARGET_STUCK_ROTOR_LATCH
+    if (stuck_rotor_inhibit != 0u) {
+        return;
+    }
+#endif
     thiszctime = INTERVAL_TIMER_COUNT;
     SET_INTERVAL_TIMER_COUNT(0);
     commutation_interval = (thiszctime + (3 * commutation_interval)) / 4;
@@ -2445,6 +2539,9 @@ if(zero_crosses < 5){
             if ((getAbsDif(last_average_interval, average_interval) > average_interval >> 1) && (average_interval < 2000)) { // throttle resitricted before zc 20.
                 zero_crosses = 0;
                 desync_happened++;
+#ifdef TARGET_ADC_ZCD_GUARD
+                adcZcdResetAcquisition(ADC_ZCD_RESET_DESYNC);
+#endif
                 if ((!eepromBuffer.bi_direction && (input > 47)) || commutation_interval > 1000) {
                     running = 0;
                 }
@@ -2643,6 +2740,11 @@ if(zero_crosses < 5){
                     commutation_interval = 5000;
                 }
                 zero_crosses = 0;
+#ifdef TARGET_ADC_ZCD_GUARD
+                /* Native timeout stepping is retained for acquisition, but
+                 * it is not evidence of a real ADC crossing or valid speed. */
+                adcZcdResetAcquisition(ADC_ZCD_RESET_TIMEOUT);
+#endif
                 zcfoundroutine();
                 }
             }

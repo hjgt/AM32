@@ -1,0 +1,64 @@
+// Compile the actual ADC branch and selected actual main.c functions against
+// register stubs. No source changes, MCU connection, or firmware build here.
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const { spawnSync } = require('node:child_process');
+const assert = require('node:assert/strict');
+const root = path.resolve(__dirname, '..');
+const read = (name) => fs.readFileSync(path.join(root, name), 'utf8');
+const targets = read('Inc/targets.h');
+const targetStart = targets.indexOf('#ifdef CUSTOM_FD6288_G431');
+const target = targets.slice(targetStart, targets.indexOf('#ifndef FIRMWARE_NAME', targetStart));
+for (const flag of ['TARGET_ADC_ZCD_GUARD', 'TARGET_STUCK_ROTOR_LATCH', 'HELI_COAST_ON_ZERO', 'HELI_COAST_BAILOUT']) {
+  assert(new RegExp(`^#define ${flag}\\s*$`, 'm').test(target), `Target disabled ${flag}`);
+}
+assert(/^#define TARGET_MIN_BEMF_COUNTS 0$/m.test(target));
+assert(/^#define HELI_COAST_ADC_MIN_SPAN 64u$/m.test(target));
+const stripIncludes = (source) => source.replace(/^#include[^\n]*$/gm, '');
+function functionBody(source, signature) {
+  const start = source.indexOf(signature);
+  if (start < 0) throw new Error(`Missing function: ${signature}`);
+  const open = source.indexOf('{', start);
+  let depth = 0;
+  for (let i = open; i < source.length; ++i) {
+    if (source[i] === '{') ++depth;
+    if (source[i] === '}' && --depth === 0) return source.slice(start, i + 1);
+  }
+  throw new Error(`Unterminated function: ${signature}`);
+}
+const comparator = read('Mcu/g431/Src/comparator.c');
+const start = comparator.indexOf('#ifdef USE_ADC_ZCD\n');
+const end = comparator.indexOf('#else /* !USE_ADC_ZCD');
+if (start < 0 || end < start) throw new Error('ADC branch markers changed');
+const adc = stripIncludes(comparator.slice(start, end)) + '\n#endif\n';
+const header = stripIncludes(read('Mcu/g431/Inc/comparator.h'));
+const main = read('Src/main.c');
+const signatures = [
+  'static void heliCoastTrackingLost(uint8_t inhibit_restart)',
+  'static void stuckRotorStop(void)',
+  'static uint8_t stuckRotorGuardInput(void)',
+  'void getBemfState()',
+  'void commutate()',
+  'void zcfoundroutine()',
+];
+const functions = signatures.map((s) => functionBody(main, s)).join('\n');
+const harness = read('tests/fd6288_host_tests.c');
+const marker = '/* FIRMWARE_FUNCTIONS */';
+if (!harness.includes(marker)) throw new Error('Missing harness marker');
+const source = harness.replace(marker, `${header}\n${adc}\n${functions}`);
+const output = fs.mkdtempSync(path.join(os.tmpdir(), 'fd6288-host-tests-'));
+const binary = path.join(output, 'test');
+const compile = spawnSync(process.env.CC || 'cc', [
+  '-std=c11', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
+  '-Wno-unused-function', '-fsanitize=address,undefined',
+  '-x', 'c', '-', '-o', binary,
+], { input: source, encoding: 'utf8' });
+process.stdout.write(compile.stdout || '');
+process.stderr.write(compile.stderr || '');
+if (compile.status !== 0) process.exit(compile.status || 1);
+const result = spawnSync(binary, [], { encoding: 'utf8' });
+process.stdout.write(result.stdout || '');
+process.stderr.write(result.stderr || '');
+console.log(`Host test executable: ${binary}`);
+process.exit(result.status || 0);
