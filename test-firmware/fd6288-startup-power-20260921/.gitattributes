@@ -1,0 +1,2 @@
+# Preserve delivered HEX bytes and SHA-256 across Git checkouts.
+*.hex -text
