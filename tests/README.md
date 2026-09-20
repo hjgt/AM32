@@ -19,6 +19,26 @@ unchanged Coast observation, trace wrap/freeze, native stuck threshold/switch,
 latched shutdown, explicit operator-zero recovery, pending commutation, and
 interrupt-mask preservation.
 
+The runner now tests both startup variants (A: original timing; B: seed from
+the second actual DRIVE crossing and separate atomic timeout stepping), plus
+the real RAM logger, wraparound, freeze/rearm, unchanged Coast period filtering,
+the stale-timeout race, and the native stuck-rotor threshold after forced steps.
+Current totals: A 402 assertions; B 416 assertions. These include the earlier
+362 assertions, not just newly added tests.
+
+Capture-tool tests use synthetic memory and a mock RPC provider only:
+
+```sh
+node tests/fd6288_capture_tests.cjs obj-startup-timing-B/AM32_CUSTOM_FD6288_G431_2.20.elf
+```
+
+See [the evening procedure](../NIGHT-TEST-2026-09-20.md) for explicit single-board
+build commands and capture use. Trace and timing changes are opt-in build flags;
+normal builds default to both disabled. Use separate OBJ directories for each
+flag combination; if reusing an existing directory with different flags, force
+a rebuild (`make -B` with the same explicit board target). Make does not track
+command-line compiler flag changes as source dependencies.
+
 These are function-level tests, **not** a motor simulation, full-firmware
 interrupt scheduler, or evidence of safe loaded operation. ADC sample age,
 analog ringing/demagnetization, real startup torque, filter delay, missed

@@ -46,10 +46,15 @@ const functions = signatures.map((s) => functionBody(main, s)).join('\n');
 const harness = read('tests/fd6288_host_tests.c');
 const marker = '/* FIRMWARE_FUNCTIONS */';
 if (!harness.includes(marker)) throw new Error('Missing harness marker');
-const source = harness.replace(marker, `${header}\n${adc}\n${functions}`);
+const traceHeader = stripIncludes(read('Inc/fd6288_startup_trace.h')).replace('#pragma once', '');
+const trace = stripIncludes(read('Src/fd6288_startup_trace.c'));
+const timeout = functionBody(main, 'static void fd6288TimeoutStep(void)');
+const source = harness.replace(marker, `${traceHeader}\n${header}\n${trace}\n${adc}\n${functions}\n#if FD6288_STARTUP_TIMING_FIX\n${timeout}\n#endif`);
 const output = fs.mkdtempSync(path.join(os.tmpdir(), 'fd6288-host-tests-'));
-const binary = path.join(output, 'test');
+for (const variant of [0, 1]) {
+const binary = path.join(output, `test-${variant}`);
 const compile = spawnSync(process.env.CC || 'cc', [
+  `-DFD6288_STARTUP_TIMING_FIX=${variant}`,
   '-std=c11', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
   '-Wno-unused-function', '-fsanitize=address,undefined',
   '-x', 'c', '-', '-o', binary,
@@ -61,4 +66,5 @@ const result = spawnSync(binary, [], { encoding: 'utf8' });
 process.stdout.write(result.stdout || '');
 process.stderr.write(result.stderr || '');
 console.log(`Host test executable: ${binary}`);
-process.exit(result.status || 0);
+if (result.status !== 0) process.exit(result.status || 1);
+}

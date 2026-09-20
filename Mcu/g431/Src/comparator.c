@@ -8,6 +8,7 @@
 #include "comparator.h"
 #include "common.h"
 #include "targets.h"
+#include "fd6288_startup_trace.h"
 
 #ifdef USE_ADC_ZCD
 #include "ADC.h"
@@ -52,6 +53,12 @@ static uint8_t adc_zcd_phase = 0;
 #endif
 static volatile uint8_t adc_zcd_blank = 0;
 static uint8_t          adc_zcd_last_out = 0;
+#ifdef TARGET_STARTUP_TRACE
+static uint8_t adc_zcd_decision;
+#define FD_DECISION(reason) (adc_zcd_decision = (reason))
+#else
+#define FD_DECISION(reason) ((void)0)
+#endif
 
 #ifdef HELI_COAST_ON_ZERO
 extern volatile uint8_t heli_coast_active;
@@ -71,6 +78,19 @@ static uint8_t adc_zcd_required_samples;
 static uint32_t adc_zcd_earliest;
 static uint32_t adc_zcd_last_real_interval;
 
+#if FD6288_STARTUP_TIMING_FIX
+uint32_t adcZcdDrivePeriod(uint32_t elapsed, uint32_t previous)
+{
+    /* First acceptance is measured from a seeded/forced start, not a ZC.
+     * Only the SECOND consecutive accepted edge provides a real ZC-to-ZC
+     * interval. Seed from that pair; subsequent pairs use the original IIR.
+     * Timeout/START/desync reset the private acquisition count. */
+    if (elapsed == 0u || adc_zcd_drive_crossings < 2u) return previous;
+    if (adc_zcd_drive_crossings == 2u) return elapsed;
+    return (elapsed + 3u * previous) / 4u;
+}
+#endif
+
 void adcZcdResetAcquisition(uint8_t reason)
 {
     uint32_t primask = __get_PRIMASK();
@@ -86,6 +106,8 @@ void adcZcdResetAcquisition(uint8_t reason)
     }
     if (reason == ADC_ZCD_RESET_FAULT) {
         adc_zcd_diag.trace_frozen = 1u;
+        fdTraceEvent(FD_EVENT_FAULT, reason);
+        fdTraceFreeze(FD_END_FAULT);
     }
     __set_PRIMASK(primask);
 }
@@ -104,20 +126,24 @@ static uint8_t adcZcdQualifyDrive(int32_t margin)
 {
     int32_t directed_margin = rising ? margin : -margin;
     if (adc_zcd_reported != 0u) {
+        FD_DECISION(FD_SAMPLE_REPORTED);
         return 0u;
     }
     if (directed_margin < -ADC_ZCD_HYSTERESIS_COUNTS) {
+        FD_DECISION(FD_SAMPLE_PRE);
         adc_zcd_before_seen = 1u;
         adc_zcd_confirmations = 0u;
         return 0u;
     }
     if (directed_margin <= ADC_ZCD_HYSTERESIS_COUNTS) {
+        FD_DECISION(FD_SAMPLE_HYST);
         adc_zcd_confirmations = 0u;
         return 0u;
     }
 
     uint32_t elapsed = INTERVAL_TIMER_COUNT;
     if ((adc_zcd_earliest != 0u) && (elapsed <= adc_zcd_earliest)) {
+        FD_DECISION(FD_SAMPLE_EARLY);
         /* Do not let a rejected early pulse remain armed and turn into a
          * synthetic edge merely because time later advances past the gate. */
         adc_zcd_before_seen = 0u;
@@ -126,16 +152,19 @@ static uint8_t adcZcdQualifyDrive(int32_t margin)
         return 0u;
     }
     if (adc_zcd_before_seen == 0u) {
+        FD_DECISION(FD_SAMPLE_UNARMED);
         adc_zcd_diag.rejected_unarmed++;
         return 0u;
     }
     adc_zcd_confirmations++;
     if (adc_zcd_confirmations < adc_zcd_required_samples) {
+        FD_DECISION(FD_SAMPLE_CONFIRM);
         adc_zcd_diag.waiting_confirmation++;
         return 0u;
     }
 
     adc_zcd_reported = 1u;
+    FD_DECISION(FD_SAMPLE_ACCEPT);
     adc_zcd_last_real_interval = elapsed;
     if (adc_zcd_drive_crossings < 5u) {
         adc_zcd_drive_crossings++;
@@ -195,10 +224,12 @@ uint8_t getCompOutputSample(uint8_t *level)
      * samples exists.
      */
     if (!LL_ADC_IsActiveFlag_JEOS(ADC1)) {
+        fdTraceNoFresh();
         *level = adc_zcd_last_out;
         return 0u;
     }
     LL_ADC_ClearFlag_JEOS(ADC1);
+    FD_DECISION(FD_SAMPLE_INVALID);
 
     uint16_t va = (uint16_t)LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_1);
     uint16_t vb = (uint16_t)LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_2);
@@ -264,6 +295,7 @@ uint8_t getCompOutputSample(uint8_t *level)
                 ADC_ZCD_MIN_DRIVE_DELTA);
     }
     if (sample_valid && (adc_zcd_blank != 0u)) {
+        FD_DECISION(FD_SAMPLE_BLANK);
         /*
          * Post-commutation blanking: ignore the flyback transient. Return the
          * last stable polarity WITHOUT updating it, so the AM32 zero-cross
@@ -271,6 +303,7 @@ uint8_t getCompOutputSample(uint8_t *level)
          */
         adc_zcd_blank--;
     } else if (sample_valid) {
+        FD_DECISION(FD_SAMPLE_COAST);
         int32_t margin = (int32_t)bemf - (int32_t)neutral;
         if (margin > ADC_ZCD_HYSTERESIS_COUNTS) {
             out = 0u; /* COMP minus (phase) is higher than plus (neutral). */
@@ -297,6 +330,10 @@ uint8_t getCompOutputSample(uint8_t *level)
 #endif
 
     *level = out;
+#ifdef TARGET_STARTUP_TRACE
+    fdTraceSample(va, vb, vc, (int16_t)((int32_t)bemf - neutral),
+        adc_zcd_decision, adc_zcd_before_seen, adc_zcd_confirmations);
+#endif
     return valid;
 }
 

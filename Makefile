@@ -128,6 +128,11 @@ $$($(2)_BASENAME).elf: $(SRC_COMMON) $$(SRC_$(1)) $(xSRC)
 endef
 $(foreach MCU,$(MCU_TYPES),$(foreach TARGET,$(TARGETS_$(MCU)), $(eval $(call CREATE_BUILD_TARGET,$(MCU),$(TARGET)))))
 
+# Two bench variants of ONE board, not additional targets or an all-board build.
+FD6288_STARTUP_TIMING_FIX ?= 0
+FD6288_STARTUP_TRACE ?= 0
+CFLAGS_CUSTOM_FD6288_G431 += -DFD6288_STARTUP_TIMING_FIX=$(FD6288_STARTUP_TIMING_FIX) -DFD6288_STARTUP_TRACE=$(FD6288_STARTUP_TRACE)
+
 # include the targets for installing tools
 include $(ROOT)/make/tools_install.mk
 

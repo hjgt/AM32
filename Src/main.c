@@ -247,6 +247,7 @@ an settings option)
 #endif
 
 #include <version.h>
+#include "fd6288_startup_trace.h"
 
 void zcfoundroutine(void);
 
@@ -1244,6 +1245,7 @@ void commutate()
     bemfcounter = 0;
     zcfound = 0;
     commutation_intervals[step - 1] = commutation_interval; // just used to calulate average
+    fdTraceEvent(FD_EVENT_COMMUTATE, 0u);
     
 #ifdef USE_PULSE_OUT
 	if(step == 1 || step == 4  ){
@@ -1316,6 +1318,42 @@ void startMotor()
     }
     enableCompInterrupts();
 }
+
+#if defined(TARGET_ADC_ZCD_GUARD) && FD6288_STARTUP_TIMING_FIX
+static void fd6288TimeoutStep(void)
+{
+    if (INTERVAL_TIMER_COUNT <= 45000u || running != 1u) return;
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    /* TIM6 can accept a real ZC after the main-loop check above. ADC polling
+     * has no phase interrupt to mask, so recheck and advance atomically. */
+    if (INTERVAL_TIMER_COUNT > 45000u && running == 1u) {
+        fdTraceEvent(FD_EVENT_TIMEOUT, bemf_timeout_happened);
+        if (heli_coast_active != 0u) {
+            heliCoastTrackingLost((input >= 47u) ? 1u : 0u);
+        } else {
+            bemf_timeout_happened++;
+            maskPhaseInterrupts();
+            old_routine = 1;
+            if (input < 48u) {
+                running = 0;
+                commutation_interval = 5000u;
+            }
+            zero_crosses = 0u;
+            adcZcdResetAcquisition(ADC_ZCD_RESET_TIMEOUT);
+            /* A forced step is not a ZC: no IIR update, no increment of the
+             * real-edge count, and no blocking post-ZC delay. Retain the old
+             * timeout cadence, phase sequence and startup power limits. */
+            thiszctime = 0u;
+            SET_INTERVAL_TIMER_COUNT(0u);
+            commutate();
+            bemfcounter = 0u;
+            bad_count = 0u;
+        }
+    }
+    __set_PRIMASK(mask);
+}
+#endif
 
 void setInput()
 {
@@ -1557,6 +1595,7 @@ if (!stepper_sine && armed) {
             } else {
 #endif
             if (running == 0) {
+                fdTraceBegin();
                 allOff();
 #ifdef TARGET_ADC_ZCD_GUARD
                 adcZcdResetAcquisition(ADC_ZCD_RESET_START);
@@ -1767,6 +1806,7 @@ if (!stepper_sine && armed) {
 
 void tenKhzRoutine()
 { // 20khz as of 2.00 to be renamed
+    fdTraceControlTick();
     duty_cycle = duty_cycle_setpoint;
 #ifdef DRIVE_SAFETY_LIMIT_PRIORITY
     if ((drive_safety_limit_inhibit == 0u) && armed && running &&
@@ -2124,6 +2164,11 @@ void zcfoundroutine()
 #endif
     thiszctime = INTERVAL_TIMER_COUNT;
     SET_INTERVAL_TIMER_COUNT(0);
+#if defined(TARGET_ADC_ZCD_GUARD) && FD6288_STARTUP_TIMING_FIX
+    if (heli_coast_active == 0u) {
+        commutation_interval = adcZcdDrivePeriod(thiszctime, commutation_interval);
+    } else
+#endif
     commutation_interval = (thiszctime + (3 * commutation_interval)) / 4;
 #ifdef HELI_COAST_ON_ZERO
     if (heli_coast_active != 0u) {
@@ -2138,6 +2183,7 @@ void zcfoundroutine()
         advance = (auto_advance_level * commutation_interval) >> 6;
     }
     waitTime = commutation_interval / 2 - advance;
+    fdTraceEvent(FD_EVENT_ZC, (zero_crosses < 5u) ? 1u : 0u);
     while ((INTERVAL_TIMER_COUNT) < (waitTime)) {
         if (zero_crosses < 5) {
             break;
@@ -2277,6 +2323,7 @@ int main(void)
     initAfterJump();
     checkDeviceInfo();
     initCorePeripherals();
+    fdTraceInit();
     enableCorePeripherals();
     loadEEpromSettings();
 
@@ -2539,6 +2586,7 @@ if(zero_crosses < 5){
             if ((getAbsDif(last_average_interval, average_interval) > average_interval >> 1) && (average_interval < 2000)) { // throttle resitricted before zc 20.
                 zero_crosses = 0;
                 desync_happened++;
+                fdTraceEvent(FD_EVENT_DESYNC, 0u);
 #ifdef TARGET_ADC_ZCD_GUARD
                 adcZcdResetAcquisition(ADC_ZCD_RESET_DESYNC);
 #endif
@@ -2724,7 +2772,11 @@ if(zero_crosses < 5){
                 }
             }
 #endif
+#if defined(TARGET_ADC_ZCD_GUARD) && FD6288_STARTUP_TIMING_FIX
+            fd6288TimeoutStep();
+#else
             if (INTERVAL_TIMER_COUNT > 45000 && running == 1) {
+                fdTraceEvent(FD_EVENT_TIMEOUT, bemf_timeout_happened);
 #ifdef HELI_COAST_ON_ZERO
                 if (heli_coast_active != 0u) {
                     heliCoastTrackingLost((input >= 47u) ? 1u : 0u);
@@ -2748,6 +2800,7 @@ if(zero_crosses < 5){
                 zcfoundroutine();
                 }
             }
+#endif
         } else { // stepper sine
 
 #ifdef GIMBAL_MODE

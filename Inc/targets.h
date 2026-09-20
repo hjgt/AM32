@@ -3198,12 +3198,23 @@
 /* C11: this is a helicopter main ESC, not a crawler. Stall protection adds
  * torque as speed falls and is therefore the wrong failure response here.
  * Keep the standard AM32 stuck-rotor timeout available through its existing
- * EEPROM/configurator switch now that the target's ZCD path is validated. */
+ * EEPROM/configurator switch. Its usability with this ADC-ZCD port still
+ * requires loaded startup / false-trip validation; it is not overcurrent
+ * protection or a substitute for a trustworthy commutation observer. */
 #define TARGET_DISABLE_STALL_PROTECTION
 /* Loaded-ZCD candidate: target-local ADC qualification and native stuck-rotor
  * stop integration. No EEPROM/configurator or bridge timing changes. */
 #define TARGET_ADC_ZCD_GUARD
 #define TARGET_STUCK_ROTOR_LATCH
+#if defined(FD6288_STARTUP_TRACE) && FD6288_STARTUP_TRACE
+#define TARGET_STARTUP_TRACE
+#endif
+#ifndef FD6288_STARTUP_TIMING_FIX
+#define FD6288_STARTUP_TIMING_FIX 0
+#endif
+#if FD6288_STARTUP_TIMING_FIX != 0 && FD6288_STARTUP_TIMING_FIX != 1
+#error "FD6288_STARTUP_TIMING_FIX must be 0 (trace only) or 1 (timing candidate)"
+#endif
 #define VARIABLE_PWM
 #define USE_DSHOT_TELEMETRY
 #define USE_SERIAL_TELEMETRY

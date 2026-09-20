@@ -2,11 +2,13 @@
  * Synthetic samples are NOT a physical motor/power-stage model. */
 #include <assert.h>
 #include <stdint.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 
 #define USE_ADC_ZCD
 #define TARGET_ADC_ZCD_GUARD
+#define TARGET_STARTUP_TRACE
 #define TARGET_STUCK_ROTOR_LATCH
 #define HELI_COAST_ON_ZERO
 #define HELI_COAST_BAILOUT
@@ -22,6 +24,16 @@ static uint8_t fresh;
 static unsigned reads;
 static unsigned primask;
 static uint32_t interval_timer;
+static unsigned simulate_zc_preemption;
+static struct { uint32_t CYCCNT, CTRL; } fake_dwt;
+static struct { uint32_t DEMCR; } fake_core;
+static struct { uint32_t CCR1, CCR4; } fake_tim1;
+#define DWT (&fake_dwt)
+#define CoreDebug (&fake_core)
+#define TIM1 (&fake_tim1)
+#define CoreDebug_DEMCR_TRCENA_Msk 1u
+#define DWT_CTRL_CYCCNTENA_Msk 1u
+#define __DMB() ((void)0)
 static struct { unsigned ARR; } com_timer;
 #define COM_TIMER (&com_timer)
 #define INTERVAL_TIMER_COUNT interval_timer
@@ -30,7 +42,13 @@ static unsigned com_irq, pwm, gates, gate_writes, bailout_calls;
 #define DISABLE_COM_TIMER_INT() (com_irq = 0)
 #define SET_DUTY_CYCLE_ALL(t) (pwm = (t))
 static unsigned __get_PRIMASK(void) { return primask; }
-static void __disable_irq(void) { primask = 1; }
+static void __disable_irq(void) {
+    if (simulate_zc_preemption && !primask) {
+        interval_timer = 0; // model an accepted ISR ZC just before critical entry
+        simulate_zc_preemption = 0;
+    }
+    primask = 1;
+}
 static void __enable_irq(void) { primask = 0; }
 static void __set_PRIMASK(unsigned p) { primask = p; }
 static unsigned LL_ADC_IsActiveFlag_JEOS(int a) { (void)a; return fresh; }
@@ -54,15 +72,18 @@ static uint8_t running, prop_brake_active, bemf_timeout_happened;
 static uint8_t bemf_timeout = 10, stuck_enabled = 1;
 #define EFFECTIVE_STUCK_ROTOR_PROTECTION stuck_enabled
 #define EFFECTIVE_STALL_PROTECTION 0
-static uint16_t input, adjusted_input, duty_cycle_setpoint, duty_cycle;
+static uint16_t input, adjusted_input, duty_cycle_setpoint, battery_voltage;
+volatile uint16_t duty_cycle, waitTime, thiszctime, newinput;
+static int16_t actual_current;
 static uint16_t adjusted_duty_cycle, last_duty_cycle;
-static uint32_t zero_crosses;
+volatile uint32_t zero_crosses;
 static uint8_t zcfound, bemfcounter, bad_count, bad_count_threshold = 6;
-static unsigned forward = 1, desync_check, average_interval;
+char forward = 1;
+static unsigned desync_check, average_interval;
 static unsigned drive_safety_limit_inhibit;
 static unsigned commutation_intervals[6];
-static unsigned thiszctime, advance, temp_advance = 16;
-static unsigned auto_advance_level = 16, waitTime;
+static unsigned advance, temp_advance = 16;
+static unsigned auto_advance_level = 16;
 static struct { unsigned auto_advance, rc_car_reverse; } eepromBuffer;
 
 /* FIRMWARE_FUNCTIONS */
@@ -294,6 +315,143 @@ static void test_commutation_atomicity(void)
     forward = 1;
 }
 
+static void trace_rearm(void)
+{
+    input = newinput = adjusted_input = running = heli_coast_active = 0;
+    fd_startup_trace.command = FD_TRACE_ARM_COMMAND;
+    fdTraceControlTick();
+    CHECK(fd_startup_trace.state == FD_TRACE_ARMED);
+    CHECK(fd_startup_trace.sample_sequence == 0);
+    CHECK(fd_startup_trace.event_sequence == 0);
+}
+
+static void test_startup_logging(void)
+{
+    memset((void *)&fd_startup_trace, 0, sizeof(fd_startup_trace));
+    fdTraceInit();
+    CHECK(sizeof(fd_startup_trace) == 23656u);
+    CHECK(fd_startup_trace.magic == FD_TRACE_MAGIC);
+    CHECK(fd_startup_trace.variant == FD6288_STARTUP_TIMING_FIX);
+    trace_rearm();
+    adjusted_input = input = newinput = 200;
+    DWT->CYCCNT = UINT32_MAX - 1000u;
+    fdTraceBegin();
+    CHECK(fd_startup_trace.state == FD_TRACE_ACTIVE);
+    fd_startup_trace.command = FD_TRACE_ARM_COMMAND;
+    fdTraceControlTick();
+    CHECK(fd_startup_trace.state == FD_TRACE_ACTIVE);
+    CHECK(fd_startup_trace.rejected_commands == 1);
+    for (unsigned i = 0; i < FD_TRACE_SAMPLE_RING + 100u; i++) {
+        DWT->CYCCNT += 100u;
+        fdTraceSample(100, 200, 300, -17, FD_SAMPLE_PRE, 1, 0);
+    }
+    CHECK(fd_startup_trace.sample_first[0].sequence == 1);
+    CHECK(fd_startup_trace.sample_first[63].sequence == 64);
+    CHECK(fd_startup_trace.sample_ring[99].sequence == 612);
+    CHECK(fd_startup_trace.decisions[FD_SAMPLE_PRE] == 612);
+    fdTraceNoFresh();
+    CHECK(fd_startup_trace.no_fresh == 1);
+    thiszctime = 1234; interval_timer = 0;
+    fdTraceEvent(FD_EVENT_ZC, 1);
+    CHECK(fd_startup_trace.event_first[1].elapsed == 1234);
+    CHECK(fd_startup_trace.event_first[1].aux == 1);
+    adjusted_input = 0;
+    fdTraceControlTick();
+    CHECK(fd_startup_trace.state == FD_TRACE_FROZEN);
+    CHECK(fd_startup_trace.end_reason == FD_END_ZERO);
+    fdTraceSample(0, 0, 0, 0, 0, 0, 0);
+    CHECK(fd_startup_trace.sample_sequence == 612);
+    trace_rearm();
+    adjusted_input = 200;
+    fdTraceBegin();
+    running = gates = pwm = 1;
+    DWT->CYCCNT += 160000000u;
+    fdTraceControlTick();
+    CHECK(fd_startup_trace.end_reason == FD_END_DEADLINE);
+    CHECK(running == 1 && gates == 1 && pwm == 1); // capture cap is NOT a motor timeout
+    trace_rearm();
+    adjusted_input = 200;
+    fdTraceBegin();
+    for (unsigned i = 0; i < FD_TRACE_EVENT_RING + 8; i++) fdTraceEvent(FD_EVENT_COMMUTATE, i);
+    CHECK(fd_startup_trace.event_first[0].kind == FD_EVENT_START);
+    CHECK(fd_startup_trace.event_ring[8].sequence == 137);
+    primask = 1;
+    adcZcdResetAcquisition(ADC_ZCD_RESET_FAULT);
+    CHECK(primask == 1);
+    CHECK(fd_startup_trace.end_reason == FD_END_FAULT);
+    CHECK(fd_startup_trace.state == FD_TRACE_FROZEN);
+    primask = 0;
+    trace_rearm();
+    adjusted_input = 200;
+    fdTraceBegin();
+    fd_startup_trace.command = FD_TRACE_FREEZE_COMMAND;
+    fdTraceControlTick();
+    CHECK(fd_startup_trace.end_reason == FD_END_REQUEST);
+}
+
+static void test_period_and_forced_steps(void)
+{
+    stuck_rotor_inhibit = 0;
+    heli_coast_active = heli_coast_restart_inhibit = prop_brake_active = 0;
+    running = 1; input = adjusted_input = 300; bemf_timeout_happened = 0;
+    zero_crosses = 0; commutation_interval = 10000; interval_timer = 1000;
+    adc_zcd_drive_crossings = 1;
+    zcfoundroutine();
+#if FD6288_STARTUP_TIMING_FIX
+    CHECK(commutation_interval == 10000); // first edge cannot establish a period
+#else
+    CHECK(commutation_interval == 7750); // A retains baseline startup IIR
+#endif
+    adc_zcd_drive_crossings = 2; interval_timer = 1000;
+    zcfoundroutine();
+#if FD6288_STARTUP_TIMING_FIX
+    CHECK(commutation_interval == 1000);
+#else
+    CHECK(commutation_interval == 6062);
+#endif
+    adc_zcd_drive_crossings = 3; interval_timer = 1000;
+    zcfoundroutine();
+#if FD6288_STARTUP_TIMING_FIX
+    CHECK(commutation_interval == 1000);
+    CHECK(adcZcdDrivePeriod(0, 1000) == 1000);
+    unsigned writes = gate_writes;
+    interval_timer = 45001; zero_crosses = 20;
+    fd6288TimeoutStep();
+    CHECK(commutation_interval == 1000 && zero_crosses == 0);
+    CHECK(interval_timer == 0 && bemf_timeout_happened == 1);
+    CHECK(gate_writes == writes + 1 && adc_zcd_drive_crossings == 0);
+    CHECK(primask == 0);
+    interval_timer = 45000;
+    fd6288TimeoutStep();
+    CHECK(gate_writes == writes + 1);
+    interval_timer = 45001; simulate_zc_preemption = 1;
+    fd6288TimeoutStep();
+    CHECK(gate_writes == writes + 1 && bemf_timeout_happened == 1);
+    CHECK(primask == 0 && interval_timer == 0); // recheck rejects stale timeout
+    interval_timer = 45001; primask = 1;
+    fd6288TimeoutStep();
+    CHECK(primask == 1 && bemf_timeout_happened == 2);
+    primask = 0;
+    stuck_enabled = 1; bemf_timeout = 10;
+    for (unsigned i = 2; i < 10; i++) { interval_timer = 45001; fd6288TimeoutStep(); }
+    CHECK(bemf_timeout_happened == 10 && stuckRotorGuardInput() == 0);
+    interval_timer = 45001; fd6288TimeoutStep();
+    CHECK(stuckRotorGuardInput() == 1 && !running && !gates && !pwm);
+    adjusted_input = 0; CHECK(stuckRotorGuardInput() == 0);
+    running = 1; input = adjusted_input = 300; heli_coast_active = 1;
+    interval_timer = 45001;
+    fd6288TimeoutStep();
+    CHECK(!heli_coast_active && !running && !gates);
+    CHECK(heli_coast_restart_inhibit == 1);
+#else
+    CHECK(commutation_interval == 4796);
+#endif
+    heli_coast_active = 1; zero_crosses = 0; commutation_interval = 1000;
+    interval_timer = 2000; adc_zcd_drive_crossings = 0;
+    zcfoundroutine();
+    CHECK(commutation_interval == 1250); // original Coast IIR in both variants
+}
+
 int main(void)
 {
     test_all_phases();
@@ -303,6 +461,8 @@ int main(void)
     test_trace();
     test_native_stuck_latch();
     test_commutation_atomicity();
+    test_startup_logging();
+    test_period_and_forced_steps();
     printf("PASS: %u assertions against actual ADC/commutation/fault functions.\n", checks);
     puts("Not a motor model: load, current, timing margins and startup still require hardware validation.");
 }
