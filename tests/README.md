@@ -61,3 +61,16 @@ node tests/check_fd6288_image.cjs obj-loaded-zcd-candidate/AM32_CUSTOM_FD6288_G4
 The image check verifies HEX checksums/addresses, main-only flash coverage,
 initial stack/reset vectors, `.file_name` coverage, and BIN/HEX consistency.
 It does **not** program flash or validate the settings currently in the ESC.
+
+## Separate, unintegrated startup-power design prototype
+
+```sh
+node tests/run_fd6288_power_policy_tests.cjs
+```
+
+This builds only `experiments/fd6288-startup-power/policy_test.c` on the host,
+with ASan/UBSan. It checks the proposed one-shot floor boost, release, caps,
+zero-command rearming, raw-cycle wrap and shared P0/P1 bench-stop request.
+It does NOT build firmware, connect hardware, implement a bridge shutdown, or
+certify safe startup/current. The prototype is deliberately outside firmware
+source directories; read its README's integration blockers before reusing it.
