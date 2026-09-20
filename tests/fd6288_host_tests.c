@@ -171,6 +171,35 @@ static void test_confirmation(void)
     CHECK(bemfcounter == 1);
 }
 
+/* Capture 2 (2026-09-20) never accepted a DRIVE crossing. Its retained tail
+ * moved post -> hysteresis -> pre in sectors 4/5, opposite to the requested
+ * edge. Exercise that SHAPE for every phase/polarity, not a motor simulation
+ * or replay of omitted ADC samples. Do not "fix" acquisition by accepting
+ * the wrong slope or a post-side plateau. A later proper edge must still work.
+ */
+static void test_failed_start_edge_shape(void)
+{
+    for (unsigned s = 1; s <= 6; ++s) {
+        for (unsigned edge = 0; edge <= 1; ++edge) {
+            adcZcdResetAcquisition(ADC_ZCD_RESET_START);
+            sector(s, edge, 45000, 0);
+            unsigned accepted = adc_zcd_diag.accepted;
+            post(100); // the first fresh sequence is blanked
+            post(200); post(300); // post side without an observed pre side
+            CHECK(bemfcounter == 0 && !adc_zcd_before_seen);
+            floating(800, 400); // neutral / Schmitt band
+            pre(500); pre(600); // reverse slope only arms a future edge
+            CHECK(bemfcounter == 0 && adc_zcd_before_seen);
+            CHECK(adc_zcd_diag.accepted == accepted);
+            post(700); // genuine forward slope, first confirmation
+            CHECK(bemfcounter == 0);
+            post(800);
+            CHECK(bemfcounter == 1);
+            CHECK(adc_zcd_diag.accepted == accepted + 1);
+        }
+    }
+}
+
 static void acquire(void)
 {
     adcZcdResetAcquisition(ADC_ZCD_RESET_START);
@@ -456,6 +485,7 @@ int main(void)
 {
     test_all_phases();
     test_confirmation();
+    test_failed_start_edge_shape();
     test_time_gate_and_resets();
     test_coast_unchanged();
     test_trace();

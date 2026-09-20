@@ -23,8 +23,12 @@ The runner now tests both startup variants (A: original timing; B: seed from
 the second actual DRIVE crossing and separate atomic timeout stepping), plus
 the real RAM logger, wraparound, freeze/rearm, unchanged Coast period filtering,
 the stale-timeout race, and the native stuck-rotor threshold after forced steps.
-Current totals: A 402 assertions; B 416 assertions. These include the earlier
-362 assertions, not just newly added tests.
+Current totals: A 474 assertions; B 488 assertions. These include the earlier
+362 assertions and 72 checks prompted by the captured failed-start edge shape:
+post-side plateau followed by the wrong-direction transition must not be
+accepted, while a later properly confirmed edge still works in all six phases
+and both polarities. This is a synthetic shape regression, not a replay of
+overwritten samples or a motor model. The earlier A/B totals were 402/416.
 
 Capture-tool tests use synthetic memory and a mock RPC provider only:
 

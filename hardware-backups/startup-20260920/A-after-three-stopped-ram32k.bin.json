@@ -1,0 +1,317 @@
+{
+  "at": "2026-09-20T15:07:17.456Z",
+  "user_report": "3 starts: first two normal, third abnormal; now zero/stopped; no power cycle/restart",
+  "runtime": {
+    "zero_crosses": 0,
+    "desync_happened": 0,
+    "bemf_timeout_happened": 0,
+    "stuck_rotor_trip_count": 0,
+    "drive_safety_limit_trip_count": 0,
+    "drive_safety_limit_last_cap": 0,
+    "drive_safety_limit_last_required": 0,
+    "battery_voltage": 757,
+    "actual_current": 14
+  },
+  "diag": {
+    "accepted": 9940,
+    "rejected_early": 130,
+    "rejected_unarmed": 35293,
+    "waiting_confirmation": 734,
+    "reset_start": 3,
+    "reset_timeout": 148,
+    "reset_desync": 0,
+    "reset_fault": 0,
+    "trace_sequence": 9940,
+    "trace_frozen": 0
+  },
+  "legacy": [
+    {
+      "sequence": 9909,
+      "elapsed": 1220,
+      "interval": 1294,
+      "margin": 10,
+      "step": 1,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9910,
+      "elapsed": 1424,
+      "interval": 1276,
+      "margin": -34,
+      "step": 2,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9911,
+      "elapsed": 1322,
+      "interval": 1314,
+      "margin": 43,
+      "step": 3,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9912,
+      "elapsed": 1219,
+      "interval": 1317,
+      "margin": -15,
+      "step": 4,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9913,
+      "elapsed": 1322,
+      "interval": 1293,
+      "margin": 24,
+      "step": 5,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9914,
+      "elapsed": 1220,
+      "interval": 1301,
+      "margin": -14,
+      "step": 6,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9915,
+      "elapsed": 1322,
+      "interval": 1281,
+      "margin": 16,
+      "step": 1,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9916,
+      "elapsed": 1322,
+      "interval": 1292,
+      "margin": -24,
+      "step": 2,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9917,
+      "elapsed": 1322,
+      "interval": 1300,
+      "margin": 37,
+      "step": 3,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9918,
+      "elapsed": 1321,
+      "interval": 1306,
+      "margin": -38,
+      "step": 4,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9919,
+      "elapsed": 1220,
+      "interval": 1310,
+      "margin": 16,
+      "step": 5,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9920,
+      "elapsed": 1322,
+      "interval": 1288,
+      "margin": -27,
+      "step": 6,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9921,
+      "elapsed": 1322,
+      "interval": 1297,
+      "margin": 25,
+      "step": 1,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9922,
+      "elapsed": 1220,
+      "interval": 1304,
+      "margin": -15,
+      "step": 2,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9923,
+      "elapsed": 1322,
+      "interval": 1284,
+      "margin": 28,
+      "step": 3,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9924,
+      "elapsed": 1321,
+      "interval": 1294,
+      "margin": -35,
+      "step": 4,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9925,
+      "elapsed": 1322,
+      "interval": 1301,
+      "margin": 43,
+      "step": 5,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9926,
+      "elapsed": 1220,
+      "interval": 1307,
+      "margin": -19,
+      "step": 6,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9927,
+      "elapsed": 1322,
+      "interval": 1286,
+      "margin": 20,
+      "step": 1,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9928,
+      "elapsed": 1322,
+      "interval": 1296,
+      "margin": -25,
+      "step": 2,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9929,
+      "elapsed": 1220,
+      "interval": 1303,
+      "margin": 16,
+      "step": 3,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9930,
+      "elapsed": 1322,
+      "interval": 1283,
+      "margin": -26,
+      "step": 4,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9931,
+      "elapsed": 1322,
+      "interval": 1293,
+      "margin": 37,
+      "step": 5,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9932,
+      "elapsed": 1322,
+      "interval": 1301,
+      "margin": -24,
+      "step": 6,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9933,
+      "elapsed": 1220,
+      "interval": 1307,
+      "margin": 10,
+      "step": 1,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9934,
+      "elapsed": 1322,
+      "interval": 1286,
+      "margin": -17,
+      "step": 2,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9935,
+      "elapsed": 1322,
+      "interval": 1296,
+      "margin": 26,
+      "step": 3,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9936,
+      "elapsed": 1220,
+      "interval": 1303,
+      "margin": -14,
+      "step": 4,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9937,
+      "elapsed": 1322,
+      "interval": 1283,
+      "margin": 26,
+      "step": 5,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9938,
+      "elapsed": 1322,
+      "interval": 1293,
+      "margin": -19,
+      "step": 6,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9939,
+      "elapsed": 1324,
+      "interval": 1301,
+      "margin": 16,
+      "step": 1,
+      "confirmations": 1
+    },
+    {
+      "sequence": 9940,
+      "elapsed": 1320,
+      "interval": 1307,
+      "margin": -28,
+      "step": 2,
+      "confirmations": 1
+    }
+  ],
+  "trace": {
+    "magic": 1179866161,
+    "abi": 1,
+    "variant": 0,
+    "clock_hz": 160000000,
+    "state": 3,
+    "command": 0,
+    "capture_id": 1,
+    "start_cycles": 3061258268,
+    "end_cycles": 3221294125,
+    "end_reason": 2,
+    "sample_sequence": 14357,
+    "event_sequence": 1477,
+    "no_fresh": 898,
+    "decisions": {
+      "invalid": 3,
+      "blank": 736,
+      "pre": 10694,
+      "hysteresis": 1389,
+      "early": 0,
+      "unarmed": 443,
+      "confirmation": 358,
+      "accepted": 734,
+      "reported": 0,
+      "coast": 0
+    },
+    "max_sample_cycles": 229,
+    "max_event_cycles": 281,
+    "rejected_commands": 0
+  },
+  "ram_sha256": "f9b6a01d7ea716b5e6523ff43b372c1d323d9f1235efd393cc5223ee26e3ff21",
+  "caveat": "Cumulative diagnostic counters span all starts since boot. Last accepted-edge ring has no timestamps/start identifiers, so cannot assign all entries to the third attempt or reconstruct its failure. Frozen large trace is capture 1, first normal start."
+}

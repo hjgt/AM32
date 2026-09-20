@@ -1,0 +1,90 @@
+{
+  "at": "2026-09-20T15:19:15.740Z",
+  "user_report": "One start since capture 2 arm: abnormal at 20% for approximately 2 seconds, 2.5 A, cannot recover while throttle remains; now zero and fully stopped, still powered",
+  "elf": "obj-startup-trace-A/AM32_CUSTOM_FD6288_G431_2.20.elf",
+  "hex_sha256": "24ff2551ca5908ce1afc421003b9a8e4d0725958540749ce3239f9449c7a82ee",
+  "ram_sha256": "ddeaa1c99ab46622821be5b7792fe652e3d8205475d519429eb8c0a244ec88a8",
+  "stopped_before": {
+    "input": 0,
+    "adjusted_input": 0,
+    "newinput": 0,
+    "running": 0,
+    "heli_coast_active": 0,
+    "duty_cycle": 0
+  },
+  "stopped_after": {
+    "input": 0,
+    "adjusted_input": 0,
+    "newinput": 0,
+    "running": 0,
+    "heli_coast_active": 0,
+    "duty_cycle": 0
+  },
+  "runtime": {
+    "zero_crosses": 0,
+    "desync_happened": 0,
+    "bemf_timeout_happened": 0,
+    "stuck_rotor_inhibit": 0,
+    "stuck_rotor_trip_count": 0,
+    "drive_safety_limit_trip_count": 0,
+    "drive_safety_limit_last_cap": 0,
+    "drive_safety_limit_last_required": 0,
+    "battery_voltage": 746,
+    "actual_current": 14
+  },
+  "diag": {
+    "accepted": 9940,
+    "rejected_early": 130,
+    "rejected_unarmed": 57730,
+    "waiting_confirmation": 735,
+    "reset_start": 4,
+    "reset_timeout": 242,
+    "reset_desync": 0,
+    "reset_fault": 0,
+    "trace_sequence": 9940,
+    "trace_frozen": 0
+  },
+  "delta_since_three_starts_snapshot": {
+    "accepted": 0,
+    "rejected_early": 0,
+    "rejected_unarmed": 22437,
+    "waiting_confirmation": 1,
+    "reset_start": 1,
+    "reset_timeout": 94,
+    "reset_desync": 0,
+    "reset_fault": 0,
+    "trace_sequence": 0
+  },
+  "trace": {
+    "magic": 1179866161,
+    "abi": 1,
+    "variant": 0,
+    "clock_hz": 160000000,
+    "state": 3,
+    "command": 0,
+    "capture_id": 2,
+    "start_cycles": 3524956241,
+    "end_cycles": 3684962184,
+    "end_reason": 2,
+    "sample_sequence": 19589,
+    "event_sequence": 135,
+    "no_fresh": 19,
+    "decisions": {
+      "invalid": 0,
+      "blank": 45,
+      "pre": 8265,
+      "hysteresis": 364,
+      "early": 0,
+      "unarmed": 10915,
+      "confirmation": 0,
+      "accepted": 0,
+      "reported": 0,
+      "coast": 0
+    },
+    "max_sample_cycles": 229,
+    "max_event_cycles": 281,
+    "rejected_commands": 0
+  },
+  "settings_ram_hex": "0103110214a001000a64006400ffffffff000000010000221896160e00000501af4b7e3200500000050a01ff00050101fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffdfdfdfdfdfdfdfdffffffffffffffff",
+  "caveat": "RAM is read while CPU runs, not an atomic snapshot. START delta=1 and stable frozen trace plus operator report allow cumulative edge/timeout delta attribution to this single trial; no precise duration or ADC waveform beyond first 1-second trace. Zeroed live counters after throttle zero do not prove absence of earlier transient conditions."
+}

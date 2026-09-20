@@ -32,17 +32,19 @@ function mock({moving = false, cpu = 'running', wrongFlash = false, badABI = fal
   let writes = 0;
   const api = {close() {}, async rpc(cmd) {
     if (cmd === '[target current] curstate') return cpu;
-    let m = cmd.match(/^read_memory 0x([\da-f]+) 8 (\d+)$/);
+    let m = cmd.match(/^read_memory 0x([\da-f]+) (8|32) (\d+)$/);
     if (m) {
-      const addr = parseInt(m[1], 16), n = Number(m[2]);
-      return Array.from({length: n}, (_, i) => {
+      const addr = parseInt(m[1], 16), stride = Number(m[2]) / 8, n = Number(m[3]) * stride;
+      if (stride === 4) assert.equal(addr % 4, 0);
+      const bytes = Buffer.from(Array.from({length: n}, (_, i) => {
         const a = addr + i;
         if (a >= 0x20000000 && a < 0x20008000) return ram[a - 0x20000000];
         if (a >= 0x08001000 && a < 0x0800f800) return (flash.get(a) ?? 255) ^ ((wrongFlash && a === 0x08001000) ? 1 : 0);
         if (a >= 0xe000ed08 && a < 0xe000ed0c) return [0, 16, 0, 8][a - 0xe000ed08];
         assert((a >= 0x48000010 && a < 0x48000014) || (a >= 0x48001410 && a < 0x48001414) || (a >= 0x40012c34 && a < 0x40012c44), `Unexpected read ${cmd}`);
         return 0;
-      }).map(v => `0x${v.toString(16)}`).join(' ');
+      }));
+      return Array.from({length: n / stride}, (_, i) => `0x${bytes.readUIntLE(i * stride, stride).toString(16)}`).join(' ');
     }
     assert.equal(cmd, `write_memory 0x${(syms.fd_startup_trace.address + 20).toString(16)} 32 {0x41524d31}`, 'Unexpected write or hardware operation');
     writes++;

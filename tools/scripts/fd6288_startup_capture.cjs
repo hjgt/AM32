@@ -126,12 +126,17 @@ async function hardware(command, elf, out, stopped, connection = connect) {
   try {
     async function memory(address, count) {
       const b = Buffer.alloc(count);
-      for (let i = 0; i < count; i += 512) {
-        const n = Math.min(512, count - i);
-        const r = await c.rpc(`read_memory 0x${(address + i).toString(16)} 8 ${n}`);
+      // Aligned SRAM/flash blocks can use word transfers: much faster on
+      // ST-Link, with identical little-endian output and all stop/identity
+      // checks intact. Small/unaligned symbols retain byte reads.
+      const stride = address % 4 === 0 && count % 4 === 0 ? 4 : 1;
+      for (let i = 0; i < count; i += 1024) {
+        const n = Math.min(1024, count - i);
+        const r = await c.rpc(`read_memory 0x${(address + i).toString(16)} ${stride * 8} ${n / stride}`);
         const values = r.trim().split(/\s+/).map(Number);
-        assert(values.length === n && values.every(v => Number.isInteger(v) && v >= 0 && v <= 255), 'Malformed memory reply');
-        b.set(values, i);
+        assert(values.length === n / stride && values.every(v => Number.isInteger(v) && v >= 0 && v <= (stride === 4 ? 0xffffffff : 255)), 'Malformed memory reply');
+        if (stride === 4) values.forEach((v, j) => b.writeUInt32LE(v, i + 4 * j));
+        else b.set(values, i);
       }
       return b;
     }
