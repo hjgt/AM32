@@ -3,14 +3,15 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const {decode, parseHex, symbols, hardware, SIZE, HEADER, MAGIC} = require('../tools/scripts/fd6288_startup_capture.cjs');
+const {decode, decodeBench, parseHex, symbols, hardware, SIZE, HEADER, MAGIC} = require('../tools/scripts/fd6288_startup_capture.cjs');
 const elf = path.resolve(process.argv[2] || 'obj-startup-timing-B/AM32_CUSTOM_FD6288_G431_2.20.elf');
 const syms = symbols(elf);
+const variant = syms.fd_power_bench ? (elf.includes('power-P0') ? 2 : 3) : 1;
 const flash = parseHex(fs.readFileSync(elf.replace(/\.elf$/, '.hex'), 'utf8'));
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'fd6288-capture-tests-'));
 function fixture(samples = 700, events = 200) {
   const b = Buffer.alloc(SIZE);
-  [MAGIC, 1, 1, 160000000, 3, 0, 4, 0xfffffff0, 160, 1, samples, events].forEach((v, i) => b.writeUInt32LE(v, i * 4));
+  [MAGIC, 1, variant, 160000000, 3, 0, 4, 0xfffffff0, 160, 1, samples, events].forEach((v, i) => b.writeUInt32LE(v, i * 4));
   function put(offset, n, kind) {
     b.writeUInt32LE(n, offset); b.writeUInt32LE(144, offset + 4);
     b.writeUInt16LE(1000, offset + 8); b.writeInt16LE(-20, offset + 18);
@@ -24,9 +25,25 @@ function fixture(samples = 700, events = 200) {
   for (let n = Math.max(1, events - 127); n <= events; n++) put(HEADER + 608 * 32 + ((n - 1) % 128) * 32, n, 'event');
   return b;
 }
-function mock({moving = false, cpu = 'running', wrongFlash = false, badABI = false, data = fixture()} = {}) {
+function benchFixture(count = 18) {
+  const b = Buffer.alloc(552);
+  [0x46504231, 1, variant === 2 ? 0 : 40, count, count, count, 0, 1, 0, 0]
+    .forEach((v, i) => b.writeUInt32LE(v, i * 4));
+  for (let id = Math.max(1, count - 15); id <= count; id++) {
+    const o = 40 + ((id - 1) % 16) * 32;
+    [id, 48000000, 5, 2, 8000000, 16000000].forEach((v, i) => b.writeUInt32LE(v, o + i * 4));
+    b.writeInt16LE(123, o + 24); b.writeUInt16LE(760, o + 26);
+    b.writeUInt16LE(400, o + 28); b[o + 30] = 1;
+  }
+  return b;
+}
+function mock({moving = false, cpu = 'running', wrongFlash = false, badABI = false, badBench = false, data = fixture()} = {}) {
   const ram = Buffer.alloc(32768);
   data.copy(ram, syms.fd_startup_trace.address - 0x20000000);
+  if (syms.fd_power_bench) {
+    benchFixture().copy(ram, syms.fd_power_bench.address - 0x20000000);
+    if (badBench) ram.writeUInt32LE(99, syms.fd_power_bench.address - 0x20000000 + 4);
+  }
   if (badABI) ram.writeUInt32LE(99, syms.fd_startup_trace.address - 0x20000000 + 4);
   if (moving) ram[syms.running.address - 0x20000000] = 1;
   let writes = 0;
@@ -55,6 +72,17 @@ function mock({moving = false, cpu = 'running', wrongFlash = false, badABI = fal
   return {connect: async () => api, writes: () => writes};
 }
 async function main() {
+  const bench = decodeBench(benchFixture());
+  assert.equal(bench.records.length, 16); assert.equal(bench.records[0].id, 3);
+  assert.equal(bench.records[15].id, 18); assert.equal(bench.omitted_earlier_trials, 2);
+  assert.equal(bench.records[0].elapsed_us, 300000);
+  assert.equal(bench.records[0].peak_filtered_current_A, 1.23);
+  assert.equal(bench.records[0].reason, 'window_300ms');
+  assert.equal(decodeBench(benchFixture(0)).records.length, 0);
+  const badBench = benchFixture(); badBench.writeUInt32LE(19, 32);
+  assert.throws(() => decodeBench(badBench), /Unfinished/);
+  const mismatch = benchFixture(); mismatch.writeUInt32LE(0, 40 + 2 * 32);
+  assert.throws(() => decodeBench(mismatch), /sequence mismatch/);
   const b = fixture(), d = decode(b);
   assert.equal(d.samples.retained, 576); assert.deepEqual(d.samples.gaps, [[65, 188]]);
   assert.equal(d.events.retained, 160); assert.deepEqual(d.events.gaps, [[33, 72]]);
@@ -76,7 +104,15 @@ async function main() {
   await hardware('dump', elf, out, true, m.connect);
   assert.deepEqual(fs.readFileSync(out), b);
   assert.equal(m.writes(), 0);
-  assert.equal(JSON.parse(fs.readFileSync(`${out}.json`)).header.variant, 1);
+  const saved = JSON.parse(fs.readFileSync(`${out}.json`));
+  assert.equal(saved.header.variant, variant);
+  if (variant >= 2) {
+    assert.deepEqual(saved.bench, bench);
+    const m = mock({badBench: true});
+    const badOut = path.join(temp, 'bad-bench.bin');
+    await assert.rejects(hardware('dump', elf, badOut, true, m.connect));
+    assert(!fs.existsSync(badOut)); assert.equal(m.writes(), 0);
+  }
   await assert.rejects(hardware('dump', elf, out, true, m.connect));
   console.log('PASS: offline decoder + mock RPC identity/stopped gates/arm/dump/overwrite guards. No hardware accessed.');
 }

@@ -248,6 +248,7 @@ an settings option)
 
 #include <version.h>
 #include "fd6288_startup_trace.h"
+#include "fd6288_startup_power.h"
 
 void zcfoundroutine(void);
 
@@ -674,6 +675,12 @@ volatile uint16_t heli_coast_valid_crossings;
  * Twelve crossings ensure that every interval slot contains Coast data. */
 static uint8_t heliCoastBailoutReady(uint16_t *entry_duty)
 {
+#ifdef TARGET_STARTUP_POWER_BENCH
+    /* Bench shots require a stopped cold start. Never allow an unbudgeted
+     * rotating pickup to bypass the 300 ms test window. Normal builds retain
+     * C05 unchanged. Keep the body compiled for baseline compatibility. */
+    return 0u;
+#endif
     if (heli_coast_valid_crossings < HELI_COAST_BAILOUT_MIN_CROSSINGS) {
         return 0u;
     }
@@ -865,6 +872,192 @@ static uint8_t stuckRotorGuardInput(void)
 
 #ifdef NEED_INPUT_READY
 volatile char input_ready = 0;
+#endif
+
+#ifdef TARGET_STARTUP_POWER_BENCH
+/* FD_POWER_BENCH_ADAPTER_BEGIN -- every policy/summary access is serialized.
+ * This is an opt-in, short-shot bench image, NOT a flight/production mode. */
+_Static_assert(sizeof(FdPowerSummary) == 32u, "power summary ABI");
+_Static_assert(sizeof(FdPowerDiagnostics) == 552u, "power diagnostics ABI");
+volatile FdPowerDiagnostics fd_power_bench = {
+    .magic = FD_POWER_BENCH_MAGIC, .abi = 1u,
+    .extra = FD6288_STARTUP_POWER_EXTRA
+};
+static FdPowerPolicy fd_power_policy;
+static FdPowerSummary fd_power_work;
+static uint32_t fd_power_accepted_start, fd_power_timeouts_start;
+static uint8_t fd_power_starting;
+
+static uint8_t fdBenchConfigOk(void)
+{
+    /* Refuse incompatible settings, never silently rewrite their EEPROM. */
+    return min_startup_duty == 360u && minimum_duty_cycle == 210u &&
+        startup_max_duty_cycle == 610u && eepromBuffer.pwm_frequency == 24u &&
+        !eepromBuffer.variable_pwm && eepromBuffer.comp_pwm &&
+        !eepromBuffer.use_sine_start && !eepromBuffer.bi_direction &&
+        !eepromBuffer.rc_car_reverse && !use_speed_control_loop && !stepper_sine;
+}
+
+static void fdBenchObserve(uint32_t now)
+{
+    if (!fd_power_bench.active_id) return;
+    fd_power_work.elapsed_cycles = now - fd_power_policy.started;
+    fd_power_work.accepted = adc_zcd_diag.accepted - fd_power_accepted_start;
+    fd_power_work.timeouts = adc_zcd_diag.resets[ADC_ZCD_RESET_TIMEOUT] -
+        fd_power_timeouts_start;
+    if (fd_power_work.accepted && fd_power_work.first_observed_cycles == UINT32_MAX)
+        fd_power_work.first_observed_cycles = fd_power_work.elapsed_cycles;
+    if (adcZcdDriveCrossings() >= 5u &&
+        fd_power_work.fifth_observed_cycles == UINT32_MAX)
+        fd_power_work.fifth_observed_cycles = fd_power_work.elapsed_cycles;
+    if (actual_current > fd_power_work.peak_filtered_current)
+        fd_power_work.peak_filtered_current = actual_current;
+    if (battery_voltage < fd_power_work.min_voltage)
+        fd_power_work.min_voltage = battery_voltage;
+    if (duty_cycle > fd_power_work.max_duty)
+        fd_power_work.max_duty = duty_cycle;
+}
+
+static void fdBenchFinish(uint8_t reason)
+{
+    if (!fd_power_bench.active_id) return;
+    fdBenchObserve(DWT->CYCCNT);
+    fd_power_work.reason = reason;
+    fd_power_bench.records[(fd_power_work.id - 1u) % FD_POWER_SUMMARIES] = fd_power_work;
+    __DMB();
+    fd_power_bench.completed++;
+    fd_power_bench.active_id = 0u;
+}
+
+static void fdBenchStop(uint8_t reason)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    if (!fd_power_bench.inhibit) {
+        fd_power_bench.inhibit = 1u; /* publish before canceling pending work */
+        fdBenchFinish(reason);
+        fd_power_bench.stops++;
+        fd_power_bench.last_reason = reason;
+        fdTraceEvent(FD_EVENT_BENCH_STOP, reason);
+        fdTraceFreeze(FD_END_BENCH);
+        fdPowerRequestStop(&fd_power_policy, FD_POWER_WINDOW_END);
+        fd_power_bench.floor = 0u;
+        fd_power_starting = 0u;
+        prop_brake_active = 0u;
+        heliCoastTrackingLost(1u);
+        input = 0u;
+        /* Reset acquisition without inventing a native timeout/stuck fault. */
+        adcZcdResetAcquisition(ADC_ZCD_RESET_COUNT);
+    }
+    __set_PRIMASK(mask);
+}
+
+static void fdBenchService(void)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    if (fd_power_bench.active_id && !fd_power_bench.inhibit) {
+        uint32_t now = DWT->CYCCNT;
+        fdBenchObserve(now);
+        if (stuck_rotor_inhibit) fdBenchStop(FD_BENCH_NATIVE_STUCK);
+        else if (drive_safety_limit_inhibit) fdBenchStop(FD_BENCH_SAFETY_CAP);
+        else if (!adjusted_input) {
+            fdBenchFinish(FD_BENCH_OPERATOR_ZERO);
+            fdPowerOperatorZero(&fd_power_policy);
+            fd_power_bench.floor = 0u;
+        } else if (!armed || (!running && !fd_power_starting) || heli_coast_active) {
+            fdBenchStop(FD_BENCH_NOT_RUNNING);
+        } else {
+            fd_power_bench.floor = fdPowerFloor(&fd_power_policy, now,
+                min_startup_duty, startup_max_duty_cycle, driveEffectiveDutyLimit(),
+                adcZcdDriveCrossings(), 1u);
+            if (fd_power_policy.stop_reason == FD_POWER_WINDOW_END)
+                fdBenchStop(FD_BENCH_WINDOW);
+            else if (fd_power_policy.stop_reason)
+                fdBenchStop(FD_BENCH_SAFETY_CAP);
+        }
+    }
+    __set_PRIMASK(mask);
+}
+
+static uint8_t fdBenchGuardInput(void)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    fdBenchService();
+    if (armed && !fdBenchConfigOk()) {
+        fdBenchStop(FD_BENCH_BAD_CONFIG);
+    } else if (!adjusted_input) {
+        if (fd_power_bench.inhibit) {
+            heliCoastTrackingLost(0u);
+            heli_coast_restart_inhibit = 0u;
+        }
+        fd_power_bench.inhibit = 0u;
+        fdPowerOperatorZero(&fd_power_policy);
+    } else if (heli_coast_active) {
+        fdBenchStop(FD_BENCH_NOT_RUNNING); // bench has no rotating bailout
+    }
+    uint8_t blocked = fd_power_bench.inhibit != 0u;
+    if (blocked) { input = 0u; duty_cycle_setpoint = 0u; }
+    __set_PRIMASK(mask);
+    return blocked;
+}
+
+static uint8_t fdBenchBegin(void)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    uint8_t allowed = armed && !running && !heli_coast_active &&
+        !stuck_rotor_inhibit && !drive_safety_limit_inhibit &&
+        !heli_coast_restart_inhibit && !fd_power_bench.inhibit &&
+        adjusted_input >= 47u && fdBenchConfigOk();
+    /* fdTraceInit enables DWT. Check it rather than assuming debugger presence. */
+    allowed = allowed && ((DWT->CTRL & DWT_CTRL_CYCCNTENA_Msk) != 0u);
+    if (!fdPowerBegin(&fd_power_policy, DWT->CYCCNT, allowed,
+                     FD6288_STARTUP_POWER_EXTRA)) {
+        fdBenchStop(fdBenchConfigOk() ? FD_BENCH_NO_ZERO : FD_BENCH_BAD_CONFIG);
+        __set_PRIMASK(mask);
+        return 0u;
+    }
+    fd_power_bench.trials++;
+    fd_power_work = (FdPowerSummary){
+        .id = fd_power_bench.trials, .first_observed_cycles = UINT32_MAX,
+        .fifth_observed_cycles = UINT32_MAX,
+        .peak_filtered_current = actual_current, .min_voltage = battery_voltage
+    };
+    fd_power_accepted_start = adc_zcd_diag.accepted;
+    fd_power_timeouts_start = adc_zcd_diag.resets[ADC_ZCD_RESET_TIMEOUT];
+    fd_power_bench.active_id = fd_power_work.id;
+    fd_power_bench.floor = min_startup_duty;
+    fd_power_starting = 1u;
+    __set_PRIMASK(mask);
+    return 1u;
+}
+
+static uint8_t fdBenchDeadlineExpired(void)
+{
+    return fd_power_bench.inhibit || (fd_power_bench.active_id &&
+        (uint32_t)(DWT->CYCCNT - fd_power_policy.started) >= FD_POWER_TRIAL_TICKS);
+}
+
+static void fdBenchWritePwm(uint16_t ticks)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    fdBenchService();
+    if (fd_power_bench.inhibit || stuck_rotor_inhibit || drive_safety_limit_inhibit) {
+        duty_cycle_setpoint = duty_cycle = adjusted_duty_cycle = last_duty_cycle = 0u;
+        SET_DUTY_CYCLE_ALL(0u);
+    } else if (heli_coast_active) {
+        last_duty_cycle = 0u;
+        SET_HELI_COAST_HIGH_Z_SAMPLE(tim1_arr);
+    } else {
+        last_duty_cycle = duty_cycle;
+        SET_DUTY_CYCLE_ALL(ticks);
+    }
+    __set_PRIMASK(mask);
+}
+/* FD_POWER_BENCH_ADAPTER_END */
 #endif
 
 int32_t doPidCalculations(struct fastPID* pidnow, int actual, int target)
@@ -1192,6 +1385,14 @@ void commutate()
     uint32_t primask = __get_PRIMASK();
     __disable_irq();
 #endif
+#ifdef TARGET_STARTUP_POWER_BENCH
+    fdBenchService();
+    if (fd_power_bench.inhibit ||
+        (!fd_power_bench.active_id && !heli_coast_active)) {
+        __set_PRIMASK(primask);
+        return;
+    }
+#endif
 #ifdef TARGET_STUCK_ROTOR_LATCH
     if (stuck_rotor_inhibit != 0u) {
         __set_PRIMASK(primask);
@@ -1261,6 +1462,9 @@ void PeriodElapsedCallback()
 {
     DISABLE_COM_TIMER_INT(); // disable interrupt
     commutate();
+#ifdef TARGET_STARTUP_POWER_BENCH
+    if (fd_power_bench.inhibit) return;
+#endif
     commutation_interval = ((commutation_interval)+((lastzctime + thiszctime) >> 1))>>1;
   	if (!eepromBuffer.auto_advance) {
 	  advance = (commutation_interval * temp_advance) >> 6; // 60 divde 64 0.9375 degree increments
@@ -1513,6 +1717,9 @@ void setInput()
         adjusted_input = newinput;
     }
 #ifndef BRUSHED_MODE
+#ifdef TARGET_STARTUP_POWER_BENCH
+    if (fdBenchGuardInput()) return;
+#endif
 #ifdef TARGET_STUCK_ROTOR_LATCH
     if (stuckRotorGuardInput()) {
         return; /* No ordinary zero-input, tone or Coast path after a fault. */
@@ -1595,6 +1802,14 @@ if (!stepper_sine && armed) {
             } else {
 #endif
             if (running == 0) {
+#ifdef TARGET_STARTUP_POWER_BENCH
+                uint32_t start_mask = __get_PRIMASK();
+                __disable_irq();
+                if (!fdBenchBegin()) {
+                    __set_PRIMASK(start_mask);
+                    return;
+                }
+#endif
                 fdTraceBegin();
                 allOff();
 #ifdef TARGET_ADC_ZCD_GUARD
@@ -1614,6 +1829,10 @@ if (!stepper_sine && armed) {
                 }
                 running = 1;
                 last_duty_cycle = min_startup_duty;
+#ifdef TARGET_STARTUP_POWER_BENCH
+                fd_power_starting = 0u;
+                __set_PRIMASK(start_mask);
+#endif
             }
 
             if (eepromBuffer.use_sine_start) {
@@ -1757,9 +1976,17 @@ if (!stepper_sine && armed) {
         }
         if (!prop_brake_active) {
             if (input >= 47 && (zero_crosses < (uint32_t)(30 >> EFFECTIVE_STALL_PROTECTION))) {
+#ifdef TARGET_STARTUP_POWER_BENCH
+                fdBenchService();
+                uint16_t startup_floor = fd_power_bench.floor;
+                if (duty_cycle_setpoint < startup_floor) {
+                    duty_cycle_setpoint = startup_floor;
+                }
+#else
                 if (duty_cycle_setpoint < min_startup_duty) {
                     duty_cycle_setpoint = min_startup_duty;
                 }
+#endif
                 if (duty_cycle_setpoint > startup_max_duty_cycle) {
                     duty_cycle_setpoint = startup_max_duty_cycle;
                 }
@@ -1806,6 +2033,9 @@ if (!stepper_sine && armed) {
 
 void tenKhzRoutine()
 { // 20khz as of 2.00 to be renamed
+#ifdef TARGET_STARTUP_POWER_BENCH
+    fdBenchService();
+#endif
     fdTraceControlTick();
     duty_cycle = duty_cycle_setpoint;
 #ifdef DRIVE_SAFETY_LIMIT_PRIORITY
@@ -2059,6 +2289,9 @@ void tenKhzRoutine()
             }
         }
         SET_AUTO_RELOAD_PWM(tim1_arr);
+#ifdef TARGET_STARTUP_POWER_BENCH
+        fdBenchWritePwm(adjusted_duty_cycle);
+#else
 #ifdef TARGET_STUCK_ROTOR_LATCH
         if (stuck_rotor_inhibit != 0u) {
             /* Also catch a fault that preempted this control tick after its
@@ -2081,6 +2314,7 @@ void tenKhzRoutine()
             last_duty_cycle = duty_cycle;
             SET_DUTY_CYCLE_ALL(adjusted_duty_cycle);
         }
+#endif // TARGET_STARTUP_POWER_BENCH
     }
 #endif // ndef brushed_mode
 #if defined(FIXED_DUTY_MODE) || defined(FIXED_SPEED_MODE)
@@ -2157,6 +2391,10 @@ void advanceincrement()
 
 void zcfoundroutine()
 { // only used in polling mode, blocking routine.
+#ifdef TARGET_STARTUP_POWER_BENCH
+    fdBenchService();
+    if (fd_power_bench.inhibit || (!running && !fd_power_starting)) return;
+#endif
 #ifdef TARGET_STUCK_ROTOR_LATCH
     if (stuck_rotor_inhibit != 0u) {
         return;
@@ -2185,6 +2423,12 @@ void zcfoundroutine()
     waitTime = commutation_interval / 2 - advance;
     fdTraceEvent(FD_EVENT_ZC, (zero_crosses < 5u) ? 1u : 0u);
     while ((INTERVAL_TIMER_COUNT) < (waitTime)) {
+#ifdef TARGET_STARTUP_POWER_BENCH
+        if (fdBenchDeadlineExpired()) {
+            fdBenchService();
+            if (fd_power_bench.inhibit) return;
+        }
+#endif
         if (zero_crosses < 5) {
             break;
         }
@@ -2199,6 +2443,9 @@ void zcfoundroutine()
 		COM_TIMER->pr = waitTime;
 #endif
     commutate();
+#ifdef TARGET_STARTUP_POWER_BENCH
+    if (fd_power_bench.inhibit) return;
+#endif
     bemfcounter = 0;
     bad_count = 0;
 
@@ -2712,6 +2959,14 @@ if(zero_crosses < 5){
         }
 #endif
         stuckcounter = 0;
+#ifdef TARGET_STARTUP_POWER_BENCH
+        fdBenchService();
+        if (fd_power_bench.inhibit) {
+            e_rpm = 0u;
+            k_erpm = 0u;
+            continue;
+        }
+#endif
         if (stepper_sine == 0) {
 
             e_rpm = running * (600000 / e_com_time); // in tens of rpm

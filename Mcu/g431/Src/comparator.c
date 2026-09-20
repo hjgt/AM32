@@ -78,6 +78,13 @@ static uint8_t adc_zcd_required_samples;
 static uint32_t adc_zcd_earliest;
 static uint32_t adc_zcd_last_real_interval;
 
+#ifdef TARGET_STARTUP_POWER_BENCH
+uint8_t adcZcdDriveCrossings(void)
+{
+    return adc_zcd_drive_crossings;
+}
+#endif
+
 #if FD6288_STARTUP_TIMING_FIX
 uint32_t adcZcdDrivePeriod(uint32_t elapsed, uint32_t previous)
 {

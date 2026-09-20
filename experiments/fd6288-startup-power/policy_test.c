@@ -94,5 +94,5 @@ int main(void)
         }
     }
     printf("PASS: %u offline startup-power policy assertions.\n", checks);
-    puts("Not integrated into firmware; not a motor, ADC, ISR or safety validation.");
+    puts("Pure shared policy only: not a motor, ADC, ISR or hardware safety validation.");
 }

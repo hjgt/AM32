@@ -7,13 +7,14 @@ const { spawnSync } = require('node:child_process');
 const assert = require('node:assert/strict');
 const SIZE = 23656, HEADER = 104, MAGIC = 0x46535431;
 const reasons = ['invalid', 'blank', 'pre', 'hysteresis', 'early', 'unarmed', 'confirmation', 'accepted', 'reported', 'coast'];
-const events = ['', 'start', 'commutate', 'zc', 'timeout', 'desync', 'stop', 'fault'];
+const events = ['', 'start', 'commutate', 'zc', 'timeout', 'desync', 'stop', 'fault', 'bench_stop'];
+const benchReasons = ['', 'window_300ms', 'native_stuck', 'safety_cap', 'not_running', 'bad_config', 'no_zero_or_start_not_allowed', 'operator_zero'];
 const sha = b => crypto.createHash('sha256').update(b).digest('hex');
 function header(b) {
   assert(b.length >= HEADER, 'Truncated trace header');
   const names = ['magic', 'abi', 'variant', 'clock_hz', 'state', 'command', 'capture_id', 'start_cycles', 'end_cycles', 'end_reason', 'sample_sequence', 'event_sequence', 'no_fresh'];
   const h = Object.fromEntries(names.map((n, i) => [n, b.readUInt32LE(i * 4)]));
-  assert(h.magic === MAGIC && h.abi === 1 && h.clock_hz === 160000000 && h.variant <= 1, 'Wrong trace ABI/firmware');
+  assert(h.magic === MAGIC && h.abi === 1 && h.clock_hz === 160000000 && h.variant <= 3, 'Wrong trace ABI/firmware');
   h.decisions = Object.fromEntries(reasons.map((r, i) => [r, b.readUInt32LE(52 + 4 * i)]));
   h.max_sample_cycles = b.readUInt32LE(92);
   h.max_event_cycles = b.readUInt32LE(96);
@@ -55,11 +56,39 @@ function decode(b) {
     return {total, retained: records.length, gaps, records};
   }
   return {
-    header: h, end: ['none', 'operator_zero', 'one_second_capture_cap', 'fault', 'request'][h.end_reason],
+    header: h, end: ['none', 'operator_zero', 'one_second_capture_cap', 'fault', 'request', 'bench_stop'][h.end_reason],
     samples: collect('sample', HEADER, 64, HEADER + 64 * 32, 512, h.sample_sequence),
     events: collect('event', HEADER + 576 * 32, 32, HEADER + 608 * 32, 128, h.event_sequence),
     caveats: ['Software-consumed sequential ADC results, not an oscilloscope waveform.', 'zc means zcfoundroutine entry: variant A also calls it after forced timeout; correlate with accepted ADC samples.', 'elapsed/interval/wait use 0.5 us ticks; current is filtered centiamps, voltage centivolts.', 'flags indicate commanded direction, NOT measured rotor direction.', 'First records plus ring tail; gaps are omitted/overwritten history, not missing ADC interrupts.', 'cycle maxima measure only inner logger work, not full ISR or total overhead.', 'The 1 s cap stops logging only, never the motor. No hardware-validation claim.'],
   };
+}
+function decodeBench(b) {
+  assert.equal(b.length, 552, 'Wrong bench summary size');
+  const names = ['magic', 'abi', 'extra', 'trials', 'completed', 'stops', 'inhibit', 'last_reason', 'active_id', 'floor'];
+  const h = Object.fromEntries(names.map((n, i) => [n, b.readUInt32LE(i * 4)]));
+  assert(h.magic === 0x46504231 && h.abi === 1 && [0, 40].includes(h.extra), 'Wrong bench summary ABI');
+  assert(h.completed === h.trials && h.active_id === 0, 'Unfinished bench trial');
+  assert(h.last_reason < benchReasons.length, 'Unknown bench stop reason');
+  const records = [];
+  for (let id = Math.max(1, h.trials - 15); id <= h.trials; id++) {
+    const o = 40 + ((id - 1) % 16) * 32;
+    assert.equal(b.readUInt32LE(o), id, 'Bench ring sequence mismatch');
+    const r = {id};
+    ['elapsed_cycles', 'accepted', 'timeouts', 'first_observed_cycles', 'fifth_observed_cycles']
+      .forEach((n, i) => { r[n] = b.readUInt32LE(o + 4 + 4 * i); });
+    for (const n of ['elapsed', 'first_observed', 'fifth_observed'])
+      r[`${n}_us`] = r[`${n}_cycles`] === 0xffffffff ? null : r[`${n}_cycles`] / 160;
+    r.peak_filtered_current_A = b.readInt16LE(o + 24) / 100;
+    r.min_voltage_V = b.readUInt16LE(o + 26) / 100;
+    r.max_duty = b.readUInt16LE(o + 28);
+    assert(b[o + 30] > 0 && b[o + 30] < benchReasons.length, 'Unknown trial reason');
+    r.reason = benchReasons[b[o + 30]];
+    records.push(r);
+  }
+  return {header: h, records, omitted_earlier_trials: Math.max(0, h.trials - 16),
+    caveats: ['Last 16 trial summaries, not continuous waveforms. Main trace remains first-shot until explicitly rearmed.',
+      'Observed times are service timestamps, not physical zero-cross timestamps. Current is a filtered software maximum, not peak phase current.',
+      'The 300 ms bench window is a software stop request, not a hardware current limiter or a flight mode.']};
 }
 function parseHex(text) {
   let base = 0, eof = false;
@@ -91,6 +120,9 @@ function symbols(elf) {
   for (const n of ['fd_startup_trace', 'input', 'adjusted_input', 'newinput', 'running', 'heli_coast_active', 'duty_cycle', 'stuck_rotor_inhibit', 'stuck_rotor_trip_count', 'bemf_timeout', 'bemf_timeout_happened', 'eepromBuffer']) {
     assert(out[n] && out[n].address >= 0x20000000 && out[n].address + out[n].size <= 0x20008000, `Bad/missing RAM symbol ${n}`);
   }
+  if (out.fd_power_bench) assert(out.fd_power_bench.size === 552 &&
+    out.fd_power_bench.address >= 0x20000000 && out.fd_power_bench.address + 552 <= 0x20008000,
+    'Bad bench summary symbol');
   return out;
 }
 async function connect() {
@@ -170,7 +202,9 @@ async function hardware(command, elf, out, stopped, connection = connect) {
       await c.rpc(`write_memory 0x${(addr + 20).toString(16)} 32 {0x41524d31}`);
       const after = header(await memory(addr, HEADER));
       assert(after.state === 1 && after.capture_id === before.capture_id + 1 && after.command === 0, 'Firmware did not accept arm command');
-      console.log(JSON.stringify({armed: true, variant: after.variant, capture_id: after.capture_id, note: 'No throttle change. Start only on operator decision. Logging cap is NOT motor shutdown.'}, null, 2));
+      console.log(JSON.stringify({armed: true, variant: after.variant, capture_id: after.capture_id,
+        note: after.variant >= 2 ? 'No throttle change. P0/P1 separately impose a 300 ms drive window, even on success. Bench only; wait for full stop between trials.' :
+          'No throttle change. Start only on operator decision. Logging cap is NOT motor shutdown.'}, null, 2));
     } else {
       assert(before.state === 3, 'Trace must be frozen; return to zero first');
       assert(out && !fs.existsSync(out) && !fs.existsSync(`${out}.json`), 'Provide a new output BIN path');
@@ -183,7 +217,16 @@ async function hardware(command, elf, out, stopped, connection = connect) {
         const s = syms[name]; protection[name] = (await memory(s.address, s.size)).readUIntLE(0, s.size);
       }
       const settings = await memory(syms.eepromBuffer.address, syms.eepromBuffer.size);
-      const d = {...decode(b), metadata: {capturedAt: new Date().toISOString(), elf, hex_sha256: sha(fs.readFileSync(hexPath)), trace_sha256: sha(b), stoppedState, protection_after_zero: protection, settings_ram_hex: settings.toString('hex')}};
+      let bench, benchBytes;
+      if (before.variant >= 2) {
+        assert(syms.fd_power_bench, 'Bench image missing summary symbol');
+        benchBytes = await memory(syms.fd_power_bench.address, 552);
+        assert.deepEqual(await memory(syms.fd_power_bench.address, 552), benchBytes, 'Bench summaries changed during dump');
+        bench = decodeBench(benchBytes);
+        assert.equal(bench.header.extra, before.variant === 2 ? 0 : 40);
+        await stoppedCheck();
+      }
+      const d = {...decode(b), bench, metadata: {capturedAt: new Date().toISOString(), elf, hex_sha256: sha(fs.readFileSync(hexPath)), trace_sha256: sha(b), stoppedState, protection_after_zero: protection, settings_ram_hex: settings.toString('hex'), bench_raw_hex: benchBytes?.toString('hex')}};
       fs.mkdirSync(path.dirname(path.resolve(out)), {recursive: true});
       fs.writeFileSync(out, b, {flag: 'wx'});
       fs.writeFileSync(`${out}.json`, JSON.stringify(d, null, 2) + '\n', {flag: 'wx'});
@@ -196,5 +239,5 @@ async function main(args) {
   if (['arm', 'dump'].includes(args[0])) { await hardware(args[0], args[1], args[2] === '--stopped' ? undefined : args[2], args.includes('--stopped')); return; }
   console.log('Offline: node tools/scripts/fd6288_startup_capture.cjs decode TRACE.bin\nStopped board only (OpenOCD already running):\n  ... arm MAIN.elf --stopped\n  ... dump MAIN.elf NEW-TRACE.bin --stopped\nNever starts OpenOCD, halts/resets CPU, changes throttle, or writes flash/settings.\nARM writes only a trace command in RAM after flash identity + stopped checks.');
 }
-module.exports = {decode, header, parseHex, symbols, hardware, SIZE, HEADER, MAGIC};
+module.exports = {decode, decodeBench, header, parseHex, symbols, hardware, SIZE, HEADER, MAGIC};
 if (require.main === module) main(process.argv.slice(2)).catch(e => { console.error(e.message); process.exitCode = 1; });

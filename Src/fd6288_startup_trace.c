@@ -29,7 +29,7 @@ void fdTraceInit(void)
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
     fd_startup_trace.magic = FD_TRACE_MAGIC;
     fd_startup_trace.abi = 1u;
-    fd_startup_trace.variant = FD6288_STARTUP_TIMING_FIX;
+    fd_startup_trace.variant = FD6288_TRACE_VARIANT;
     fd_startup_trace.clock_hz = 160000000u;
     fd_startup_trace.state = FD_TRACE_ARMED;
 }

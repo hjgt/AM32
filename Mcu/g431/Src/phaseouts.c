@@ -7,6 +7,7 @@
 #include "phaseouts.h"
 
 #include "targets.h"
+#include "fd6288_startup_power.h"
 
 extern char prop_brake_active;
 
@@ -295,6 +296,14 @@ void allOff()
 
 void comStep(int newStep)
 {
+#ifdef TARGET_STARTUP_POWER_BENCH
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    if (fd_power_bench.inhibit) {
+        __set_PRIMASK(mask);
+        return;
+    }
+#endif
     // TIM14->CNT = 0;
     switch (newStep) {
     case 1: // A-B
@@ -335,6 +344,9 @@ void comStep(int newStep)
     }
 
     // stop_time = TIM14->CNT;
+#ifdef TARGET_STARTUP_POWER_BENCH
+    __set_PRIMASK(mask);
+#endif
 }
 
 void fullBrake()
@@ -346,9 +358,20 @@ void fullBrake()
 
 void allpwm()
 { // for stepper_sine
+#ifdef TARGET_STARTUP_POWER_BENCH
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    if (fd_power_bench.inhibit) {
+        __set_PRIMASK(mask);
+        return;
+    }
+#endif
     phaseAPWM();
     phaseBPWM();
     phaseCPWM();
+#ifdef TARGET_STARTUP_POWER_BENCH
+    __set_PRIMASK(mask);
+#endif
 }
 
 void twoChannelForward()

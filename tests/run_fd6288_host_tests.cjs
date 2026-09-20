@@ -42,19 +42,42 @@ const signatures = [
   'void commutate()',
   'void zcfoundroutine()',
 ];
-const functions = signatures.map((s) => functionBody(main, s)).join('\n');
+const adapter = main.slice(main.indexOf('/* FD_POWER_BENCH_ADAPTER_BEGIN'),
+  main.indexOf('/* FD_POWER_BENCH_ADAPTER_END */'));
+assert(adapter.length > 1000);
+const functions = signatures.map((s, i) => functionBody(main, s) + (i === 2 ?
+  `\n#ifdef TARGET_STARTUP_POWER_BENCH\n${adapter}\n#endif\n` : '')).join('\n');
 const harness = read('tests/fd6288_host_tests.c');
 const marker = '/* FIRMWARE_FUNCTIONS */';
 if (!harness.includes(marker)) throw new Error('Missing harness marker');
 const traceHeader = stripIncludes(read('Inc/fd6288_startup_trace.h')).replace('#pragma once', '');
 const trace = stripIncludes(read('Src/fd6288_startup_trace.c'));
 const timeout = functionBody(main, 'static void fd6288TimeoutStep(void)');
-const source = harness.replace(marker, `${traceHeader}\n${header}\n${trace}\n${adc}\n${functions}\n#if FD6288_STARTUP_TIMING_FIX\n${timeout}\n#endif`);
+const powerHeader = stripIncludes(read('Inc/fd6288_startup_power_policy.h')) + '\n' +
+  stripIncludes(read('Inc/fd6288_startup_power.h')).replace('#pragma once', '');
+const phase = read('Mcu/g431/Src/phaseouts.c');
+const phaseFunctions = ['void comStep(int newStep)', 'void allpwm()']
+  .map(s => functionBody(phase, s)).join('\n');
+const startupFloor = functionBody(main, 'if (input >= 47 && (zero_crosses < (uint32_t)(30 >> EFFECTIVE_STALL_PROTECTION)))');
+const ramp = functionBody(main, 'if (ramp_count > ramp_divider)');
+const source = harness.replace(marker, `${powerHeader}\n${traceHeader}\n${header}\n${trace}\n${adc}\n${functions}\n#ifdef TARGET_STARTUP_POWER_BENCH\n${phaseFunctions}\nstatic void actualStartupFloor(void) { ${startupFloor} }\nstatic void actualRamp(void) { ${ramp} }\n#endif\n#if FD6288_STARTUP_TIMING_FIX\n${timeout}\n#endif`)
+  .replace('/* POWER_BENCH_TESTS */', read('tests/fd6288_power_adapter_tests.c'));
+// Ensure the tested adapter is hooked into all output/timing entry points.
+for (const [signature, token] of [
+  ['void setInput()', 'fdBenchGuardInput()'], ['void setInput()', 'fdBenchBegin()'],
+  ['void setInput()', 'uint16_t startup_floor = fd_power_bench.floor'],
+  ['void tenKhzRoutine()', 'fdBenchWritePwm(adjusted_duty_cycle)'],
+  ['void zcfoundroutine()', 'fdBenchDeadlineExpired()'],
+  ['void PeriodElapsedCallback()', 'if (fd_power_bench.inhibit) return;'],
+]) assert(functionBody(main, signature).includes(token), `Missing hook: ${signature}: ${token}`);
 const output = fs.mkdtempSync(path.join(os.tmpdir(), 'fd6288-host-tests-'));
-for (const variant of [0, 1]) {
+for (const variant of [0, 1, 2, 3]) {
 const binary = path.join(output, `test-${variant}`);
 const compile = spawnSync(process.env.CC || 'cc', [
-  `-DFD6288_STARTUP_TIMING_FIX=${variant}`,
+  `-DFD6288_STARTUP_TIMING_FIX=${variant === 1 ? 1 : 0}`,
+  ...(variant >= 2 ? ['-DTARGET_STARTUP_POWER_BENCH',
+    `-DFD6288_STARTUP_POWER_EXTRA=${variant === 2 ? 0 : 40}`,
+    `-DFD6288_TRACE_VARIANT=${variant}`] : []),
   '-std=c11', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
   '-Wno-unused-function', '-fsanitize=address,undefined',
   '-x', 'c', '-', '-o', binary,

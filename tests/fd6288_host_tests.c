@@ -36,11 +36,17 @@ static struct { uint32_t CCR1, CCR4; } fake_tim1;
 #define __DMB() ((void)0)
 static struct { unsigned ARR; } com_timer;
 #define COM_TIMER (&com_timer)
-#define INTERVAL_TIMER_COUNT interval_timer
+static uint32_t wait_cycle_increment;
+static uint32_t readInterval(void) {
+    fake_dwt.CYCCNT += wait_cycle_increment;
+    return interval_timer;
+}
+#define INTERVAL_TIMER_COUNT readInterval()
 #define SET_INTERVAL_TIMER_COUNT(t) (interval_timer = (t))
 static unsigned com_irq, pwm, gates, gate_writes, bailout_calls;
 #define DISABLE_COM_TIMER_INT() (com_irq = 0)
 #define SET_DUTY_CYCLE_ALL(t) (pwm = (t))
+#define SET_HELI_COAST_HIGH_Z_SAMPLE(t) ((void)(t), pwm = 0)
 static unsigned __get_PRIMASK(void) { return primask; }
 static void __disable_irq(void) {
     if (simulate_zc_preemption && !primask) {
@@ -56,7 +62,21 @@ static void LL_ADC_ClearFlag_JEOS(int a) { (void)a; fresh = 0; }
 static uint16_t LL_ADC_INJ_ReadConversionData12(int a, unsigned rank)
 { (void)a; reads++; return samples[rank]; }
 static void allOff(void) { gates = 0; }
+#ifndef TARGET_STARTUP_POWER_BENCH
 static void comStep(unsigned s) { gates = s; gate_writes++; }
+#else
+static void phaseAPWM(void) { gates |= 1u; gate_writes++; }
+static void phaseBPWM(void) { gates |= 2u; gate_writes++; }
+static void phaseCPWM(void) { gates |= 4u; gate_writes++; }
+static void phaseALOW(void) { gates |= 8u; gate_writes++; }
+static void phaseBLOW(void) { gates |= 16u; gate_writes++; }
+static void phaseCLOW(void) { gates |= 32u; gate_writes++; }
+static void phaseAFLOAT(void) { gates &= ~(1u | 8u); }
+static void phaseBFLOAT(void) { gates &= ~(2u | 16u); }
+static void phaseCFLOAT(void) { gates &= ~(4u | 32u); }
+void comStep(int newStep);
+void allpwm(void);
+#endif
 static uint8_t heliCoastBailoutAtBoundary(void) { bailout_calls++; return 0; }
 
 volatile char rising;
@@ -84,7 +104,17 @@ static unsigned drive_safety_limit_inhibit;
 static unsigned commutation_intervals[6];
 static unsigned advance, temp_advance = 16;
 static unsigned auto_advance_level = 16;
-static struct { unsigned auto_advance, rc_car_reverse; } eepromBuffer;
+static struct { unsigned auto_advance, rc_car_reverse, pwm_frequency,
+    variable_pwm, comp_pwm, use_sine_start, bi_direction; } eepromBuffer;
+#ifdef TARGET_STARTUP_POWER_BENCH
+static uint16_t min_startup_duty = 360, minimum_duty_cycle = 210;
+static uint16_t startup_max_duty_cycle = 610, tim1_arr = 6665;
+static unsigned use_speed_control_loop, stepper_sine, armed, hard_cap = 2000;
+static uint16_t ramp_count;
+static uint8_t ramp_divider = 9, max_ramp_startup = 2;
+static uint8_t max_ramp_low_rpm = 2, max_ramp_high_rpm = 2, max_duty_cycle_change;
+static uint16_t driveEffectiveDutyLimit(void) { return hard_cap; }
+#endif
 
 /* FIRMWARE_FUNCTIONS */
 
@@ -481,8 +511,13 @@ static void test_period_and_forced_steps(void)
     CHECK(commutation_interval == 1250); // original Coast IIR in both variants
 }
 
+/* POWER_BENCH_TESTS */
+
 int main(void)
 {
+#ifdef TARGET_STARTUP_POWER_BENCH
+    test_power_adapter();
+#else
     test_all_phases();
     test_confirmation();
     test_failed_start_edge_shape();
@@ -493,6 +528,7 @@ int main(void)
     test_commutation_atomicity();
     test_startup_logging();
     test_period_and_forced_steps();
+#endif
     printf("PASS: %u assertions against actual ADC/commutation/fault functions.\n", checks);
     puts("Not a motor model: load, current, timing margins and startup still require hardware validation.");
 }

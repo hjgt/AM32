@@ -3215,6 +3215,16 @@
 #if FD6288_STARTUP_TIMING_FIX != 0 && FD6288_STARTUP_TIMING_FIX != 1
 #error "FD6288_STARTUP_TIMING_FIX must be 0 (trace only) or 1 (timing candidate)"
 #endif
+#if defined(FD6288_STARTUP_POWER_BENCH) && FD6288_STARTUP_POWER_BENCH
+#if !defined(TARGET_STARTUP_TRACE) || FD6288_STARTUP_TIMING_FIX
+#error "Power bench requires trace=1 and timing_fix=0 for an A-based comparison"
+#endif
+#if FD6288_STARTUP_POWER_EXTRA != 0 && FD6288_STARTUP_POWER_EXTRA != 40
+#error "Only P0 (+0) and P1 (+40) are enabled for this bench experiment"
+#endif
+#define TARGET_STARTUP_POWER_BENCH
+#define FD6288_TRACE_VARIANT (2u + (FD6288_STARTUP_POWER_EXTRA != 0))
+#endif
 #define VARIABLE_PWM
 #define USE_DSHOT_TELEMETRY
 #define USE_SERIAL_TELEMETRY
