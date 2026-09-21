@@ -76,11 +76,12 @@ for (const [signature, token] of [
   ['void PeriodElapsedCallback()', 'if (fd_rev_acquiring) return;'],
 ]) assert(functionBody(main, signature).includes(token), `Missing hook: ${signature}: ${token}`);
 const output = fs.mkdtempSync(path.join(os.tmpdir(), 'fd6288-host-tests-'));
-for (const variant of [0, 1, 2, 3, 4]) {
+for (const variant of [0, 1, 2, 3, 4, 5]) {
 const binary = path.join(output, `test-${variant}`);
 const compile = spawnSync(process.env.CC || 'cc', [
-  `-DFD6288_STARTUP_TIMING_FIX=${[1, 4].includes(variant) ? 1 : 0}`,
-  ...(variant === 4 ? ['-DTARGET_STARTUP_SEQUENCE'] : []),
+  `-DFD6288_STARTUP_TIMING_FIX=${[1, 4, 5].includes(variant) ? 1 : 0}`,
+  ...(variant >= 4 ? ['-DTARGET_STARTUP_SEQUENCE'] : []),
+  ...(variant === 5 ? ['-DTARGET_STARTUP_SEQUENCE_V2'] : []),
   ...(variant >= 2 ? ['-DTARGET_STARTUP_POWER_BENCH',
     `-DFD6288_STARTUP_POWER_EXTRA=${variant === 2 ? 0 : 40}`,
     `-DFD6288_TRACE_VARIANT=${variant}`] : []),

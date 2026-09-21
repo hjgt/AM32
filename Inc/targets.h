@@ -3224,7 +3224,14 @@
 #endif
 #define TARGET_STARTUP_SEQUENCE
 #define TARGET_STARTUP_POWER_BENCH /* shared bounded trial / output interlocks */
+#if FD6288_STARTUP_SEQUENCE == 2
+#define TARGET_STARTUP_SEQUENCE_V2
+#define FD6288_TRACE_VARIANT 5u
+#elif FD6288_STARTUP_SEQUENCE == 1
 #define FD6288_TRACE_VARIANT 4u
+#else
+#error "FD6288_STARTUP_SEQUENCE must be 0, 1 (S1), or 2 (S2)"
+#endif
 #elif defined(FD6288_STARTUP_POWER_BENCH) && FD6288_STARTUP_POWER_BENCH
 #if !defined(TARGET_STARTUP_TRACE) || FD6288_STARTUP_TIMING_FIX
 #error "Power bench requires trace=1 and timing_fix=0 for an A-based comparison"

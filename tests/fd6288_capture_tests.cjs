@@ -6,7 +6,8 @@ const path = require('node:path');
 const {decode, decodeBench, parseHex, symbols, hardware, SIZE, HEADER, MAGIC} = require('../tools/scripts/fd6288_startup_capture.cjs');
 const elf = path.resolve(process.argv[2] || 'obj-startup-timing-B/AM32_CUSTOM_FD6288_G431_2.20.elf');
 const syms = symbols(elf);
-const variant = syms.fd_rev_acquiring ? 4 : syms.fd_power_bench ? (elf.includes('power-P0') ? 2 : 3) : 1;
+const variant = process.argv[3] ? Number(process.argv[3]) : syms.fd_rev_acquiring ? 4 : syms.fd_power_bench ? (elf.includes('power-P0') ? 2 : 3) : 1;
+assert([1, 2, 3, 4, 5].includes(variant), 'Explicit variant must be 1..5');
 const flash = parseHex(fs.readFileSync(elf.replace(/\.elf$/, '.hex'), 'utf8'));
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'fd6288-capture-tests-'));
 function fixture(samples = 700, events = 200) {
@@ -34,6 +35,7 @@ function benchFixture(count = 18) {
     [id, 48000000, 5, 2, 8000000, 16000000].forEach((v, i) => b.writeUInt32LE(v, o + i * 4));
     b.writeInt16LE(123, o + 24); b.writeUInt16LE(760, o + 26);
     b.writeUInt16LE(400, o + 28); b[o + 30] = 1;
+    if (variant === 5) b[o + 31] = 0x64;
   }
   return b;
 }
@@ -77,7 +79,7 @@ async function main() {
   assert.equal(bench.records[15].id, 18); assert.equal(bench.omitted_earlier_trials, 2);
   assert.equal(bench.records[0].elapsed_us, 300000);
   assert.equal(bench.records[0].peak_filtered_current_A, 1.23);
-  assert.equal(bench.records[0].reason, 'window_300ms');
+  assert.equal(bench.records[0].reason, variant === 5 ? 'closed_observation_1s' : 'window_300ms');
   const revSummary = benchFixture(1);
   revSummary[70] = 8; revSummary[71] = 2;
   assert.equal(decodeBench(revSummary, 4).records[0].reason, 'rev_no_lock');
@@ -86,6 +88,11 @@ async function main() {
   assert.equal(decodeBench(revSummary, 4).records[0].reason, 'rev_lost_feedback');
   revSummary[71] = 5;
   assert.throws(() => decodeBench(revSummary, 4), /Unknown rev-up stage/);
+  revSummary[71] = 0x22;
+  assert.equal(decodeBench(revSummary, 5).records[0].max_qualified_streak, 2);
+  assert.equal(decodeBench(revSummary, 5).records[0].rev_stage, 'open_loop');
+  revSummary[71] = 0x74;
+  assert.throws(() => decodeBench(revSummary, 5), /Invalid qualified streak/);
   const revTrace = fixture(0, 1);
   revTrace.writeUInt32LE(4, 8);
   for (const offset of [HEADER + 576 * 32, HEADER + 608 * 32]) {
@@ -93,6 +100,12 @@ async function main() {
   }
   assert.equal(decode(revTrace).events.records[0].rev_stage, 'pending_handoff');
   assert.equal(decode(revTrace).events.records[0].confidence, 6);
+  revTrace.writeUInt32LE(5, 8);
+  for (const offset of [HEADER + 576 * 32, HEADER + 608 * 32]) {
+    revTrace[offset + 30] = 12; revTrace.writeUInt16LE(0x5c02, offset + 26);
+  }
+  assert.equal(decode(revTrace).events.records[0].decision, 'too_late');
+  assert.equal(decode(revTrace).events.records[0].sector_percent, 92);
   assert.equal(decodeBench(benchFixture(0)).records.length, 0);
   const badBench = benchFixture(); badBench.writeUInt32LE(19, 32);
   assert.throws(() => decodeBench(badBench), /Unfinished/);

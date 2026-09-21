@@ -94,3 +94,25 @@ node tests/fd6288_capture_tests.cjs obj-startup-sequence-S1/AM32_CUSTOM_FD6288_G
 The last command uses only mock RPC/memory, not the attached debugger. The
 capture decoder understands S1 event kinds, trial stages and failure reasons;
 `capture_id` identifies the retained trial, which need not be the latest trial.
+
+### S2: slower ramp, late-edge settling, separate observation deadline
+
+S2 uses `FD6288_STARTUP_SEQUENCE=2`, trace variant 5; S1 stays at option 1.
+The common host runner now checks S2 (12804 assertions), including six-step
+settling without weaker handoff qualification, no extension for partial
+streaks, 1 s from actual handoff, blocking-wait deadline shutdown and immediate
+bench stop on the first runtime timeout with native protection Off/On.
+The shared S1 regression now has 12627 assertions (one existing combined
+assertion was split). No motor simulation or flight-readiness claim.
+
+```sh
+node tests/fd6288_s1_replay.cjs
+node tests/fd6288_capture_tests.cjs obj-startup-sequence-S2/AM32_CUSTOM_FD6288_G431_2.20.elf 5
+```
+
+Replay uses the real, retained S1 binary trace with all 123 events, verifies
+every recorded policy confidence result, and reproduces no handoff. It must
+not be used to predict S2 motor behavior using unchanged S1 edge timestamps.
+Capture tests use mock RPC only; pass explicit variant 5 for S2. Its summary
+reserved byte has stage in the low nibble and maximum streak in the high
+nibble. Earlier capture ABIs remain readable.

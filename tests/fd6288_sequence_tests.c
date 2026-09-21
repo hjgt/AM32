@@ -12,6 +12,17 @@ static void sequenceTickAt(uint32_t now)
     DWT->CYCCNT = now;
     fdRevTick();
 }
+static void sequenceComplete(void)
+{
+#ifdef TARGET_STARTUP_SEQUENCE_V2
+    if (fd_rev.stage == FD_REV_CLOSED) {
+        DWT->CYCCNT = fd_rev.closed_at + FD_REV_OBSERVE_TICKS;
+        fdBenchService();
+        return;
+    }
+#endif
+    benchAt(300000);
+}
 static void sequenceRealEdge(void)
 {
     uint32_t age = fd_rev.period / 2u;
@@ -56,9 +67,9 @@ static void test_sequence(void)
         CHECK(gate_writes == writes && !zero_crosses);
         sequenceLock();
         CHECK(!bemf_timeout_happened && adc_zcd_diag.resets[ADC_ZCD_RESET_TIMEOUT] == 0u);
-        benchAt(300000);
+        sequenceComplete();
         CHECK(fd_power_bench.last_reason == FD_BENCH_WINDOW && !fd_trace_failure_pinned);
-        CHECK(fd_power_bench.records[0].reserved == FD_REV_CLOSED);
+        CHECK((fd_power_bench.records[0].reserved & 15u) == FD_REV_CLOSED);
         CHECK(!running && !gates && !pwm);
     }
     // Repeat failures with protection OFF and ON; no blind retry at positive
@@ -81,12 +92,12 @@ static void test_sequence(void)
         CHECK(fd_power_bench.trials == 1);
         unsigned capture = fd_startup_trace.capture_id, sequence = fd_startup_trace.sample_sequence;
         adjusted_input = newinput = 0; CHECK(!fdBenchGuardInput());
-        benchStart(); sequenceLock(); benchAt(300000);
+        benchStart(); sequenceLock(); sequenceComplete();
         CHECK(fd_startup_trace.capture_id == capture && fd_startup_trace.sample_sequence == sequence);
-        CHECK(fd_power_bench.trials == 2 && fd_power_bench.records[1].reserved == FD_REV_CLOSED);
+        CHECK(fd_power_bench.trials == 2 && (fd_power_bench.records[1].reserved & 15u) == FD_REV_CLOSED);
     }
     // A successful trial is replaceable; the first following failure is pinned.
-    sequenceReset(); benchStart(); sequenceLock(); benchAt(300000);
+    sequenceReset(); benchStart(); sequenceLock(); sequenceComplete();
     adjusted_input = newinput = 0; CHECK(!fdBenchGuardInput());
     benchStart(); CHECK(fd_startup_trace.capture_id == 2u);
     benchAt(300000); CHECK(fd_trace_failure_pinned);
@@ -98,7 +109,12 @@ static void test_sequence(void)
     adjusted_input = 0; CHECK(!fdBenchGuardInput()); CHECK(!stuckRotorGuardInput());
     sequenceReset(); benchStart(); sequenceLock();
     interval_timer = 45001; fd6288TimeoutStep();
-    CHECK(bemf_timeout_happened == 1u && !zero_crosses);
+    CHECK(bemf_timeout_happened == 1u);
+#ifdef TARGET_STARTUP_SEQUENCE_V2
+    CHECK(fd_power_bench.inhibit && !running && !gates && !pwm);
+#else
+    CHECK(!zero_crosses);
+#endif
     CHECK(adc_zcd_diag.resets[ADC_ZCD_RESET_TIMEOUT] == 1u);
     benchAt(300000);
     CHECK(fd_power_bench.last_reason == FD_BENCH_LOST_FEEDBACK && fd_trace_failure_pinned);
@@ -112,7 +128,7 @@ static void test_sequence(void)
     CHECK(!fdBenchGuardInput() && !fd_rev_acquiring && !fd_power_bench.active_id);
     // Raw-counter wrap and delayed service must not emit a catch-up burst.
     sequenceReset(); DWT->CYCCNT = UINT32_MAX - 300u; benchStart();
-    sequenceLock(); benchAt(300000); CHECK(fd_power_bench.last_reason == FD_BENCH_WINDOW);
+    sequenceLock(); sequenceComplete(); CHECK(fd_power_bench.last_reason == FD_BENCH_WINDOW);
     sequenceReset(); benchStart(); unsigned writes = gate_writes;
     sequenceTickAt(fd_power_policy.started + FD_POWER_TRIAL_TICKS + 1000);
     CHECK(gate_writes == writes && fd_power_bench.last_reason == FD_BENCH_NO_LOCK);
@@ -138,5 +154,66 @@ static void test_sequence(void)
     fd_startup_trace.command = FD_TRACE_ARM_COMMAND; fdTraceControlTick();
     CHECK(!fd_trace_failure_pinned && fd_startup_trace.state == FD_TRACE_ARMED);
     CHECK(!gates && !pwm);
+#ifdef TARGET_STARTUP_SEQUENCE_V2
+    // Slower ramp and a one-electrical-cycle hold on coherent late edges.
+    fdRevBeginPolicy(&p, 0u);
+    fdRevAdvancePolicy(&p, FD_REV_ALIGN_TICKS);
+    uint32_t first = p.period;
+    fdRevEdgePolicy(&p, p.sector_at + p.period * 4u / 5u, 16u);
+    CHECK(p.confidence == 1u && !p.settle_steps && p.decision == FD_REV_EDGE_SEED);
+    fdRevAdvancePolicy(&p, p.sector_at + p.period);
+    CHECK(p.period == first * 31u / 32u);
+    fdRevEdgePolicy(&p, p.sector_at + p.period * 4u / 5u, 16u);
+    CHECK(p.confidence == 2u && p.settle_steps == 6u && p.max_confidence == 2u);
+    uint32_t held = p.period;
+    for (unsigned i = 0u; i < 6u; i++) {
+        fdRevAdvancePolicy(&p, p.sector_at + p.period);
+        CHECK(p.period == held && p.settle_steps == 5u - i);
+    }
+    CHECK(!p.confidence && p.stage == FD_REV_OPEN); // missing edges never earn lock
+    fdRevAdvancePolicy(&p, p.sector_at + p.period);
+    CHECK(p.period == held * 31u / 32u);
+    fdRevEdgePolicy(&p, p.sector_at + p.period * 15u / 16u, 16u);
+    CHECK(p.decision == FD_REV_EDGE_LATE && !p.confidence && !p.settle_steps);
+    fdRevAdvancePolicy(&p, p.sector_at + p.period);
+    fdRevEdgePolicy(&p, p.sector_at + p.period / 16u, 16u);
+    CHECK(p.decision == FD_REV_EDGE_EARLY && !p.confidence && !p.settle_steps);
+
+    // Partial qualification must never earn a longer powered interval.
+    for (unsigned count = 0; count < 6; count++) {
+        sequenceReset(); benchStart(); fd_rev.confidence = count;
+        fd_rev.settle_steps = 6; benchAt(300000);
+        CHECK(fd_power_bench.last_reason == FD_BENCH_NO_LOCK && !gates && !pwm);
+    }
+    // Successful handoff gets 1 s from the actual handoff, not from throttle.
+    sequenceReset(); benchStart(); sequenceLock();
+    benchAt(300000); CHECK(!fd_power_bench.inhibit && running);
+    DWT->CYCCNT = fd_rev.closed_at + FD_REV_OBSERVE_TICKS - 1u;
+    fdBenchService(); CHECK(!fdBenchDeadlineExpired());
+    fdTraceControlTick(); CHECK(fd_startup_trace.state == FD_TRACE_ACTIVE);
+    DWT->CYCCNT++; fdBenchService();
+    CHECK(fd_power_bench.last_reason == FD_BENCH_WINDOW && !running && !gates && !pwm);
+    CHECK((fd_power_bench.records[0].reserved >> 4) == 6u);
+
+    // Polling ISR's blocking wait must use the extended deadline as well.
+    sequenceReset(); benchStart(); sequenceLock();
+    DWT->CYCCNT = fd_rev.closed_at + FD_REV_OBSERVE_TICKS - 100u;
+    interval_timer = 1000; wait_cycle_increment = 40;
+    zcfoundroutine(); wait_cycle_increment = 0;
+    CHECK(fd_power_bench.inhibit && !pwm && !gates && !running);
+
+    // First runtime missing-feedback timeout aborts without a forced step,
+    // even with native protection Off; this is separate from its >10 latch.
+    for (unsigned on = 0u; on <= 1u; on++) {
+        sequenceReset(); benchStart(); sequenceLock(); stuck_enabled = on;
+        unsigned writes = gate_writes;
+        interval_timer = 45001u; fd6288TimeoutStep();
+        CHECK(fd_power_bench.last_reason == FD_BENCH_LOST_FEEDBACK);
+        CHECK(!stuck_rotor_trip_count && bemf_timeout_happened == 1u);
+        CHECK(gate_writes == writes && !gates && !pwm && !running);
+        CHECK(fdBenchGuardInput() && !fdBenchBegin());
+    }
+    // Current/duty limits, zero recovery, and Coast restrictions remain common.
+#endif
 }
 #endif

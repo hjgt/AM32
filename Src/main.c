@@ -930,6 +930,9 @@ static void fdBenchFinish(uint8_t reason)
     fd_power_work.reason = reason;
 #ifdef TARGET_STARTUP_SEQUENCE
     fd_power_work.reserved = fd_rev.stage; /* S1 ABI extension: final stage */
+#ifdef TARGET_STARTUP_SEQUENCE_V2
+    fd_power_work.reserved |= fd_rev.max_confidence << 4; /* S2 high nibble */
+#endif
 #endif
     fd_power_bench.records[(fd_power_work.id - 1u) % FD_POWER_SUMMARIES] = fd_power_work;
     __DMB();
@@ -989,8 +992,12 @@ static void fdBenchService(void)
             fdBenchStop(FD_BENCH_NOT_RUNNING);
         } else {
 #ifdef TARGET_STARTUP_SEQUENCE
+#ifdef TARGET_STARTUP_SEQUENCE_V2
+            if (fdRevDeadlinePolicy(&fd_rev, now, fd_power_policy.started)) {
+#else
             uint32_t age = now - fd_power_policy.started;
             if (age >= FD_POWER_TRIAL_TICKS) {
+#endif
                 fdBenchStop(FD_BENCH_WINDOW);
             } else {
                 uint16_t requested = fd_rev.stage == FD_REV_ALIGN ? 360u : 400u;
@@ -1079,7 +1086,11 @@ static uint8_t fdBenchBegin(void)
 static uint8_t fdBenchDeadlineExpired(void)
 {
     return fd_power_bench.inhibit || (fd_power_bench.active_id &&
+#ifdef TARGET_STARTUP_SEQUENCE_V2
+        fdRevDeadlinePolicy(&fd_rev, DWT->CYCCNT, fd_power_policy.started));
+#else
         (uint32_t)(DWT->CYCCNT - fd_power_policy.started) >= FD_POWER_TRIAL_TICKS);
+#endif
 }
 
 #ifdef TARGET_STARTUP_SEQUENCE
@@ -1139,6 +1150,9 @@ static void fdRevObserveEdge(void)
         uint8_t timing = eepromBuffer.auto_advance ? auto_advance_level : temp_advance;
         (void)fdRevEdgePolicy(&fd_rev, DWT->CYCCNT, timing);
         fdTraceEvent(FD_EVENT_REV_EDGE, (fd_rev.stage << 8) | fd_rev.confidence);
+#ifdef TARGET_STARTUP_SEQUENCE_V2
+        fdTraceEvent(FD_EVENT_REV_DECISION, (fd_rev.phase_percent << 8) | fd_rev.decision);
+#endif
     }
     __set_PRIMASK(mask);
 }
@@ -1647,6 +1661,17 @@ static void fd6288TimeoutStep(void)
             heliCoastTrackingLost((input >= 47u) ? 1u : 0u);
         } else {
             bemf_timeout_happened++;
+#ifdef TARGET_STARTUP_SEQUENCE_V2
+            /* Longer observation is not permission for blind forced-step
+             * retries. S2 bench aborts on the first missing-feedback timeout;
+             * native protection switch/threshold code remains unchanged. */
+            if (fd_rev.stage == FD_REV_CLOSED) {
+                adcZcdResetAcquisition(ADC_ZCD_RESET_TIMEOUT);
+                fdBenchStop(FD_BENCH_LOST_FEEDBACK);
+                __set_PRIMASK(mask);
+                return;
+            }
+#endif
             maskPhaseInterrupts();
             old_routine = 1;
             if (input < 48u) {

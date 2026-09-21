@@ -7,7 +7,8 @@ const { spawnSync } = require('node:child_process');
 const assert = require('node:assert/strict');
 const SIZE = 23656, HEADER = 104, MAGIC = 0x46535431;
 const reasons = ['invalid', 'blank', 'pre', 'hysteresis', 'early', 'unarmed', 'confirmation', 'accepted', 'reported', 'coast'];
-const events = ['', 'start', 'commutate', 'zc', 'timeout', 'desync', 'stop', 'fault', 'bench_stop', 'rev_step', 'rev_edge', 'rev_handoff'];
+const events = ['', 'start', 'commutate', 'zc', 'timeout', 'desync', 'stop', 'fault', 'bench_stop', 'rev_step', 'rev_edge', 'rev_handoff', 'rev_decision'];
+const revDecisions = ['ignored_stage_or_duplicate', 'too_early', 'too_late', 'first_qualified_edge', 'inconsistent_period', 'qualified_pair', 'ready_for_handoff'];
 const benchReasons = ['', 'window_300ms', 'native_stuck', 'safety_cap', 'not_running', 'bad_config', 'no_zero_or_start_not_allowed', 'operator_zero', 'rev_no_lock', 'rev_lost_feedback'];
 const revStages = ['off', 'align', 'open_loop', 'pending_handoff', 'closed_loop'];
 const sha = b => crypto.createHash('sha256').update(b).digest('hex');
@@ -15,7 +16,7 @@ function header(b) {
   assert(b.length >= HEADER, 'Truncated trace header');
   const names = ['magic', 'abi', 'variant', 'clock_hz', 'state', 'command', 'capture_id', 'start_cycles', 'end_cycles', 'end_reason', 'sample_sequence', 'event_sequence', 'no_fresh'];
   const h = Object.fromEntries(names.map((n, i) => [n, b.readUInt32LE(i * 4)]));
-  assert(h.magic === MAGIC && h.abi === 1 && h.clock_hz === 160000000 && h.variant <= 4, 'Wrong trace ABI/firmware');
+  assert(h.magic === MAGIC && h.abi === 1 && h.clock_hz === 160000000 && h.variant <= 5, 'Wrong trace ABI/firmware');
   h.decisions = Object.fromEntries(reasons.map((r, i) => [r, b.readUInt32LE(52 + 4 * i)]));
   h.max_sample_cycles = b.readUInt32LE(92);
   h.max_event_cycles = b.readUInt32LE(96);
@@ -43,6 +44,10 @@ function decode(b) {
         r.rev_stage = revStages[r.aux >> 8]; r.confidence = r.aux & 255;
       }
       if (r.kind === 'rev_handoff') r.confidence = r.aux;
+      if (r.kind === 'rev_decision') {
+        r.decision = revDecisions[r.aux & 255] || 'unknown';
+        r.sector_percent = (r.aux >> 8) === 255 ? null : r.aux >> 8;
+      }
     }
     return r;
   }
@@ -62,10 +67,10 @@ function decode(b) {
     return {total, retained: records.length, gaps, records};
   }
   return {
-    header: h, end: ['none', 'operator_zero', 'one_second_capture_cap', 'fault', 'request', 'bench_stop'][h.end_reason],
+    header: h, end: ['none', 'operator_zero', h.variant === 5 ? 'two_second_capture_cap' : 'one_second_capture_cap', 'fault', 'request', 'bench_stop'][h.end_reason],
     samples: collect('sample', HEADER, 64, HEADER + 64 * 32, 512, h.sample_sequence),
     events: collect('event', HEADER + 576 * 32, 32, HEADER + 608 * 32, 128, h.event_sequence),
-    caveats: ['Software-consumed sequential ADC results, not an oscilloscope waveform.', 'zc means zcfoundroutine entry: variant A also calls it after forced timeout; correlate with accepted ADC samples.', 'elapsed/interval/wait use 0.5 us ticks; current is filtered centiamps, voltage centivolts.', 'flags indicate commanded direction, NOT measured rotor direction.', 'First records plus ring tail; gaps are omitted/overwritten history, not missing ADC interrupts.', 'cycle maxima measure only inner logger work, not full ISR or total overhead.', 'The 1 s cap stops logging only, never the motor. No hardware-validation claim.'],
+    caveats: ['Software-consumed sequential ADC results, not an oscilloscope waveform.', 'zc means zcfoundroutine entry: variant A also calls it after forced timeout; correlate with accepted ADC samples.', 'elapsed/interval/wait use 0.5 us ticks; current is filtered centiamps, voltage centivolts.', 'flags indicate commanded direction, NOT measured rotor direction.', 'First records plus ring tail; gaps are omitted/overwritten history, not missing ADC interrupts.', 'cycle maxima measure only inner logger work, not full ISR or total overhead.', `The ${h.variant === 5 ? 2 : 1} s capture cap stops logging only, never the motor. No hardware-validation claim.`],
   };
 }
 function decodeBench(b, variant = 3) {
@@ -89,16 +94,22 @@ function decodeBench(b, variant = 3) {
     r.max_duty = b.readUInt16LE(o + 28);
     assert(b[o + 30] > 0 && b[o + 30] < benchReasons.length, 'Unknown trial reason');
     r.reason = benchReasons[b[o + 30]];
-    if (variant === 4) {
-      assert(b[o + 31] < revStages.length, 'Unknown rev-up stage');
-      r.rev_stage = revStages[b[o + 31]];
+    if (variant >= 4) {
+      const stage = variant === 5 ? b[o + 31] & 15 : b[o + 31];
+      assert(stage < revStages.length, 'Unknown rev-up stage');
+      r.rev_stage = revStages[stage];
+      if (variant === 5) {
+        r.max_qualified_streak = b[o + 31] >> 4;
+        assert(r.max_qualified_streak <= 6, 'Invalid qualified streak');
+        if (b[o + 30] === 1) r.reason = 'closed_observation_1s';
+      }
     }
     records.push(r);
   }
   return {header: h, records, omitted_earlier_trials: Math.max(0, h.trials - 16),
-    caveats: [variant === 4 ? 'Last 16 summaries. Trace capture_id is the trial id; each start replaces a non-failure trace, first failed trial remains pinned until explicit ARM. Closed-loop stage alone is not proof of normal loaded operation.' : 'Last 16 trial summaries, not continuous waveforms. Main trace remains first-shot until explicitly rearmed.',
+    caveats: [variant >= 4 ? 'Last 16 summaries. Trace capture_id is the trial id; each start replaces a non-failure trace, first failed trial remains pinned until explicit ARM. Closed-loop stage alone is not proof of normal loaded operation.' : 'Last 16 trial summaries, not continuous waveforms. Main trace remains first-shot until explicitly rearmed.',
       'Observed times are service timestamps, not physical zero-cross timestamps. Current is a filtered software maximum, not peak phase current.',
-      'The 300 ms bench window is a software stop request, not a hardware current limiter or a flight mode.']};
+      variant === 5 ? 'S2: acquisition <= 300 ms; only six-edge handoff earns <= 1 s observation; first runtime timeout aborts. Not a hardware current limiter, native stuck-trip proof or flight mode.' : 'The 300 ms bench window is a software stop request, not a hardware current limiter or a flight mode.']};
 }
 function parseHex(text) {
   let base = 0, eof = false;
@@ -227,7 +238,7 @@ async function hardware(command, elf, out, stopped, connection = connect, quickD
       const after = header(await memory(addr, HEADER));
       assert(after.state === 1 && after.capture_id === before.capture_id + 1 && after.command === 0, 'Firmware did not accept arm command');
       console.log(JSON.stringify({armed: true, variant: after.variant, capture_id: after.capture_id,
-        note: after.variant >= 2 ? 'No throttle change. P0/P1/S1 separately impose a 300 ms drive window, even on success. Bench only; wait for full stop between trials.' :
+        note: after.variant === 5 ? 'No throttle change. S2: 300 ms acquisition, then <= 1 s observation only after handoff. First runtime timeout aborts. Bench only.' : after.variant >= 2 ? 'No throttle change. P0/P1/S1 separately impose a 300 ms drive window, even on success. Bench only; wait for full stop between trials.' :
           'No throttle change. Start only on operator decision. Logging cap is NOT motor shutdown.'}, null, 2));
     } else {
       assert(before.state === 3, 'Trace must be frozen; return to zero first');

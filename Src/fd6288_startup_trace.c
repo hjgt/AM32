@@ -161,8 +161,13 @@ void fdTraceControlTick(void)
     }
     if (fd_startup_trace.state == FD_TRACE_ACTIVE) {
         if (adjusted_input == 0u) fdTraceFreeze(FD_END_ZERO);
-        else if ((uint32_t)(DWT->CYCCNT - fd_startup_trace.start_cycles) >= 160000000u)
-            fdTraceFreeze(FD_END_DEADLINE); /* 1 s capture cap; NO motor action */
+        else if ((uint32_t)(DWT->CYCCNT - fd_startup_trace.start_cycles) >=
+#ifdef TARGET_STARTUP_SEQUENCE_V2
+            320000000u) /* S2 motor window <= 1.3 s, retain final stop event */
+#else
+            160000000u)
+#endif
+            fdTraceFreeze(FD_END_DEADLINE); /* logging cap only; NO motor action */
     }
     __set_PRIMASK(mask);
 }

@@ -28,7 +28,8 @@ enum {
 enum {
     FD_EVENT_START = 1, FD_EVENT_COMMUTATE, FD_EVENT_ZC, FD_EVENT_TIMEOUT,
     FD_EVENT_DESYNC, FD_EVENT_STOP, FD_EVENT_FAULT, FD_EVENT_BENCH_STOP,
-    FD_EVENT_REV_STEP, FD_EVENT_REV_EDGE, FD_EVENT_REV_HANDOFF
+    FD_EVENT_REV_STEP, FD_EVENT_REV_EDGE, FD_EVENT_REV_HANDOFF,
+    FD_EVENT_REV_DECISION
 };
 /* Flags: bit0 forward, bit1 rising, bit2 running, bit3 Coast, bit4 old_routine.
  * ADC values are software-consumed injected results, NOT edge timestamps or
