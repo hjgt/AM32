@@ -1,0 +1,13 @@
+[
+  {
+    "at": "2026-09-21T00:54:19.181Z",
+    "stage": "identity",
+    "value": {
+      "flash_sha256": "5285553bc0420fc5c7d1689a2c96d53806fb2d4d615c16142b46a0cdb41dc5eb",
+      "matches": [
+        "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/obj-startup-power-disabled-check/AM32_CUSTOM_FD6288_G431_2.20.hex",
+        "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/obj-startup-trace-A/AM32_CUSTOM_FD6288_G431_2.20.hex"
+      ]
+    }
+  }
+]

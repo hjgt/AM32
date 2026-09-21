@@ -1,0 +1,9 @@
+[
+  {
+    "at": "2026-09-21T00:53:28.709Z",
+    "stage": "error",
+    "value": {
+      "message": "Firmware mismatch at 0x80012e0\n\n97 !== 1\n"
+    }
+  }
+]

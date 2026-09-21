@@ -1,0 +1,52 @@
+[
+  {
+    "at": "2026-09-21T00:55:19.350Z",
+    "stage": "before_reset",
+    "value": {
+      "input": 0,
+      "newinput": 0,
+      "adjusted_input": 0,
+      "running": 0,
+      "heli_coast_active": 0,
+      "duty_cycle": 0,
+      "gpioa_idr": 49152,
+      "gpiof_idr": 0,
+      "ccr": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "at": "2026-09-21T00:55:19.395Z",
+    "stage": "reset_init",
+    "value": ""
+  },
+  {
+    "at": "2026-09-21T00:55:20.464Z",
+    "stage": "write_main",
+    "value": "auto erase enabled\nwrote 34024 bytes from file /Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-startup-power-20260921/AM32_CUSTOM_FD6288_G431_P1_BENCH_300ms.hex in 1.067176s (31.135 KiB/s)\n"
+  },
+  {
+    "at": "2026-09-21T00:55:20.818Z",
+    "stage": "verify_main",
+    "value": "verified 33980 bytes in 0.352752s (94.071 KiB/s)\n"
+  },
+  {
+    "at": "2026-09-21T00:55:21.537Z",
+    "stage": "all_regions_verified",
+    "value": {
+      "main_bytes": 33980,
+      "bootloader_unchanged": true,
+      "settings_unchanged": true,
+      "flash_sha256": "d0927d54a4d79821a5c1d55b821a3129abe57a22481e7839ce111bbb894c3fcf"
+    }
+  },
+  {
+    "at": "2026-09-21T00:55:21.542Z",
+    "stage": "reset_run",
+    "value": ""
+  }
+]

@@ -1,0 +1,44 @@
+[
+  {
+    "at": "2026-09-21T00:54:56.641Z",
+    "stage": "preflight_ok",
+    "value": {
+      "directory": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/hardware-backups/startup-P1-flash-BOf5U4",
+      "flash_sha256": "5285553bc0420fc5c7d1689a2c96d53806fb2d4d615c16142b46a0cdb41dc5eb",
+      "state": {
+        "input": 0,
+        "newinput": 0,
+        "adjusted_input": 0,
+        "running": 0,
+        "heli_coast_active": 0,
+        "duty_cycle": 0,
+        "gpioa_idr": 49152,
+        "gpiof_idr": 0,
+        "ccr": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "config": {
+        "armed": 1,
+        "minimum_duty_cycle": 210,
+        "min_startup_duty": 360,
+        "startup_max_duty_cycle": 610,
+        "SystemCoreClock": 160000000,
+        "use_speed_control_loop": 0,
+        "stepper_sine": 0,
+        "battery_voltage": 828,
+        "actual_current": 4,
+        "stuck_rotor_inhibit": 0,
+        "stuck_rotor_trip_count": 0,
+        "drive_safety_limit_inhibit": 0,
+        "heli_coast_restart_inhibit": 0,
+        "direction": 0,
+        "auto_advance": 1,
+        "settings_sha256": "852293fdb1c158518b9b9b4575dad3fbf74b2e7205fee5f73b44fb461b725e08"
+      }
+    }
+  }
+]
