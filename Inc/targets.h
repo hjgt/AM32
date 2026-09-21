@@ -3215,7 +3215,17 @@
 #if FD6288_STARTUP_TIMING_FIX != 0 && FD6288_STARTUP_TIMING_FIX != 1
 #error "FD6288_STARTUP_TIMING_FIX must be 0 (trace only) or 1 (timing candidate)"
 #endif
-#if defined(FD6288_STARTUP_POWER_BENCH) && FD6288_STARTUP_POWER_BENCH
+#if defined(FD6288_STARTUP_SEQUENCE) && FD6288_STARTUP_SEQUENCE
+#if !defined(TARGET_STARTUP_TRACE) || !FD6288_STARTUP_TIMING_FIX || FD6288_STARTUP_POWER_BENCH
+#error "S1 requires trace + real-edge timing, and excludes P0/P1"
+#endif
+#if FD6288_STARTUP_POWER_EXTRA != 40
+#error "S1 bench uses the bounded +40 request"
+#endif
+#define TARGET_STARTUP_SEQUENCE
+#define TARGET_STARTUP_POWER_BENCH /* shared bounded trial / output interlocks */
+#define FD6288_TRACE_VARIANT 4u
+#elif defined(FD6288_STARTUP_POWER_BENCH) && FD6288_STARTUP_POWER_BENCH
 #if !defined(TARGET_STARTUP_TRACE) || FD6288_STARTUP_TIMING_FIX
 #error "Power bench requires trace=1 and timing_fix=0 for an A-based comparison"
 #endif

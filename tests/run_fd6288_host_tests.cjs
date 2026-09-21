@@ -53,7 +53,8 @@ if (!harness.includes(marker)) throw new Error('Missing harness marker');
 const traceHeader = stripIncludes(read('Inc/fd6288_startup_trace.h')).replace('#pragma once', '');
 const trace = stripIncludes(read('Src/fd6288_startup_trace.c'));
 const timeout = functionBody(main, 'static void fd6288TimeoutStep(void)');
-const powerHeader = stripIncludes(read('Inc/fd6288_startup_power_policy.h')) + '\n' +
+const powerHeader = stripIncludes(read('Inc/fd6288_startup_sequence.h')) + '\n' +
+  stripIncludes(read('Inc/fd6288_startup_power_policy.h')) + '\n' +
   stripIncludes(read('Inc/fd6288_startup_power.h')).replace('#pragma once', '');
 const phase = read('Mcu/g431/Src/phaseouts.c');
 const phaseFunctions = ['void comStep(int newStep)', 'void allpwm()']
@@ -61,7 +62,7 @@ const phaseFunctions = ['void comStep(int newStep)', 'void allpwm()']
 const startupFloor = functionBody(main, 'if (input >= 47 && (zero_crosses < (uint32_t)(30 >> EFFECTIVE_STALL_PROTECTION)))');
 const ramp = functionBody(main, 'if (ramp_count > ramp_divider)');
 const source = harness.replace(marker, `${powerHeader}\n${traceHeader}\n${header}\n${trace}\n${adc}\n${functions}\n#ifdef TARGET_STARTUP_POWER_BENCH\n${phaseFunctions}\nstatic void actualStartupFloor(void) { ${startupFloor} }\nstatic void actualRamp(void) { ${ramp} }\n#endif\n#if FD6288_STARTUP_TIMING_FIX\n${timeout}\n#endif`)
-  .replace('/* POWER_BENCH_TESTS */', read('tests/fd6288_power_adapter_tests.c'));
+  .replace('/* POWER_BENCH_TESTS */', read('tests/fd6288_power_adapter_tests.c') + '\n' + read('tests/fd6288_sequence_tests.c'));
 // Ensure the tested adapter is hooked into all output/timing entry points.
 for (const [signature, token] of [
   ['void setInput()', 'fdBenchGuardInput()'], ['void setInput()', 'fdBenchBegin()'],
@@ -69,12 +70,17 @@ for (const [signature, token] of [
   ['void tenKhzRoutine()', 'fdBenchWritePwm(adjusted_duty_cycle)'],
   ['void zcfoundroutine()', 'fdBenchDeadlineExpired()'],
   ['void PeriodElapsedCallback()', 'if (fd_power_bench.inhibit) return;'],
+  ['void setInput()', 'fdRevStartDrive()'],
+  ['void tenKhzRoutine()', 'fdRevTick()'],
+  ['void zcfoundroutine()', 'fdRevObserveEdge()'],
+  ['void PeriodElapsedCallback()', 'if (fd_rev_acquiring) return;'],
 ]) assert(functionBody(main, signature).includes(token), `Missing hook: ${signature}: ${token}`);
 const output = fs.mkdtempSync(path.join(os.tmpdir(), 'fd6288-host-tests-'));
-for (const variant of [0, 1, 2, 3]) {
+for (const variant of [0, 1, 2, 3, 4]) {
 const binary = path.join(output, `test-${variant}`);
 const compile = spawnSync(process.env.CC || 'cc', [
-  `-DFD6288_STARTUP_TIMING_FIX=${variant === 1 ? 1 : 0}`,
+  `-DFD6288_STARTUP_TIMING_FIX=${[1, 4].includes(variant) ? 1 : 0}`,
+  ...(variant === 4 ? ['-DTARGET_STARTUP_SEQUENCE'] : []),
   ...(variant >= 2 ? ['-DTARGET_STARTUP_POWER_BENCH',
     `-DFD6288_STARTUP_POWER_EXTRA=${variant === 2 ? 0 : 40}`,
     `-DFD6288_TRACE_VARIANT=${variant}`] : []),

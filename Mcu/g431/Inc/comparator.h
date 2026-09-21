@@ -51,6 +51,9 @@ typedef struct {
 extern volatile AdcZcdDiagnostics adc_zcd_diag;
 extern volatile AdcZcdTrace adc_zcd_trace[ADC_ZCD_TRACE_LENGTH];
 void adcZcdResetAcquisition(uint8_t reason);
+#ifdef TARGET_STARTUP_SEQUENCE
+void adcZcdSeedHandoff(uint32_t period);
+#endif
 #ifdef TARGET_STARTUP_POWER_BENCH
 uint8_t adcZcdDriveCrossings(void);
 #endif

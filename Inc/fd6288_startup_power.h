@@ -3,12 +3,13 @@
 #include "targets.h"
 #ifdef TARGET_STARTUP_POWER_BENCH
 #include "fd6288_startup_power_policy.h"
+#include "fd6288_startup_sequence.h"
 #define FD_POWER_SUMMARIES 16u
 #define FD_POWER_BENCH_MAGIC 0x46504231u
 enum {
     FD_BENCH_WINDOW = 1, FD_BENCH_NATIVE_STUCK, FD_BENCH_SAFETY_CAP,
     FD_BENCH_NOT_RUNNING, FD_BENCH_BAD_CONFIG, FD_BENCH_NO_ZERO,
-    FD_BENCH_OPERATOR_ZERO
+    FD_BENCH_OPERATOR_ZERO, FD_BENCH_NO_LOCK, FD_BENCH_LOST_FEEDBACK
 };
 typedef struct {
     uint32_t id, elapsed_cycles, accepted, timeouts;

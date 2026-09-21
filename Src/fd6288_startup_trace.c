@@ -16,6 +16,24 @@ _Static_assert(offsetof(FdStartupTrace, command) == 20, "trace command ABI");
 _Static_assert(offsetof(FdStartupTrace, sample_first) == 104, "trace header ABI");
 _Static_assert(sizeof(FdStartupTrace) == 23656, "trace block ABI");
 volatile FdStartupTrace fd_startup_trace;
+#ifdef TARGET_STARTUP_SEQUENCE
+static uint8_t fd_trace_failure_pinned;
+void fdTraceTrial(uint32_t id)
+{
+    /* Called with IRQs masked before energizing. Reuse the one RAM buffer,
+     * but never overwrite the first failed trial until explicit manual ARM. */
+    if (fd_trace_failure_pinned) return;
+    fd_startup_trace.state = FD_TRACE_ARMED;
+    fd_startup_trace.capture_id = id;
+    fd_startup_trace.start_cycles = fd_startup_trace.end_cycles = 0u;
+    fd_startup_trace.end_reason = FD_END_NONE;
+    fd_startup_trace.sample_sequence = fd_startup_trace.event_sequence = 0u;
+    fd_startup_trace.no_fresh = 0u;
+    fd_startup_trace.max_sample_cycles = fd_startup_trace.max_event_cycles = 0u;
+    for (uint32_t i = 0u; i < FD_SAMPLE_REASON_COUNT; i++) fd_startup_trace.decisions[i] = 0u;
+}
+void fdTracePinFailure(void) { fd_trace_failure_pinned = 1u; }
+#endif
 static uint8_t fdTraceFlags(void)
 {
     return (forward ? 1u : 0u) | (rising ? 2u : 0u) | (running ? 4u : 0u) |
@@ -122,6 +140,9 @@ void fdTraceControlTick(void)
         fd_startup_trace.command = 0u;
         if (command == FD_TRACE_ARM_COMMAND && adjusted_input == 0u &&
             newinput == 0u && input == 0u && !running && !heli_coast_active) {
+#ifdef TARGET_STARTUP_SEQUENCE
+            fd_trace_failure_pinned = 0u;
+#endif
             /* Only bounded header clearing; buffers are indexed by sequence
              * and need no large memset in the control ISR. */
             fd_startup_trace.state = FD_TRACE_ARMED;

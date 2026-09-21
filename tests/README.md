@@ -62,15 +62,35 @@ The image check verifies HEX checksums/addresses, main-only flash coverage,
 initial stack/reset vectors, `.file_name` coverage, and BIN/HEX consistency.
 It does **not** program flash or validate the settings currently in the ESC.
 
-## Separate, unintegrated startup-power design prototype
+## Startup-power policy and integrated P0/P1/S1 bench adapters
 
 ```sh
 node tests/run_fd6288_power_policy_tests.cjs
 ```
 
 This builds only `experiments/fd6288-startup-power/policy_test.c` on the host,
-with ASan/UBSan. It checks the proposed one-shot floor boost, release, caps,
+with ASan/UBSan. It checks the shared one-shot floor boost, release, caps,
 zero-command rearming, raw-cycle wrap and shared P0/P1 bench-stop request.
 It does NOT build firmware, connect hardware, implement a bridge shutdown, or
-certify safe startup/current. The prototype is deliberately outside firmware
-source directories; read its README's integration blockers before reusing it.
+certify safe startup/current. The firmware adapter is independently exercised
+by `run_fd6288_host_tests.cjs`: A 474, B 488, P0/P1 226 each, S1 12626 assertions
+(including repeated deadline/timeout service checks, not 12626 independent scenarios).
+
+S1 additionally tests actual ADC acceptance into the rev-up policy, both
+directions, the 30 ms alignment, adjacent phase/period-qualified edges,
+delayed handoff with a real-edge-based interval seed, no fabricated ZCs/native
+timeouts, no-edge shutdown with protection Off/On, output guards after stop,
+no positive-command retrigger, native fault priority/recovery, first-failure
+trace retention, manual stopped rearm, raw-counter wrap and delayed service.
+S1 is opt-in, requires trace and timing fix, excludes P0/P1, and still stops
+every trial at 300 ms. It is NOT a continuous-operation or flight image.
+
+```sh
+make -j1 CUSTOM_FD6288_G431 OBJ=obj-startup-sequence-S1 ARM_SDK_PREFIX=arm-none-eabi- FD6288_STARTUP_TRACE=1 FD6288_STARTUP_TIMING_FIX=1 FD6288_STARTUP_SEQUENCE=1
+node tests/check_fd6288_image.cjs obj-startup-sequence-S1/AM32_CUSTOM_FD6288_G431_2.20.bin obj-startup-sequence-S1/AM32_CUSTOM_FD6288_G431_2.20.hex
+node tests/fd6288_capture_tests.cjs obj-startup-sequence-S1/AM32_CUSTOM_FD6288_G431_2.20.elf
+```
+
+The last command uses only mock RPC/memory, not the attached debugger. The
+capture decoder understands S1 event kinds, trial stages and failure reasons;
+`capture_id` identifies the retained trial, which need not be the latest trial.

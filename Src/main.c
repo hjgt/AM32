@@ -887,6 +887,11 @@ static FdPowerPolicy fd_power_policy;
 static FdPowerSummary fd_power_work;
 static uint32_t fd_power_accepted_start, fd_power_timeouts_start;
 static uint8_t fd_power_starting;
+#ifdef TARGET_STARTUP_SEQUENCE
+static FdRevPolicy fd_rev;
+volatile uint8_t fd_rev_acquiring;
+void commutate(void);
+#endif
 
 static uint8_t fdBenchConfigOk(void)
 {
@@ -923,6 +928,9 @@ static void fdBenchFinish(uint8_t reason)
     if (!fd_power_bench.active_id) return;
     fdBenchObserve(DWT->CYCCNT);
     fd_power_work.reason = reason;
+#ifdef TARGET_STARTUP_SEQUENCE
+    fd_power_work.reserved = fd_rev.stage; /* S1 ABI extension: final stage */
+#endif
     fd_power_bench.records[(fd_power_work.id - 1u) % FD_POWER_SUMMARIES] = fd_power_work;
     __DMB();
     fd_power_bench.completed++;
@@ -935,6 +943,15 @@ static void fdBenchStop(uint8_t reason)
     __disable_irq();
     if (!fd_power_bench.inhibit) {
         fd_power_bench.inhibit = 1u; /* publish before canceling pending work */
+#ifdef TARGET_STARTUP_SEQUENCE
+        if (reason == FD_BENCH_WINDOW && fd_rev.stage != FD_REV_CLOSED)
+            reason = FD_BENCH_NO_LOCK;
+        if (reason == FD_BENCH_WINDOW &&
+            adc_zcd_diag.resets[ADC_ZCD_RESET_TIMEOUT] != fd_power_timeouts_start)
+            reason = FD_BENCH_LOST_FEEDBACK;
+        if (reason != FD_BENCH_WINDOW && fd_power_bench.active_id) fdTracePinFailure();
+        fd_rev_acquiring = 0u;
+#endif
         fdBenchFinish(reason);
         fd_power_bench.stops++;
         fd_power_bench.last_reason = reason;
@@ -963,11 +980,30 @@ static void fdBenchService(void)
         else if (drive_safety_limit_inhibit) fdBenchStop(FD_BENCH_SAFETY_CAP);
         else if (!adjusted_input) {
             fdBenchFinish(FD_BENCH_OPERATOR_ZERO);
+#ifdef TARGET_STARTUP_SEQUENCE
+            fd_rev_acquiring = 0u;
+#endif
             fdPowerOperatorZero(&fd_power_policy);
             fd_power_bench.floor = 0u;
         } else if (!armed || (!running && !fd_power_starting) || heli_coast_active) {
             fdBenchStop(FD_BENCH_NOT_RUNNING);
         } else {
+#ifdef TARGET_STARTUP_SEQUENCE
+            uint32_t age = now - fd_power_policy.started;
+            if (age >= FD_POWER_TRIAL_TICKS) {
+                fdBenchStop(FD_BENCH_WINDOW);
+            } else {
+                uint16_t requested = fd_rev.stage == FD_REV_ALIGN ? 360u : 400u;
+                if (fd_rev.stage == FD_REV_CLOSED) {
+                    uint32_t fade = now - fd_rev.edge_at;
+                    requested = 360u + (fade < FD_POWER_FADE_TICKS ?
+                        40u * (FD_POWER_FADE_TICKS - fade) / FD_POWER_FADE_TICKS : 0u);
+                }
+                uint16_t cap = driveEffectiveDutyLimit();
+                fd_power_bench.floor = requested < cap ? requested : cap;
+                if (!cap) fdBenchStop(FD_BENCH_SAFETY_CAP);
+            }
+#else
             fd_power_bench.floor = fdPowerFloor(&fd_power_policy, now,
                 min_startup_duty, startup_max_duty_cycle, driveEffectiveDutyLimit(),
                 adcZcdDriveCrossings(), 1u);
@@ -975,6 +1011,7 @@ static void fdBenchService(void)
                 fdBenchStop(FD_BENCH_WINDOW);
             else if (fd_power_policy.stop_reason)
                 fdBenchStop(FD_BENCH_SAFETY_CAP);
+#endif
         }
     }
     __set_PRIMASK(mask);
@@ -1030,6 +1067,11 @@ static uint8_t fdBenchBegin(void)
     fd_power_bench.active_id = fd_power_work.id;
     fd_power_bench.floor = min_startup_duty;
     fd_power_starting = 1u;
+#ifdef TARGET_STARTUP_SEQUENCE
+    fdRevBeginPolicy(&fd_rev, DWT->CYCCNT);
+    fd_rev_acquiring = 1u;
+    fdTraceTrial(fd_power_work.id);
+#endif
     __set_PRIMASK(mask);
     return 1u;
 }
@@ -1039,6 +1081,68 @@ static uint8_t fdBenchDeadlineExpired(void)
     return fd_power_bench.inhibit || (fd_power_bench.active_id &&
         (uint32_t)(DWT->CYCCNT - fd_power_policy.started) >= FD_POWER_TRIAL_TICKS);
 }
+
+#ifdef TARGET_STARTUP_SEQUENCE
+static void fdRevStartDrive(void)
+{
+    DISABLE_COM_TIMER_INT();
+    old_routine = 1u;
+    zero_crosses = 0u;
+    /* Always the same physical vector. Direction applies to the next step. */
+    step = forward ? 0 : 2;
+    commutation_interval = FD_REV_FIRST_PERIOD / 80u;
+    SET_INTERVAL_TIMER_COUNT(0u);
+    commutate();
+}
+
+static void fdRevTick(void)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    fdBenchService();
+    if (fd_power_bench.inhibit || !fd_power_bench.active_id || !running ||
+        !adjusted_input || !fd_rev_acquiring) {
+        __set_PRIMASK(mask);
+        return;
+    }
+    uint32_t now = DWT->CYCCNT;
+    uint8_t action = fdRevAdvancePolicy(&fd_rev, now);
+    if (action == FD_REV_HANDOFF) {
+        fd_rev_acquiring = 0u;
+        commutation_interval = fd_rev.measured / 80u; /* TIM2: 0.5 us/tick */
+        thiszctime = commutation_interval;
+        zero_crosses = FD_REV_REQUIRED_EDGES; /* only observed qualified edges */
+        for (unsigned i = 0u; i < 6u; i++) commutation_intervals[i] = commutation_interval;
+        average_interval = commutation_interval;
+        last_average_interval = commutation_interval;
+        desync_check = 0u;
+        adcZcdSeedHandoff(commutation_interval);
+        SET_INTERVAL_TIMER_COUNT((now - fd_rev.edge_at) / 80u);
+        fdTraceEvent(FD_EVENT_REV_HANDOFF, fd_rev.confidence);
+        commutate();
+    } else if (action == FD_REV_STEP) {
+        /* Planned steps never increment zero_crosses/native timeout counters
+         * and never feed the measured closed-loop period estimator. */
+        SET_INTERVAL_TIMER_COUNT(0u);
+        fdTraceEvent(FD_EVENT_REV_STEP, fd_rev.period / FD_REV_US);
+        commutate();
+        bad_count = 0u;
+    }
+    __set_PRIMASK(mask);
+}
+
+static void fdRevObserveEdge(void)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    if (!fd_power_bench.inhibit && fd_rev_acquiring) {
+        uint8_t timing = eepromBuffer.auto_advance ? auto_advance_level : temp_advance;
+        (void)fdRevEdgePolicy(&fd_rev, DWT->CYCCNT, timing);
+        fdTraceEvent(FD_EVENT_REV_EDGE, (fd_rev.stage << 8) | fd_rev.confidence);
+    }
+    __set_PRIMASK(mask);
+}
+#endif
 
 static void fdBenchWritePwm(uint16_t ticks)
 {
@@ -1461,6 +1565,9 @@ void commutate()
 void PeriodElapsedCallback()
 {
     DISABLE_COM_TIMER_INT(); // disable interrupt
+#ifdef TARGET_STARTUP_SEQUENCE
+    if (fd_rev_acquiring) return;
+#endif
     commutate();
 #ifdef TARGET_STARTUP_POWER_BENCH
     if (fd_power_bench.inhibit) return;
@@ -1526,6 +1633,9 @@ void startMotor()
 #if defined(TARGET_ADC_ZCD_GUARD) && FD6288_STARTUP_TIMING_FIX
 static void fd6288TimeoutStep(void)
 {
+#ifdef TARGET_STARTUP_SEQUENCE
+    if (fd_rev_acquiring) return; /* controlled rev-up owns the sector timer */
+#endif
     if (INTERVAL_TIMER_COUNT <= 45000u || running != 1u) return;
     uint32_t mask = __get_PRIMASK();
     __disable_irq();
@@ -1815,6 +1925,9 @@ if (!stepper_sine && armed) {
 #ifdef TARGET_ADC_ZCD_GUARD
                 adcZcdResetAcquisition(ADC_ZCD_RESET_START);
 #endif
+#ifdef TARGET_STARTUP_SEQUENCE
+                fdRevStartDrive();
+#else
                 if (!old_routine) {
                     startMotor();
                 } else {
@@ -1827,6 +1940,7 @@ if (!stepper_sine && armed) {
                     commutation_interval = 10000;
                     SET_INTERVAL_TIMER_COUNT(5000);
                 }
+#endif
                 running = 1;
                 last_duty_cycle = min_startup_duty;
 #ifdef TARGET_STARTUP_POWER_BENCH
@@ -1979,6 +2093,9 @@ if (!stepper_sine && armed) {
 #ifdef TARGET_STARTUP_POWER_BENCH
                 fdBenchService();
                 uint16_t startup_floor = fd_power_bench.floor;
+#ifdef TARGET_STARTUP_SEQUENCE
+                if (fd_rev_acquiring) duty_cycle_setpoint = startup_floor;
+#endif
                 if (duty_cycle_setpoint < startup_floor) {
                     duty_cycle_setpoint = startup_floor;
                 }
@@ -2035,6 +2152,9 @@ void tenKhzRoutine()
 { // 20khz as of 2.00 to be renamed
 #ifdef TARGET_STARTUP_POWER_BENCH
     fdBenchService();
+#endif
+#ifdef TARGET_STARTUP_SEQUENCE
+    fdRevTick();
 #endif
     fdTraceControlTick();
     duty_cycle = duty_cycle_setpoint;
@@ -2394,6 +2514,12 @@ void zcfoundroutine()
 #ifdef TARGET_STARTUP_POWER_BENCH
     fdBenchService();
     if (fd_power_bench.inhibit || (!running && !fd_power_starting)) return;
+#endif
+#ifdef TARGET_STARTUP_SEQUENCE
+    if (fd_rev_acquiring) {
+        fdRevObserveEdge();
+        return;
+    }
 #endif
 #ifdef TARGET_STUCK_ROTOR_LATCH
     if (stuck_rotor_inhibit != 0u) {

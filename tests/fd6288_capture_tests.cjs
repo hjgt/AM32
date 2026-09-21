@@ -6,7 +6,7 @@ const path = require('node:path');
 const {decode, decodeBench, parseHex, symbols, hardware, SIZE, HEADER, MAGIC} = require('../tools/scripts/fd6288_startup_capture.cjs');
 const elf = path.resolve(process.argv[2] || 'obj-startup-timing-B/AM32_CUSTOM_FD6288_G431_2.20.elf');
 const syms = symbols(elf);
-const variant = syms.fd_power_bench ? (elf.includes('power-P0') ? 2 : 3) : 1;
+const variant = syms.fd_rev_acquiring ? 4 : syms.fd_power_bench ? (elf.includes('power-P0') ? 2 : 3) : 1;
 const flash = parseHex(fs.readFileSync(elf.replace(/\.elf$/, '.hex'), 'utf8'));
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'fd6288-capture-tests-'));
 function fixture(samples = 700, events = 200) {
@@ -72,12 +72,27 @@ function mock({moving = false, cpu = 'running', wrongFlash = false, badABI = fal
   return {connect: async () => api, writes: () => writes};
 }
 async function main() {
-  const bench = decodeBench(benchFixture());
+  const bench = decodeBench(benchFixture(), variant);
   assert.equal(bench.records.length, 16); assert.equal(bench.records[0].id, 3);
   assert.equal(bench.records[15].id, 18); assert.equal(bench.omitted_earlier_trials, 2);
   assert.equal(bench.records[0].elapsed_us, 300000);
   assert.equal(bench.records[0].peak_filtered_current_A, 1.23);
   assert.equal(bench.records[0].reason, 'window_300ms');
+  const revSummary = benchFixture(1);
+  revSummary[70] = 8; revSummary[71] = 2;
+  assert.equal(decodeBench(revSummary, 4).records[0].reason, 'rev_no_lock');
+  assert.equal(decodeBench(revSummary, 4).records[0].rev_stage, 'open_loop');
+  revSummary[70] = 9; revSummary[71] = 4;
+  assert.equal(decodeBench(revSummary, 4).records[0].reason, 'rev_lost_feedback');
+  revSummary[71] = 5;
+  assert.throws(() => decodeBench(revSummary, 4), /Unknown rev-up stage/);
+  const revTrace = fixture(0, 1);
+  revTrace.writeUInt32LE(4, 8);
+  for (const offset of [HEADER + 576 * 32, HEADER + 608 * 32]) {
+    revTrace[offset + 30] = 10; revTrace.writeUInt16LE(0x0306, offset + 26);
+  }
+  assert.equal(decode(revTrace).events.records[0].rev_stage, 'pending_handoff');
+  assert.equal(decode(revTrace).events.records[0].confidence, 6);
   assert.equal(decodeBench(benchFixture(0)).records.length, 0);
   const badBench = benchFixture(); badBench.writeUInt32LE(19, 32);
   assert.throws(() => decodeBench(badBench), /Unfinished/);

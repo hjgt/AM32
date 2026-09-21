@@ -34,7 +34,11 @@ static void benchStart(void)
     CHECK(fdBenchBegin());
     fdTraceBegin();
     adcZcdResetAcquisition(ADC_ZCD_RESET_START);
+#ifdef TARGET_STARTUP_SEQUENCE
+    fdRevStartDrive();
+#else
     commutate();
+#endif
     running = 1; fd_power_starting = 0;
     last_duty_cycle = duty_cycle = 360;
     fdBenchService();

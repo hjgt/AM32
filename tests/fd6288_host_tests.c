@@ -100,6 +100,9 @@ volatile uint32_t zero_crosses;
 static uint8_t zcfound, bemfcounter, bad_count, bad_count_threshold = 6;
 char forward = 1;
 static unsigned desync_check, average_interval;
+#ifdef TARGET_STARTUP_SEQUENCE
+static unsigned last_average_interval;
+#endif
 static unsigned drive_safety_limit_inhibit;
 static unsigned commutation_intervals[6];
 static unsigned advance, temp_advance = 16;
@@ -515,7 +518,9 @@ static void test_period_and_forced_steps(void)
 
 int main(void)
 {
-#ifdef TARGET_STARTUP_POWER_BENCH
+#ifdef TARGET_STARTUP_SEQUENCE
+    test_sequence();
+#elif defined(TARGET_STARTUP_POWER_BENCH)
     test_power_adapter();
 #else
     test_all_phases();

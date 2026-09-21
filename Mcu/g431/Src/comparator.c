@@ -9,6 +9,7 @@
 #include "common.h"
 #include "targets.h"
 #include "fd6288_startup_trace.h"
+#include "fd6288_startup_sequence.h"
 
 #ifdef USE_ADC_ZCD
 #include "ADC.h"
@@ -77,6 +78,14 @@ static uint8_t adc_zcd_drive_crossings;
 static uint8_t adc_zcd_required_samples;
 static uint32_t adc_zcd_earliest;
 static uint32_t adc_zcd_last_real_interval;
+#ifdef TARGET_STARTUP_SEQUENCE
+void adcZcdSeedHandoff(uint32_t period)
+{
+    /* Six real, phase-qualified adjacent edges preceded this handoff. */
+    adc_zcd_drive_crossings = 5u;
+    adc_zcd_last_real_interval = period;
+}
+#endif
 
 #ifdef TARGET_STARTUP_POWER_BENCH
 uint8_t adcZcdDriveCrossings(void)
@@ -390,6 +399,12 @@ void changeCompInput(void)
     }
     adc_zcd_earliest = (adc_zcd_drive_crossings >= 5u) ?
         (gate_interval >> 1) : 0u;
+#ifdef TARGET_STARTUP_SEQUENCE
+    /* In open loop CNT is time since commanded step, NOT since the previous
+     * ZC. The rev-up policy checks phase/period; the closed-loop half-period
+     * gate is not meaningful until that timebase is rebased at handoff. */
+    if (fd_rev_acquiring) adc_zcd_earliest = 0u;
+#endif
     adc_zcd_required_samples =
         (commutation_interval >= polling_mode_changeover) ? 2u : 1u;
     __set_PRIMASK(primask);
