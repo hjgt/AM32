@@ -95,10 +95,10 @@ function decodeBench(b, variant = 3) {
     assert(b[o + 30] > 0 && b[o + 30] < benchReasons.length, 'Unknown trial reason');
     r.reason = benchReasons[b[o + 30]];
     if (variant >= 4) {
-      const stage = variant === 5 ? b[o + 31] & 15 : b[o + 31];
+      const stage = variant >= 5 ? b[o + 31] & 15 : b[o + 31];
       assert(stage < revStages.length, 'Unknown rev-up stage');
       r.rev_stage = revStages[stage];
-      if (variant === 5) {
+      if (variant >= 5) {
         r.max_qualified_streak = b[o + 31] >> 4;
         assert(r.max_qualified_streak <= 6, 'Invalid qualified streak');
         if (b[o + 30] === 1) r.reason = 'closed_observation_1s';
@@ -107,9 +107,9 @@ function decodeBench(b, variant = 3) {
     records.push(r);
   }
   return {header: h, records, omitted_earlier_trials: Math.max(0, h.trials - 16),
-    caveats: [variant >= 4 ? 'Last 16 summaries. Trace capture_id is the trial id; each start replaces a non-failure trace, first failed trial remains pinned until explicit ARM. Closed-loop stage alone is not proof of normal loaded operation.' : 'Last 16 trial summaries, not continuous waveforms. Main trace remains first-shot until explicitly rearmed.',
+    caveats: [variant >= 6 ? 'Last 16 summaries. Paired acquisition banks separately retain first completed failure and first full closed-loop observation. Early operator zero does not pin a bank.' : variant >= 4 ? 'Last 16 summaries. Trace capture_id is the trial id; each start replaces a non-failure trace, first failed trial remains pinned until explicit ARM. Closed-loop stage alone is not proof of normal loaded operation.' : 'Last 16 trial summaries, not continuous waveforms. Main trace remains first-shot until explicitly rearmed.',
       'Observed times are service timestamps, not physical zero-cross timestamps. Current is a filtered software maximum, not peak phase current.',
-      variant === 5 ? 'S2: acquisition <= 300 ms; only six-edge handoff earns <= 1 s observation; first runtime timeout aborts. Not a hardware current limiter, native stuck-trip proof or flight mode.' : 'The 300 ms bench window is a software stop request, not a hardware current limiter or a flight mode.']};
+      variant >= 5 ? 'S2: acquisition <= 300 ms; only six-edge handoff earns <= 1 s observation; first runtime timeout aborts. Not a hardware current limiter, native stuck-trip proof or flight mode.' : 'The 300 ms bench window is a software stop request, not a hardware current limiter or a flight mode.']};
 }
 function parseHex(text) {
   let base = 0, eof = false;
@@ -129,7 +129,7 @@ function parseHex(text) {
   assert(eof && data.has(0x08001000) && data.has(0x0800f7ff), 'Incomplete image');
   return data;
 }
-function symbols(elf) {
+function symbols(elf, paired = false) {
   const p = spawnSync('arm-none-eabi-nm', ['-S', '--defined-only', elf], {encoding: 'utf8'});
   assert.equal(p.status, 0, p.stderr);
   const out = {};
@@ -137,8 +137,9 @@ function symbols(elf) {
     const m = line.match(/^([\da-f]+) ([\da-f]+) \w (\w+)$/i);
     if (m) out[m[3]] = {address: parseInt(m[1], 16), size: parseInt(m[2], 16)};
   }
-  assert(out.fd_startup_trace?.size === SIZE, 'ELF has no supported bench trace');
-  for (const n of ['fd_startup_trace', 'input', 'adjusted_input', 'newinput', 'running', 'heli_coast_active', 'duty_cycle', 'stuck_rotor_inhibit', 'stuck_rotor_trip_count', 'bemf_timeout', 'bemf_timeout_happened', 'eepromBuffer']) {
+  const traceSymbol = paired ? 'fd_startup_pair' : 'fd_startup_trace';
+  assert(out[traceSymbol]?.size === (paired ? 18624 : SIZE), 'ELF has no supported bench trace');
+  for (const n of [traceSymbol, 'input', 'adjusted_input', 'newinput', 'running', 'heli_coast_active', 'duty_cycle', 'stuck_rotor_inhibit', 'stuck_rotor_trip_count', 'bemf_timeout', 'bemf_timeout_happened', 'eepromBuffer']) {
     assert(out[n] && out[n].address >= 0x20000000 && out[n].address + out[n].size <= 0x20008000, `Bad/missing RAM symbol ${n}`);
   }
   if (out.fd_power_bench) assert(out.fd_power_bench.size === 552 &&
@@ -274,5 +275,5 @@ async function main(args) {
   if (['arm', 'dump'].includes(args[0])) { await hardware(args[0], args[1], args[2] === '--stopped' ? undefined : args[2], args.includes('--stopped'), connect, args.includes('--quick-dump')); return; }
   console.log('Offline: node tools/scripts/fd6288_startup_capture.cjs decode TRACE.bin\nStopped board only (OpenOCD already running):\n  ... arm MAIN.elf --stopped\n  ... dump MAIN.elf NEW-TRACE.bin --stopped [--quick-dump]\nQuick dump: known, already verified P0/P1 session only; selected identity bytes, NOT a full flash check. Never available for arm.\nNever starts OpenOCD, halts/resets CPU, changes throttle, or writes flash/settings.\nARM writes only a trace command in RAM after flash identity + stopped checks.');
 }
-module.exports = {decode, decodeBench, header, parseHex, symbols, hardware, SIZE, HEADER, MAGIC};
+module.exports = {decode, decodeBench, header, parseHex, symbols, hardware, connect, SIZE, HEADER, MAGIC};
 if (require.main === module) main(process.argv.slice(2)).catch(e => { console.error(e.message); process.exitCode = 1; });

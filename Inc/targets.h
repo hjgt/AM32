@@ -3212,6 +3212,9 @@
 #ifndef FD6288_STARTUP_TIMING_FIX
 #define FD6288_STARTUP_TIMING_FIX 0
 #endif
+#ifndef FD6288_STARTUP_PAIR_TRACE
+#define FD6288_STARTUP_PAIR_TRACE 0
+#endif
 #if FD6288_STARTUP_TIMING_FIX != 0 && FD6288_STARTUP_TIMING_FIX != 1
 #error "FD6288_STARTUP_TIMING_FIX must be 0 (trace only) or 1 (timing candidate)"
 #endif
@@ -3226,7 +3229,12 @@
 #define TARGET_STARTUP_POWER_BENCH /* shared bounded trial / output interlocks */
 #if FD6288_STARTUP_SEQUENCE == 2
 #define TARGET_STARTUP_SEQUENCE_V2
+#if FD6288_STARTUP_PAIR_TRACE
+#define TARGET_STARTUP_PAIR_TRACE
+#define FD6288_TRACE_VARIANT 6u
+#else
 #define FD6288_TRACE_VARIANT 5u
+#endif
 #elif FD6288_STARTUP_SEQUENCE == 1
 #define FD6288_TRACE_VARIANT 4u
 #else
@@ -3241,6 +3249,12 @@
 #endif
 #define TARGET_STARTUP_POWER_BENCH
 #define FD6288_TRACE_VARIANT (2u + (FD6288_STARTUP_POWER_EXTRA != 0))
+#endif
+#if FD6288_STARTUP_PAIR_TRACE && !defined(TARGET_STARTUP_PAIR_TRACE)
+#error "Paired trace requires S2: trace=1 timing_fix=1 sequence=2"
+#endif
+#if FD6288_STARTUP_PAIR_TRACE != 0 && FD6288_STARTUP_PAIR_TRACE != 1
+#error "FD6288_STARTUP_PAIR_TRACE must be 0 or 1"
 #endif
 #define VARIABLE_PWM
 #define USE_DSHOT_TELEMETRY

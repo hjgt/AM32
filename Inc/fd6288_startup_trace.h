@@ -34,6 +34,7 @@ enum {
 /* Flags: bit0 forward, bit1 rising, bit2 running, bit3 Coast, bit4 old_routine.
  * ADC values are software-consumed injected results, NOT edge timestamps or
  * simultaneous ADC samples. No claim of mechanical direction is implied. */
+#ifndef TARGET_STARTUP_PAIR_TRACE
 typedef struct {
     uint32_t sequence, cycles;
     uint16_t elapsed, interval, va, vb, vc;
@@ -60,6 +61,7 @@ typedef struct {
     FdTraceEvent event_ring[FD_TRACE_EVENT_RING];
 } FdStartupTrace;
 extern volatile FdStartupTrace fd_startup_trace;
+#endif
 void fdTraceInit(void);
 void fdTraceControlTick(void);
 void fdTraceBegin(void);
@@ -80,4 +82,11 @@ void fdTracePinFailure(void);
 #define fdTraceSample(a, b, c, m, r, p, n) ((void)0)
 #define fdTraceNoFresh() ((void)0)
 #define fdTraceFreeze(reason) ((void)0)
+#endif
+
+#ifdef TARGET_STARTUP_PAIR_TRACE
+#include "fd6288_startup_pair.h"
+void fdTraceTrialFinish(uint8_t reason, uint8_t stage);
+#else
+#define fdTraceTrialFinish(reason, stage) ((void)0)
 #endif

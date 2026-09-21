@@ -47,6 +47,10 @@ static uint8_t adc_zcd_phase = 0;
 #ifndef ADC_ZCD_HYSTERESIS_COUNTS
 #define ADC_ZCD_HYSTERESIS_COUNTS 8
 #endif
+#ifdef TARGET_STARTUP_PAIR_TRACE
+_Static_assert(ADC_ZCD_HYSTERESIS_COUNTS == FD_PAIR_HYSTERESIS,
+    "Diagnostic side classification must match drive hysteresis");
+#endif
 
 /* Reject conversions that did not observe the driven phase in its ON state. */
 #ifndef ADC_ZCD_MIN_DRIVE_DELTA

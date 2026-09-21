@@ -927,6 +927,9 @@ static void fdBenchFinish(uint8_t reason)
 {
     if (!fd_power_bench.active_id) return;
     fdBenchObserve(DWT->CYCCNT);
+#ifdef TARGET_STARTUP_PAIR_TRACE
+    fdTraceTrialFinish(reason, fd_rev.stage);
+#endif
     fd_power_work.reason = reason;
 #ifdef TARGET_STARTUP_SEQUENCE
     fd_power_work.reserved = fd_rev.stage; /* S1 ABI extension: final stage */
