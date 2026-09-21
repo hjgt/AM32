@@ -108,6 +108,15 @@ async function main() {
   assert.equal(saved.header.variant, variant);
   if (variant >= 2) {
     assert.deepEqual(saved.bench, bench);
+    const quickOut = path.join(temp, 'quick.bin'), quick = mock();
+    await hardware('dump', elf, quickOut, true, quick.connect, true);
+    assert.equal(quick.writes(), 0);
+    assert.deepEqual(JSON.parse(fs.readFileSync(`${quickOut}.json`)).bench, bench);
+    assert.equal(JSON.parse(fs.readFileSync(`${quickOut}.json`)).metadata.identity_check, 'known_session_vectors_and_selected_functions_not_full_flash');
+    await assert.rejects(hardware('arm', elf, undefined, true, quick.connect, true));
+    const wrong = mock({wrongFlash: true});
+    await assert.rejects(hardware('dump', elf, path.join(temp, 'wrong-quick.bin'), true, wrong.connect, true));
+    assert.equal(wrong.writes(), 0);
     const m = mock({badBench: true});
     const badOut = path.join(temp, 'bad-bench.bin');
     await assert.rejects(hardware('dump', elf, badOut, true, m.connect));

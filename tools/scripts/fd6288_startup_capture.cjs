@@ -145,8 +145,9 @@ async function connect() {
     }).then(reply => { assert(reply.startsWith('OK:'), reply); return reply.slice(3); }),
   };
 }
-async function hardware(command, elf, out, stopped, connection = connect) {
+async function hardware(command, elf, out, stopped, connection = connect, quickDump = false) {
   assert(['arm', 'dump'].includes(command) && stopped, 'Require arm/dump + --stopped after operator confirmation');
+  assert(!quickDump || command === 'dump', 'Quick identity is read-only dump only');
   elf = path.resolve(elf);
   const syms = symbols(elf), hexPath = elf.replace(/\.elf$/, '.hex');
   assert.notEqual(hexPath, elf);
@@ -187,9 +188,22 @@ async function hardware(command, elf, out, stopped, connection = connect) {
       return state;
     }
     await stoppedCheck();
-    // Compare every defined HEX byte, ignoring erased vs zero-filled BIN gaps.
-    for (let a = 0x08001000; a < 0x0800f800; a += 1024) {
-      const n = Math.min(1024, 0x0800f800 - a);
+    // A just-flashed, already verified P0/P1 session can use a small identity
+    // check for repeated read-only dumps. This is NOT full flash verification.
+    let ranges;
+    if (quickDump) {
+      assert(syms.fd_power_bench, 'Quick dump supports known bench builds only');
+      ranges = [[0x08001000, 8], [0x0800f7e0, 32]];
+      for (const name of ['fdTraceInit', 'fdBenchConfigOk', 'fdBenchStop', 'fdBenchService']) {
+        const s = syms[name];
+        assert(s && s.address >= 0x08001000 && s.address + s.size <= 0x0800f800 && s.size > 0 && s.size <= 1024);
+        ranges.push([s.address, s.size]);
+      }
+    } else {
+      ranges = [];
+      for (let a = 0x08001000; a < 0x0800f800; a += 1024) ranges.push([a, Math.min(1024, 0x0800f800 - a)]);
+    }
+    for (const [a, n] of ranges) {
       if (![...Array(n).keys()].some(i => expected.has(a + i))) continue;
       const b = await memory(a, n);
       for (let i = 0; i < n; i++) if (expected.has(a + i)) assert.equal(b[i], expected.get(a + i), `Firmware mismatch at 0x${(a + i).toString(16)}`);
@@ -226,7 +240,7 @@ async function hardware(command, elf, out, stopped, connection = connect) {
         assert.equal(bench.header.extra, before.variant === 2 ? 0 : 40);
         await stoppedCheck();
       }
-      const d = {...decode(b), bench, metadata: {capturedAt: new Date().toISOString(), elf, hex_sha256: sha(fs.readFileSync(hexPath)), trace_sha256: sha(b), stoppedState, protection_after_zero: protection, settings_ram_hex: settings.toString('hex'), bench_raw_hex: benchBytes?.toString('hex')}};
+      const d = {...decode(b), bench, metadata: {capturedAt: new Date().toISOString(), elf, identity_check: quickDump ? 'known_session_vectors_and_selected_functions_not_full_flash' : 'all_defined_hex_bytes', hex_sha256: sha(fs.readFileSync(hexPath)), trace_sha256: sha(b), stoppedState, protection_after_zero: protection, settings_ram_hex: settings.toString('hex'), bench_raw_hex: benchBytes?.toString('hex')}};
       fs.mkdirSync(path.dirname(path.resolve(out)), {recursive: true});
       fs.writeFileSync(out, b, {flag: 'wx'});
       fs.writeFileSync(`${out}.json`, JSON.stringify(d, null, 2) + '\n', {flag: 'wx'});
@@ -236,8 +250,8 @@ async function hardware(command, elf, out, stopped, connection = connect) {
 }
 async function main(args) {
   if (args[0] === 'decode') { console.log(JSON.stringify(decode(fs.readFileSync(args[1])), null, 2)); return; }
-  if (['arm', 'dump'].includes(args[0])) { await hardware(args[0], args[1], args[2] === '--stopped' ? undefined : args[2], args.includes('--stopped')); return; }
-  console.log('Offline: node tools/scripts/fd6288_startup_capture.cjs decode TRACE.bin\nStopped board only (OpenOCD already running):\n  ... arm MAIN.elf --stopped\n  ... dump MAIN.elf NEW-TRACE.bin --stopped\nNever starts OpenOCD, halts/resets CPU, changes throttle, or writes flash/settings.\nARM writes only a trace command in RAM after flash identity + stopped checks.');
+  if (['arm', 'dump'].includes(args[0])) { await hardware(args[0], args[1], args[2] === '--stopped' ? undefined : args[2], args.includes('--stopped'), connect, args.includes('--quick-dump')); return; }
+  console.log('Offline: node tools/scripts/fd6288_startup_capture.cjs decode TRACE.bin\nStopped board only (OpenOCD already running):\n  ... arm MAIN.elf --stopped\n  ... dump MAIN.elf NEW-TRACE.bin --stopped [--quick-dump]\nQuick dump: known, already verified P0/P1 session only; selected identity bytes, NOT a full flash check. Never available for arm.\nNever starts OpenOCD, halts/resets CPU, changes throttle, or writes flash/settings.\nARM writes only a trace command in RAM after flash identity + stopped checks.');
 }
 module.exports = {decode, decodeBench, header, parseHex, symbols, hardware, SIZE, HEADER, MAGIC};
 if (require.main === module) main(process.argv.slice(2)).catch(e => { console.error(e.message); process.exitCode = 1; });
