@@ -6,11 +6,11 @@ const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 const strip = s => s.replace(/^#include[^\n]*$/gm, '').replace(/^#pragma once$/gm, '');
 const impl = ['Inc/fd6288_startup_pair.h', 'Inc/fd6288_startup_trace.h', 'Src/fd6288_startup_pair.c'].map(p => strip(read(p))).join('\n');
 const source = read('tests/fd6288_pair_tests.c').replace('/* PAIR_IMPLEMENTATION */', impl);
-for (const variant of [6, 7]) {
+for (const variant of [6, 7, 8]) {
 const binary = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'fd6288-pair-')), 'test');
 const fixture = binary + '.bin';
 for (const [cmd, args, opts] of [
-  [process.env.CC || 'cc', [`-DFD6288_TRACE_VARIANT=${variant}`, ...(variant === 7 ? ['-DTARGET_STARTUP_FEEDBACK'] : []), '-std=c11', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined', '-x', 'c', '-', '-o', binary], {input: source}],
+  [process.env.CC || 'cc', [`-DFD6288_TRACE_VARIANT=${variant}`, ...(variant >= 7 ? ['-DTARGET_STARTUP_FEEDBACK'] : []), '-std=c11', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined', '-x', 'c', '-', '-o', binary], {input: source}],
   [binary, [fixture], {}],
 ]) {
   const p = spawnSync(cmd, args, {encoding: 'utf8', ...opts});

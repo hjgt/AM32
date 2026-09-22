@@ -107,9 +107,10 @@ function decodeBench(b, variant = 3) {
     records.push(r);
   }
   return {header: h, records, omitted_earlier_trials: Math.max(0, h.trials - 16),
+    ...(variant === 8 ? {power_profile: {name: 'S3-P',initial_request: 540,acquisition_request: 600,startup_cap: 610,post_handoff_base: 360,release_ms: 20,legacy_extra_is_not_profile_amplitude: true}} : {}),
     caveats: [variant >= 6 ? 'Last 16 summaries. Paired acquisition banks separately retain first completed failure and first full closed-loop observation. Early operator zero does not pin a bank.' : variant >= 4 ? 'Last 16 summaries. Trace capture_id is the trial id; each start replaces a non-failure trace, first failed trial remains pinned until explicit ARM. Closed-loop stage alone is not proof of normal loaded operation.' : 'Last 16 trial summaries, not continuous waveforms. Main trace remains first-shot until explicitly rearmed.',
       'Observed times are service timestamps, not physical zero-cross timestamps. Current is a filtered software maximum, not peak phase current.',
-      variant === 7 ? 'S3: event-led acquisition <= 300 ms; streak counts consecutive ADC-qualified edges, NOT S2 phase-window qualification. Six edges earn <= 1 s observation; first runtime timeout aborts. Not a native stuck-trip proof or flight mode.' : variant >= 5 ? 'S2: acquisition <= 300 ms; only six-edge handoff earns <= 1 s observation; first runtime timeout aborts. Not a hardware current limiter, native stuck-trip proof or flight mode.' : 'The 300 ms bench window is a software stop request, not a hardware current limiter or a flight mode.']};
+      variant >= 7 ? 'S3/S3-P: event-led acquisition <= 300 ms; streak counts consecutive ADC-qualified edges, NOT S2 phase-window qualification. Six edges earn <= 1 s observation; first runtime timeout aborts. Not a native stuck-trip proof or flight mode.' : variant >= 5 ? 'S2: acquisition <= 300 ms; only six-edge handoff earns <= 1 s observation; first runtime timeout aborts. Not a hardware current limiter, native stuck-trip proof or flight mode.' : 'The 300 ms bench window is a software stop request, not a hardware current limiter or a flight mode.']};
 }
 function parseHex(text) {
   let base = 0, eof = false;

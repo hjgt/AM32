@@ -1,5 +1,10 @@
 /* S3 actual ADC + bench adapter + commutation, not a physical motor model. */
 #ifdef TARGET_STARTUP_FEEDBACK
+#ifdef TARGET_STARTUP_S3_POWER
+enum { TEST_INITIAL_REQUEST = 540, TEST_ACQUIRE_REQUEST = 600 };
+#else
+enum { TEST_INITIAL_REQUEST = 360, TEST_ACQUIRE_REQUEST = 400 };
+#endif
 static void feedbackReset(void)
 {
     fd_rev_acquiring = fd_trace_failure_pinned = 0u;
@@ -53,10 +58,52 @@ static void test_feedback(void)
 {
     test_all_phases(); test_confirmation(); test_failed_start_edge_shape();
     test_time_gate_and_resets(); test_coast_unchanged();
+#ifdef TARGET_STARTUP_S3_POWER
+    // Higher REQUEST, same native initial output seed and ramp. No direct
+    // jump to 540/600, no EEPROM edits, no extension of the powered window.
+    feedbackReset(); benchStart();
+    CHECK(min_startup_duty == 360 && startup_max_duty_cycle == 610);
+    CHECK(last_duty_cycle == 360 && fd_power_bench.floor == 540);
+    duty_cycle_setpoint = 2000; actualStartupFloor();
+    for (unsigned i = 1; i <= 100; i++) {
+        duty_cycle = duty_cycle_setpoint; ramp_count = 10; actualRamp();
+        CHECK(duty_cycle == (i < 90 ? 360 + 2 * i : 540));
+        last_duty_cycle = duty_cycle;
+    }
+    benchAt(29999); CHECK(fd_power_bench.floor == 540);
+    benchAt(30000); CHECK(fd_power_bench.floor == 600);
+    actualStartupFloor();
+    for (unsigned i = 1; i <= 40; i++) {
+        duty_cycle = duty_cycle_setpoint; ramp_count = 10; actualRamp();
+        CHECK(duty_cycle == (i < 30 ? 540 + 2 * i : 600));
+        last_duty_cycle = duty_cycle;
+    }
+    hard_cap = 490; fdBenchService(); CHECK(fd_power_bench.floor == 490);
+    actualStartupFloor(); CHECK(duty_cycle_setpoint == 490);
+    hard_cap = 2000;
+    // Post-handoff request releases 600 -> 360 within the SAME 20 ms from
+    // the sixth edge as S3. Early handoff never exceeds the initial 540 cap.
+    for (unsigned early = 0; early <= 1; early++) {
+        feedbackReset(); benchStart(); benchAt(early ? 5000 : 60000);
+        fd_rev.stage = FD_REV_CLOSED;
+        fd_rev.closed_at = fd_rev.edge_at = DWT->CYCCNT;
+        const uint32_t edge = fd_rev.edge_at;
+        fdBenchService(); CHECK(fd_power_bench.floor == (early ? 540 : 600));
+        DWT->CYCCNT = edge + 10000u * FD_REV_US;
+        fdBenchService(); CHECK(fd_power_bench.floor == 480);
+        DWT->CYCCNT = edge + 20000u * FD_REV_US;
+        fdBenchService(); CHECK(fd_power_bench.floor == 360);
+        DWT->CYCCNT = edge + 30000u * FD_REV_US;
+        fdBenchService(); CHECK(fd_power_bench.floor == 360);
+    }
+    feedbackReset(); benchStart(); hard_cap = 0; fdBenchService();
+    CHECK(fd_power_bench.last_reason == FD_BENCH_SAFETY_CAP && !gates && !pwm);
+    CHECK(fd_power_bench.floor == 0);
+#endif
     for (unsigned dir = 0; dir <= 1; dir++) {
         feedbackReset(); forward = dir; benchStart();
         CHECK(step == 1 && fd_rev.stage == FD_REV_OPEN);
-        duty_cycle_setpoint = 2000; actualStartupFloor(); CHECK(duty_cycle_setpoint == 360);
+        duty_cycle_setpoint = 2000; actualStartupFloor(); CHECK(duty_cycle_setpoint == TEST_INITIAL_REQUEST);
         feedbackLock();
         CHECK(!bemf_timeout_happened && !adc_zcd_diag.resets[ADC_ZCD_RESET_TIMEOUT]);
         sequenceComplete();
@@ -70,7 +117,7 @@ static void test_feedback(void)
     CHECK(fd_rev.confidence == 1u && fd_rev.measured == 0u);
     unsigned interval = commutation_interval;
     feedbackRetry();
-    CHECK(fd_power_bench.floor == 400u); /* now >30 ms, same S2 envelope */
+    CHECK(fd_power_bench.floor == TEST_ACQUIRE_REQUEST); /* now >30 ms */
     CHECK(!fd_rev.confidence && !adcZcdDriveCrossings() && !zero_crosses);
     CHECK(bemf_timeout_happened == 1u && commutation_interval == interval);
     CHECK(adc_zcd_diag.resets[ADC_ZCD_RESET_TIMEOUT] == 1u);

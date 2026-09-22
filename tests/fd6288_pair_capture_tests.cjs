@@ -53,6 +53,13 @@ function mock(opts = {}) {
   assert(good.closed && good.reads > 0); assert.deepEqual(fs.readFileSync(out), fixture);
   assert.deepEqual(d.banks, decoded.banks);
   assert.equal(d.header.active_bank, NONE); assert.equal(d.bench.header.trials, 7);
+  if (d.header.variant === 8) {
+    assert.deepEqual(d.bench.power_profile, {name:'S3-P', initial_request:540,
+      acquisition_request:600, startup_cap:610, post_handoff_base:360,
+      release_ms:20, legacy_extra_is_not_profile_amplitude:true});
+    assert.equal(d.banks[0].records[0].commanded_us, null);
+    assert.equal(d.banks[0].records[0].retry_deadline_us, 22500);
+  }
   await assert.rejects(dump(elf, out, true, good.connect));
   for (const name of ['moving', 'halted', 'gates', 'pwm', 'wrongVTOR', 'wrongFlash', 'badABI', 'active', 'benchActive', 'changing', 'badReply']) {
     const api = mock({[name]: true}), target = path.join(temp, name + '.bin');

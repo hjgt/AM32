@@ -1,0 +1,2 @@
+# Keep generated HEX bytes and its documented SHA identical in git/downloads.
+*.hex -text

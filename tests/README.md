@@ -133,3 +133,14 @@ and read-only mock RPC. S3 may exceed the 72-record capacity after repeated
 partial streaks; explicit overflow is not silently treated as complete evidence.
 The decoder exposes `retry_deadline_us` for S3, not a commanded sector period.
 No tests here simulate a physical motor or validate flight/protection behavior.
+
+### S3-P: power-profile-only comparison, paired variant 8
+
+Add `FD6288_STARTUP_S3_POWER=1` to S3's build options. Other sequences or an
+invalid profile are rejected. The host runner adds variant 8 with 945 assertions:
+540/600 requests, unchanged initial seed/ramp, hard-cap priority and bounded
+20 ms post-edge release to 360, plus the complete S3 control regression.
+Paired C/JS and mock capture cover variants 6/7/8. The legacy `extra=40` field
+does not describe S3-P's amplitude: decoded `power_profile` explicitly does.
+With the new option disabled, rebuilt S3 HEX is byte-identical to the baseline.
+This is a bench comparison, not a tested electrical/thermal operating rating.

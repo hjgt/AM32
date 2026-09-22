@@ -1005,6 +1005,20 @@ static void fdBenchService(void)
 #endif
                 fdBenchStop(FD_BENCH_WINDOW);
             } else {
+#ifdef TARGET_STARTUP_S3_POWER
+                /* S3-P power-only comparison. Values are duty requests, not
+                 * measured watts/torque. Retain native ramp, caps, timeout,
+                 * feedback sequence and 20 ms post-handoff release duration. */
+                uint32_t age = now - fd_power_policy.started;
+                uint16_t requested = age < FD_REV_ALIGN_TICKS ? 540u : 600u;
+                if (fd_rev.stage == FD_REV_CLOSED) {
+                    uint32_t fade = now - fd_rev.edge_at;
+                    requested = 360u + (fade < FD_POWER_FADE_TICKS ?
+                        240u * (FD_POWER_FADE_TICKS - fade) / FD_POWER_FADE_TICKS : 0u);
+                    if (age < FD_REV_ALIGN_TICKS && requested > 540u) requested = 540u;
+                }
+                if (requested > startup_max_duty_cycle) requested = startup_max_duty_cycle;
+#else
                 uint16_t requested = fd_rev.stage == FD_REV_ALIGN ? 360u : 400u;
                 if (fd_rev.stage == FD_REV_CLOSED) {
                     uint32_t fade = now - fd_rev.edge_at;
@@ -1018,6 +1032,7 @@ static void fdBenchService(void)
                 if ((uint32_t)(now - fd_power_policy.started) < FD_REV_ALIGN_TICKS)
                     requested = 360u;
 #endif
+#endif /* TARGET_STARTUP_S3_POWER */
                 uint16_t cap = driveEffectiveDutyLimit();
                 fd_power_bench.floor = requested < cap ? requested : cap;
                 if (!cap) fdBenchStop(FD_BENCH_SAFETY_CAP);

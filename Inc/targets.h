@@ -3215,6 +3215,12 @@
 #ifndef FD6288_STARTUP_PAIR_TRACE
 #define FD6288_STARTUP_PAIR_TRACE 0
 #endif
+#ifndef FD6288_STARTUP_S3_POWER
+#define FD6288_STARTUP_S3_POWER 0
+#endif
+#if FD6288_STARTUP_S3_POWER != 0 && FD6288_STARTUP_S3_POWER != 1
+#error "FD6288_STARTUP_S3_POWER must be 0 or 1 (540/600 bench comparison)"
+#endif
 #if FD6288_STARTUP_TIMING_FIX != 0 && FD6288_STARTUP_TIMING_FIX != 1
 #error "FD6288_STARTUP_TIMING_FIX must be 0 (trace only) or 1 (timing candidate)"
 #endif
@@ -3234,11 +3240,18 @@
 #error "S3 feedback acquisition requires paired diagnostics"
 #endif
 #define TARGET_STARTUP_FEEDBACK
+#if FD6288_STARTUP_S3_POWER
+#define TARGET_STARTUP_S3_POWER
+#endif
 #endif
 #if FD6288_STARTUP_PAIR_TRACE
 #define TARGET_STARTUP_PAIR_TRACE
 #ifdef TARGET_STARTUP_FEEDBACK
+#ifdef TARGET_STARTUP_S3_POWER
+#define FD6288_TRACE_VARIANT 8u
+#else
 #define FD6288_TRACE_VARIANT 7u
+#endif
 #else
 #define FD6288_TRACE_VARIANT 6u
 #endif
@@ -3265,6 +3278,9 @@
 #endif
 #if FD6288_STARTUP_PAIR_TRACE != 0 && FD6288_STARTUP_PAIR_TRACE != 1
 #error "FD6288_STARTUP_PAIR_TRACE must be 0 or 1"
+#endif
+#if FD6288_STARTUP_S3_POWER && !defined(TARGET_STARTUP_S3_POWER)
+#error "S3 power comparison requires trace=1 timing_fix=1 sequence=3 pair_trace=1"
 #endif
 #define VARIABLE_PWM
 #define USE_DSHOT_TELEMETRY
