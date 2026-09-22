@@ -108,7 +108,7 @@ function decodeBench(b, variant = 3) {
   }
   return {header: h, records, omitted_earlier_trials: Math.max(0, h.trials - 16),
     ...(variant === 8 ? {power_profile: {name: 'S3-P',initial_request: 540,acquisition_request: 600,startup_cap: 610,post_handoff_base: 360,release_ms: 20,legacy_extra_is_not_profile_amplitude: true}} : {}),
-    caveats: [variant >= 6 ? 'Last 16 summaries. Paired acquisition banks separately retain first completed failure and first full closed-loop observation. Early operator zero does not pin a bank.' : variant >= 4 ? 'Last 16 summaries. Trace capture_id is the trial id; each start replaces a non-failure trace, first failed trial remains pinned until explicit ARM. Closed-loop stage alone is not proof of normal loaded operation.' : 'Last 16 trial summaries, not continuous waveforms. Main trace remains first-shot until explicitly rearmed.',
+    caveats: [variant >= 9 ? 'Last 16 summaries. S3-D retains separate first no-lock, first post-handoff loss and first complete observation tails. Operator zero and other stops are not pinned.' : variant >= 6 ? 'Last 16 summaries. Paired acquisition banks separately retain first completed failure and first full closed-loop observation. Early operator zero does not pin a bank.' : variant >= 4 ? 'Last 16 summaries. Trace capture_id is the trial id; each start replaces a non-failure trace, first failed trial remains pinned until explicit ARM. Closed-loop stage alone is not proof of normal loaded operation.' : 'Last 16 trial summaries, not continuous waveforms. Main trace remains first-shot until explicitly rearmed.',
       'Observed times are service timestamps, not physical zero-cross timestamps. Current is a filtered software maximum, not peak phase current.',
       variant >= 7 ? 'S3/S3-P: event-led acquisition <= 300 ms; streak counts consecutive ADC-qualified edges, NOT S2 phase-window qualification. Six edges earn <= 1 s observation; first runtime timeout aborts. Not a native stuck-trip proof or flight mode.' : variant >= 5 ? 'S2: acquisition <= 300 ms; only six-edge handoff earns <= 1 s observation; first runtime timeout aborts. Not a hardware current limiter, native stuck-trip proof or flight mode.' : 'The 300 ms bench window is a software stop request, not a hardware current limiter or a flight mode.']};
 }
@@ -138,8 +138,8 @@ function symbols(elf, paired = false) {
     const m = line.match(/^([\da-f]+) ([\da-f]+) \w (\w+)$/i);
     if (m) out[m[3]] = {address: parseInt(m[1], 16), size: parseInt(m[2], 16)};
   }
-  const traceSymbol = paired ? 'fd_startup_pair' : 'fd_startup_trace';
-  assert(out[traceSymbol]?.size === (paired ? 18624 : SIZE), 'ELF has no supported bench trace');
+  const traceSymbol = paired === 'wave' ? 'fd_startup_wave' : paired ? 'fd_startup_pair' : 'fd_startup_trace';
+  assert(out[traceSymbol]?.size === (paired === 'wave' ? 21568 : paired ? 18624 : SIZE), 'ELF has no supported bench trace');
   for (const n of [traceSymbol, 'input', 'adjusted_input', 'newinput', 'running', 'heli_coast_active', 'duty_cycle', 'stuck_rotor_inhibit', 'stuck_rotor_trip_count', 'bemf_timeout', 'bemf_timeout_happened', 'eepromBuffer']) {
     assert(out[n] && out[n].address >= 0x20000000 && out[n].address + out[n].size <= 0x20008000, `Bad/missing RAM symbol ${n}`);
   }

@@ -44,10 +44,24 @@
  * ZCD_SAMPLE_FLOOR: earliest CCR4 (in TIM1 ticks) at which the injected sample
  * is allowed to fire. It includes the programmed MCU dead time plus a 92-tick
  * board-level allowance for FD6288 propagation and switching settling.
- * DEAD_TIME is in the same TIM1-clock ticks as CCR (PSC = 0).
+ * DTG is an encoded value, not a linear tick count above 0x7f. This board's
+ * fixed 0xCE must decode to 368 t_DTS. TIM1 CKD=DIV1 and PSC=0 make t_DTS
+ * equal to one compare-counter tick; do not change bridge dead time here.
  */
+#define ZCD_DTG_TICKS(code) \
+    (((code) < 0x80u) ? (code) : ((code) < 0xc0u) ? \
+     (64u + ((code) & 0x3fu)) * 2u : ((code) < 0xe0u) ? \
+     (32u + ((code) & 0x1fu)) * 8u : (32u + ((code) & 0x1fu)) * 16u)
 #ifndef ZCD_SAMPLE_FLOOR
+#ifdef TARGET_ADC_ZCD_ACTUAL_DEADTIME
+#ifndef TARGET_FIXED_DEAD_TIME_CODE
+#error "Actual-deadtime sampling needs a fixed known DTG code"
+#endif
+#define ZCD_SAMPLE_FLOOR ((uint16_t)(ZCD_DTG_TICKS(TARGET_FIXED_DEAD_TIME_CODE) + 92u))
+#else
+/* Historical S3 baseline retained for controlled diagnostic comparison. */
 #define ZCD_SAMPLE_FLOOR ((uint16_t)(DEAD_TIME + 92u))
+#endif
 #endif
 
 /*

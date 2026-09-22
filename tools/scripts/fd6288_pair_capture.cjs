@@ -60,11 +60,12 @@ function decode(b) {
   for (const index of [header.failure_bank, header.success_bank]) if (index !== NONE) assert(banks.some(b => b.bank === index));
   return {header, banks, caveats: ['Sector summaries span alignment/acquisition, not continuous ADC waveforms; closed-loop run has aggregate counts and the separate 16-trial summary.', 'Forward/reverse crossings refer to observed voltage crossing the expected Schmitt band, NOT measured rotor direction.', 'ADC ranks are sequential software-consumed samples. Filtered current is not peak phase current. Duty_first is boundary value; duty_last is last sampled output.', 'Record/counter overflow and phase mismatch are explicit flags. Actual logger overhead needs on-board cycle maxima; offline tests do not validate timing.', 'Both banks pin first completed failure and first full 1-second closed-loop observation. Operator early-zero does not pin. No motor actions originate in the logger.']};
 }
-async function dump(elf, out, stopped, connection = connect) {
+async function dump(elf, out, stopped, connection = connect, format = null) {
   assert(stopped, 'Require --stopped after operator zero/full-stop confirmation');
   assert(out && !fs.existsSync(out) && !fs.existsSync(out + '.json'), 'New output path required');
   elf = path.resolve(elf);
-  const syms = symbols(elf, true), hex = fs.readFileSync(elf.replace(/\.elf$/, '.hex'));
+  const layout = format || {mode: true, symbol: 'fd_startup_pair', size: SIZE, decode};
+  const syms = symbols(elf, layout.mode), hex = fs.readFileSync(elf.replace(/\.elf$/, '.hex'));
   const expected = parseHex(hex.toString());
   const p = spawnSync('arm-none-eabi-objcopy', ['-O', 'ihex', elf, '/dev/stdout'], {encoding: 'utf8'});
   assert.equal(p.status, 0, p.stderr); assert.deepEqual(parseHex(p.stdout), expected);
@@ -101,21 +102,21 @@ async function dump(elf, out, stopped, connection = connect) {
       for (let i = 0; i < n; i++) if (expected.has(a + i)) assert.equal(b[i], expected.get(a + i), 'Wrong board image');
     }
     await stop();
-    const pair = await mem(syms.fd_startup_pair.address, SIZE);
-    assert.deepEqual(await mem(syms.fd_startup_pair.address, SIZE), pair, 'Pair data changed');
+    const pair = await mem(syms[layout.symbol].address, layout.size);
+    assert.deepEqual(await mem(syms[layout.symbol].address, layout.size), pair, 'Trace data changed');
     const benchRaw = await mem(syms.fd_power_bench.address, 552);
     assert.deepEqual(await mem(syms.fd_power_bench.address, 552), benchRaw, 'Trials changed');
-    const d = decode(pair), bench = decodeBench(benchRaw, d.header.variant);
+    const d = layout.decode(pair), bench = decodeBench(benchRaw, d.header.variant);
     assert.equal(d.header.trials_seen, bench.header.trials);
     const protection = {};
     for (const n of ['stuck_rotor_inhibit', 'stuck_rotor_trip_count', 'bemf_timeout', 'bemf_timeout_happened']) protection[n] = await scalar(n);
     const settings = await mem(syms.eepromBuffer.address, syms.eepromBuffer.size);
     await stop();
-    assert.deepEqual(await mem(syms.fd_startup_pair.address, 64), pair.subarray(0, 64), 'Trial changed during capture');
+    assert.deepEqual(await mem(syms[layout.symbol].address, 64), pair.subarray(0, 64), 'Trial changed during capture');
     const data = {...d, bench, metadata: {capturedAt: new Date().toISOString(), elf, hex_sha256: sha(hex), trace_sha256: sha(pair), identity: 'known_session_selected_functions_not_full_flash', settings_ram_hex: settings.toString('hex'), protection_after_zero: protection, bench_raw_hex: benchRaw.toString('hex')}};
     fs.mkdirSync(path.dirname(path.resolve(out)), {recursive: true});
     fs.writeFileSync(out, pair, {flag: 'wx'}); fs.writeFileSync(out + '.json', JSON.stringify(data, null, 2) + '\n', {flag: 'wx'});
-    console.log(JSON.stringify({saved: path.resolve(out), trials: bench.header.trials, banks: d.banks.map(b => ({trial: b.header.trial_id, result: b.classification, sectors: b.header.sectors, overflow: b.header.overflow, max_sample_cycles: b.header.max_sample_cycles, max_boundary_cycles: b.header.max_boundary_cycles}))}, null, 2));
+    console.log(JSON.stringify({saved: path.resolve(out), trials: bench.header.trials, banks: d.banks.map(b => ({trial: b.header.trial_id, result: b.classification, sectors: b.header.sectors, samples_stored: b.header.samples_stored, events: b.header.events, overflow: b.header.overflow, max_sample_cycles: b.header.max_sample_cycles, max_event_cycles: b.header.max_event_cycles, max_boundary_cycles: b.header.max_boundary_cycles}))}, null, 2));
     return data;
   } finally {c.close();}
 }

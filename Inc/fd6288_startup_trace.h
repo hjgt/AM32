@@ -85,7 +85,11 @@ void fdTracePinFailure(void);
 #endif
 
 #ifdef TARGET_STARTUP_PAIR_TRACE
+#ifdef TARGET_STARTUP_WAVE_TRACE
+#include "fd6288_startup_wave.h"
+#else
 #include "fd6288_startup_pair.h"
+#endif
 void fdTraceTrialFinish(uint8_t reason, uint8_t stage);
 #else
 #define fdTraceTrialFinish(reason, stage) ((void)0)

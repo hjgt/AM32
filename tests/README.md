@@ -144,3 +144,27 @@ Paired C/JS and mock capture cover variants 6/7/8. The legacy `extra=40` field
 does not describe S3-P's amplitude: decoded `power_profile` explicitly does.
 With the new option disabled, rebuilt S3 HEX is byte-identical to the baseline.
 This is a bench comparison, not a tested electrical/thermal operating rating.
+
+### S3-D/DT: three independent waveform tails, variants 9/10
+
+```sh
+node tests/run_fd6288_wave_tests.cjs obj-startup-S3D-wave/AM32_CUSTOM_FD6288_G431_2.20.elf 9
+node tests/run_fd6288_wave_tests.cjs obj-startup-S3DT-window/AM32_CUSTOM_FD6288_G431_2.20.elf 10
+node tests/run_fd6288_window_tests.cjs
+node tests/check_fd6288_pair_codegen.cjs obj-startup-S3DT-window/AM32_CUSTOM_FD6288_G431_2.20.elf
+```
+
+Actual C logger tests cover independent no-lock/post-handoff-loss/success slots,
+duplicates, early zero and safety aborts, pre-drive abort, pinned immutability,
+time-based decimation, accepted ADC event retention, ring wrap, DWT wrap and
+preemption. Actual C binary fixtures are decoded by JS and captured via the
+existing read-only mock RPC gates; changing/active/wrong-image/bad-ABI/output-on
+states and output-file overwrite are rejected. Tail omissions are explicit;
+there is no claim that these are continuous full-start or scope waveforms.
+
+The window runner extracts the actual CCR4 helper and actual C06 limit functions:
+all 256 DTG codes, all 65536 pulse widths, and 9001 ARR values/cap boundaries.
+Variant 10 uses decoded fixed DTG 0xCE = 368 ticks, floor 460 and minimum pulse
+704, without changing bridge dead time or S3 power. Variant 9 retains floor
+162 and minimum 406. CKD=DIV1/PSC=0 assumptions are checked in timer init source.
+Neither tests analog margins, full-ISR time, motor startup or physical protection.

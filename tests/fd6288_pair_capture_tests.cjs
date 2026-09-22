@@ -1,13 +1,15 @@
 // No real connection: exercise the actual read-only capture against fake RAM.
 const assert = require('node:assert/strict'), fs = require('node:fs'), os = require('node:os'), path = require('node:path');
-const {decode, dump, SIZE, NONE} = require('../tools/scripts/fd6288_pair_capture.cjs');
+const wave = process.argv[4] === 'wave';
+const {decode, dump, SIZE, NONE} = require(wave ? '../tools/scripts/fd6288_wave_capture.cjs' : '../tools/scripts/fd6288_pair_capture.cjs');
 const {symbols, parseHex} = require('../tools/scripts/fd6288_startup_capture.cjs');
 const elf = path.resolve(process.argv[2]), fixture = fs.readFileSync(process.argv[3]);
-const syms = symbols(elf, true), flash = parseHex(fs.readFileSync(elf.replace(/\.elf$/, '.hex'), 'utf8'));
+const syms = symbols(elf, wave ? 'wave' : true), flash = parseHex(fs.readFileSync(elf.replace(/\.elf$/, '.hex'), 'utf8'));
+const traceSymbol = wave ? 'fd_startup_wave' : 'fd_startup_pair';
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'fd6288-pair-rpc-'));
 const decoded = decode(fixture);
 function mock(opts = {}) {
-  const ram = Buffer.alloc(32768), traceAt = syms.fd_startup_pair.address - 0x20000000;
+  const ram = Buffer.alloc(32768), traceAt = syms[traceSymbol].address - 0x20000000;
   fixture.copy(ram, traceAt);
   if (opts.active) ram.writeUInt32LE(0, traceAt + 24);
   if (opts.badABI) ram.writeUInt32LE(9, traceAt + 4);
@@ -28,7 +30,7 @@ function mock(opts = {}) {
       const m = cmd.match(/^read_memory 0x([a-f0-9]+) (8|32) (\d+)$/);
       assert(m, `Forbidden non-read RPC: ${cmd}`); reads++;
       const a = parseInt(m[1], 16), stride = Number(m[2]) / 8, count = Number(m[3]) * stride;
-      if (a === syms.fd_startup_pair.address && count === 1024) fullTraceReads++;
+      if (a === syms[traceSymbol].address && count === 1024) fullTraceReads++;
       if (opts.changing && fullTraceReads === 2) ram[traceAt + 44] ^= 1;
       if (opts.badReply) return 'ERR unreadable';
       const bytes = Buffer.from(Array.from({length: count}, (_, i) => {
@@ -66,7 +68,7 @@ function mock(opts = {}) {
     await assert.rejects(dump(elf, target, true, api.connect), name);
     assert(api.closed && !fs.existsSync(target), name);
   }
-  const corrupt = Buffer.from(fixture); corrupt.writeUInt32LE(73, 64 + 24);
+  const corrupt = Buffer.from(fixture); corrupt.writeUInt32LE(wave ? 1000001 : 73, 64 + (wave ? 32 : 24));
   assert.throws(() => decode(corrupt)); assert.throws(() => decode(fixture.subarray(0, SIZE - 1)));
   console.log('PASS paired capture: real C ABI, identity, zero/gates/PWM, active/changing/corrupt buffers, overwrite refusal; read-only mock RPC only');
 })().catch(e => {console.error(e); process.exitCode = 1;});

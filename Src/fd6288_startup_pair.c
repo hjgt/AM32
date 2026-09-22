@@ -1,5 +1,5 @@
 #include "fd6288_startup_trace.h"
-#ifdef TARGET_STARTUP_PAIR_TRACE
+#if defined(TARGET_STARTUP_PAIR_TRACE) && !defined(TARGET_STARTUP_WAVE_TRACE)
 #include <stddef.h>
 #include "common.h"
 #include "peripherals.h"
