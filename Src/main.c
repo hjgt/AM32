@@ -952,9 +952,11 @@ static void fdBenchStop(uint8_t reason)
 #ifdef TARGET_STARTUP_SEQUENCE
         if (reason == FD_BENCH_WINDOW && fd_rev.stage != FD_REV_CLOSED)
             reason = FD_BENCH_NO_LOCK;
+#ifndef TARGET_STARTUP_FEEDBACK
         if (reason == FD_BENCH_WINDOW &&
             adc_zcd_diag.resets[ADC_ZCD_RESET_TIMEOUT] != fd_power_timeouts_start)
             reason = FD_BENCH_LOST_FEEDBACK;
+#endif
         if (reason != FD_BENCH_WINDOW && fd_power_bench.active_id) fdTracePinFailure();
         fd_rev_acquiring = 0u;
 #endif
@@ -1009,6 +1011,13 @@ static void fdBenchService(void)
                     requested = 360u + (fade < FD_POWER_FADE_TICKS ?
                         40u * (FD_POWER_FADE_TICKS - fade) / FD_POWER_FADE_TICKS : 0u);
                 }
+#ifdef TARGET_STARTUP_FEEDBACK
+                /* Preserve S2's initial power envelope independently of
+                 * commutation: first 30 ms <=360, later acquisition <=400.
+                 * This is not an alignment dwell; edges still act at once. */
+                if ((uint32_t)(now - fd_power_policy.started) < FD_REV_ALIGN_TICKS)
+                    requested = 360u;
+#endif
                 uint16_t cap = driveEffectiveDutyLimit();
                 fd_power_bench.floor = requested < cap ? requested : cap;
                 if (!cap) fdBenchStop(FD_BENCH_SAFETY_CAP);
@@ -1104,7 +1113,11 @@ static void fdRevStartDrive(void)
     zero_crosses = 0u;
     /* Always the same physical vector. Direction applies to the next step. */
     step = forward ? 0 : 2;
+#ifdef TARGET_STARTUP_FEEDBACK
+    commutation_interval = 10000u; /* native startup seed; never a real edge */
+#else
     commutation_interval = FD_REV_FIRST_PERIOD / 80u;
+#endif
     SET_INTERVAL_TIMER_COUNT(0u);
     commutate();
 }
@@ -1134,9 +1147,24 @@ static void fdRevTick(void)
         SET_INTERVAL_TIMER_COUNT((now - fd_rev.edge_at) / 80u);
         fdTraceEvent(FD_EVENT_REV_HANDOFF, fd_rev.confidence);
         commutate();
-    } else if (action == FD_REV_STEP) {
-        /* Planned steps never increment zero_crosses/native timeout counters
-         * and never feed the measured closed-loop period estimator. */
+    } else if (action == FD_REV_STEP || action == FD_REV_RETRY) {
+#ifdef TARGET_STARTUP_FEEDBACK
+        if (action == FD_REV_RETRY) {
+            fdTraceEvent(FD_EVENT_TIMEOUT, bemf_timeout_happened);
+            bemf_timeout_happened++;
+            zero_crosses = 0u;
+            adcZcdResetAcquisition(ADC_ZCD_RESET_TIMEOUT);
+            /* Keep the existing native switch/threshold/latch in the path. */
+            if (stuckRotorGuardInput()) {
+                fdBenchService();
+                __set_PRIMASK(mask);
+                return;
+            }
+        }
+#endif
+        /* A step never invents a zero_cross or feeds the closed-loop IIR.
+         * S2 planned steps do not count as timeouts; S3 missing-feedback
+         * retries were explicitly counted above. */
         SET_INTERVAL_TIMER_COUNT(0u);
         fdTraceEvent(FD_EVENT_REV_STEP, fd_rev.period / FD_REV_US);
         commutate();
@@ -1155,6 +1183,11 @@ static void fdRevObserveEdge(void)
         fdTraceEvent(FD_EVENT_REV_EDGE, (fd_rev.stage << 8) | fd_rev.confidence);
 #ifdef TARGET_STARTUP_SEQUENCE_V2
         fdTraceEvent(FD_EVENT_REV_DECISION, (fd_rev.phase_percent << 8) | fd_rev.decision);
+#endif
+#ifdef TARGET_STARTUP_FEEDBACK
+        /* Native-style early edges act now, not at a preprogrammed boundary
+         * or at the next 20 kHz tick. The sixth still observes its ZC delay. */
+        fdRevTick();
 #endif
     }
     __set_PRIMASK(mask);

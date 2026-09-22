@@ -12,7 +12,7 @@ function decode(b) {
   const u32 = a => b.readUInt32LE(a), u16 = a => b.readUInt16LE(a), i16 = a => b.readInt16LE(a);
   const names = ['magic', 'abi', 'variant', 'clock_hz', 'size', 'command', 'active_bank', 'failure_bank', 'success_bank', 'trials_seen', 'rejected_commands', 'max_finish_cycles'];
   const header = Object.fromEntries(names.map((n, i) => [n, u32(i * 4)]));
-  assert(header.magic === MAGIC && header.abi === 1 && header.variant === 6 && header.clock_hz === 160000000 && header.size === SIZE, 'Wrong paired ABI');
+  assert(header.magic === MAGIC && header.abi === 1 && [6, 7].includes(header.variant) && header.clock_hz === 160000000 && header.size === SIZE, 'Wrong paired ABI');
   assert.equal(header.active_bank, NONE, 'Pair capture active');
   assert([NONE, 0, 1].includes(header.failure_bank) && [NONE, 0, 1].includes(header.success_bank));
   assert(header.failure_bank === NONE || header.failure_bank !== header.success_bank, 'Same bank pinned twice');
@@ -50,6 +50,10 @@ function decode(b) {
       assert(r.valid_samples <= r.samples);
       if (!r.valid_samples) for (const f of ['first_adc', 'last_adc', 'min_adc', 'max_adc', 'directed_min', 'directed_max', 'directed_first', 'directed_last']) r[f] = null;
       records.push(r);
+    }
+    if (header.variant === 7) for (const r of records) {
+      r.retry_deadline_us = r.commanded_us;
+      r.commanded_us = null; // event-led sector length was not commanded
     }
     banks.push({bank: k, pinned: k === header.failure_bank || k === header.success_bank, classification: states[h.state], header: h, records});
   }
@@ -101,7 +105,7 @@ async function dump(elf, out, stopped, connection = connect) {
     assert.deepEqual(await mem(syms.fd_startup_pair.address, SIZE), pair, 'Pair data changed');
     const benchRaw = await mem(syms.fd_power_bench.address, 552);
     assert.deepEqual(await mem(syms.fd_power_bench.address, 552), benchRaw, 'Trials changed');
-    const d = decode(pair), bench = decodeBench(benchRaw, 6);
+    const d = decode(pair), bench = decodeBench(benchRaw, d.header.variant);
     assert.equal(d.header.trials_seen, bench.header.trials);
     const protection = {};
     for (const n of ['stuck_rotor_inhibit', 'stuck_rotor_trip_count', 'bemf_timeout', 'bemf_timeout_happened']) protection[n] = await scalar(n);

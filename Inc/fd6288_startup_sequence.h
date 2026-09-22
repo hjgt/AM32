@@ -1,11 +1,11 @@
 /* Bench-only rev-up policy. Times/duty are experimental, not motor ratings.
- * S1: 300 ms whole trial. S2: 300 ms acquisition + at most 1 s closed loop.
+ * S1: 300 ms whole trial. S2/S3: 300 ms acquisition + at most 1 s closed loop.
  * Raw DWT differences are wrap safe over these bounded trials. */
 #ifndef FD6288_STARTUP_SEQUENCE_H
 #define FD6288_STARTUP_SEQUENCE_H
 #include <stdint.h>
 enum { FD_REV_OFF, FD_REV_ALIGN, FD_REV_OPEN, FD_REV_PENDING, FD_REV_CLOSED };
-enum { FD_REV_NONE, FD_REV_STEP, FD_REV_HANDOFF };
+enum { FD_REV_NONE, FD_REV_STEP, FD_REV_HANDOFF, FD_REV_RETRY };
 enum { FD_REV_EDGE_IGNORED, FD_REV_EDGE_EARLY, FD_REV_EDGE_LATE,
     FD_REV_EDGE_SEED, FD_REV_EDGE_PERIOD, FD_REV_EDGE_GOOD, FD_REV_EDGE_READY };
 enum {
@@ -24,6 +24,72 @@ typedef struct {
     uint8_t max_confidence, settle_steps, decision, phase_percent;
 #endif
 } FdRevPolicy;
+#ifdef TARGET_STARTUP_FEEDBACK
+/* S3: return to native polling-style event-led acquisition. No fixed
+ * alignment dwell or accelerating commutation table. The first five
+ * qualified ADC edges advance immediately (as native zero_crosses < 5).
+ * The sixth earns a measured post-ZC delay, then a bounded observation.
+ * "confidence" here counts consecutive ADC-qualified edges, NOT S2's
+ * fixed-sector phase/period qualification. No claim of mechanical lock. */
+enum { FD_REV_RETRY_TICKS = 22500u * FD_REV_US };
+static inline void fdRevBeginPolicy(FdRevPolicy *s, uint32_t now)
+{
+    *s = (FdRevPolicy){ .sector_at = now, .period = FD_REV_RETRY_TICKS,
+        .stage = FD_REV_OPEN, .phase_percent = 255u };
+}
+static inline uint8_t fdRevAdvancePolicy(FdRevPolicy *s, uint32_t now)
+{
+    if (s->stage == FD_REV_PENDING) {
+        if ((uint32_t)(now - s->edge_at) < s->delay) return FD_REV_NONE;
+        if (s->confidence >= FD_REV_REQUIRED_EDGES) {
+            s->stage = FD_REV_CLOSED;
+            s->closed_at = now;
+            return FD_REV_HANDOFF;
+        }
+        s->stage = FD_REV_OPEN;
+        s->sector_at = now;
+        s->seen = 0u;
+        return FD_REV_STEP;
+    }
+    if (s->stage != FD_REV_OPEN ||
+        (uint32_t)(now - s->sector_at) < FD_REV_RETRY_TICKS) return FD_REV_NONE;
+    /* Missing feedback, not a synthetic ZC. At most one retry per service. */
+    s->sector_at = now;
+    s->seen = s->confidence = 0u;
+    s->measured = 0u;
+    return FD_REV_RETRY;
+}
+static inline uint8_t fdRevEdgePolicy(FdRevPolicy *s, uint32_t now, uint8_t advance64)
+{
+    s->decision = FD_REV_EDGE_IGNORED;
+    s->phase_percent = 255u; /* no commanded-period phase window in S3 */
+    if (s->stage != FD_REV_OPEN || s->seen) return 0u;
+    /* A late IRQ cannot rescue an already expired no-feedback sector. */
+    if ((uint32_t)(now - s->sector_at) >= FD_REV_RETRY_TICKS) return 0u;
+    uint32_t elapsed = now - s->edge_at;
+    if (s->confidence && !elapsed) return 0u;
+    s->seen = 1u;
+    if (s->confidence) {
+        s->measured = s->confidence == 1u ? elapsed :
+            (3u * s->measured + elapsed) / 4u;
+        s->decision = FD_REV_EDGE_GOOD;
+    } else {
+        s->measured = 0u; /* first edge is not a ZC-to-ZC period */
+        s->decision = FD_REV_EDGE_SEED;
+    }
+    s->edge_at = now;
+    s->confidence++;
+    if (s->confidence > s->max_confidence) s->max_confidence = s->confidence;
+    s->delay = 0u;
+    if (s->confidence == FD_REV_REQUIRED_EDGES) {
+        if (advance64 > 24u) advance64 = 24u;
+        s->delay = s->measured / 2u - s->measured * advance64 / 64u;
+        s->decision = FD_REV_EDGE_READY;
+    }
+    s->stage = FD_REV_PENDING;
+    return s->confidence == FD_REV_REQUIRED_EDGES;
+}
+#else
 static inline void fdRevBeginPolicy(FdRevPolicy *s, uint32_t now)
 {
     *s = (FdRevPolicy){ .sector_at = now, .period = FD_REV_FIRST_PERIOD,
@@ -112,6 +178,7 @@ static inline uint8_t fdRevEdgePolicy(FdRevPolicy *s, uint32_t now, uint8_t adva
 #endif
     return 1u;
 }
+#endif /* TARGET_STARTUP_FEEDBACK */
 #ifdef TARGET_STARTUP_SEQUENCE_V2
 static inline uint8_t fdRevDeadlinePolicy(const FdRevPolicy *s, uint32_t now,
     uint32_t started)

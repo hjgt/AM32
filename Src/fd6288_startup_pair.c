@@ -44,7 +44,7 @@ void fdTraceInit(void)
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
     fd_startup_pair.magic = FD_PAIR_MAGIC;
     fd_startup_pair.abi = 1u;
-    fd_startup_pair.variant = 6u;
+    fd_startup_pair.variant = FD6288_TRACE_VARIANT;
     fd_startup_pair.clock_hz = 160000000u;
     fd_startup_pair.size = sizeof(FdStartupPair);
     fd_startup_pair.active_bank = fd_startup_pair.failure_bank =
@@ -69,8 +69,13 @@ void fdTraceTrial(uint32_t id)
         b->trial_id = id;
         b->handoff_at = FD_PAIR_NONE;
         fd_startup_pair.active_bank = i;
+#ifdef TARGET_STARTUP_FEEDBACK
+        fd_pair_stage = 2u;
+        fd_pair_commanded_us = 22500u; /* retry deadline, not scheduled dwell */
+#else
         fd_pair_stage = 1u;
         fd_pair_commanded_us = 30000u;
+#endif
         break;
     }
 }

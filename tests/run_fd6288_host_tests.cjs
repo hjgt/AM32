@@ -62,7 +62,7 @@ const phaseFunctions = ['void comStep(int newStep)', 'void allpwm()']
 const startupFloor = functionBody(main, 'if (input >= 47 && (zero_crosses < (uint32_t)(30 >> EFFECTIVE_STALL_PROTECTION)))');
 const ramp = functionBody(main, 'if (ramp_count > ramp_divider)');
 const source = harness.replace(marker, `${powerHeader}\n${traceHeader}\n${header}\n${trace}\n${adc}\n${functions}\n#ifdef TARGET_STARTUP_POWER_BENCH\n${phaseFunctions}\nstatic void actualStartupFloor(void) { ${startupFloor} }\nstatic void actualRamp(void) { ${ramp} }\n#endif\n#if FD6288_STARTUP_TIMING_FIX\n${timeout}\n#endif`)
-  .replace('/* POWER_BENCH_TESTS */', read('tests/fd6288_power_adapter_tests.c') + '\n' + read('tests/fd6288_sequence_tests.c'));
+  .replace('/* POWER_BENCH_TESTS */', read('tests/fd6288_power_adapter_tests.c') + '\n' + read('tests/fd6288_sequence_tests.c') + '\n' + read('tests/fd6288_feedback_tests.c'));
 // Ensure the tested adapter is hooked into all output/timing entry points.
 for (const [signature, token] of [
   ['void setInput()', 'fdBenchGuardInput()'], ['void setInput()', 'fdBenchBegin()'],
@@ -76,12 +76,13 @@ for (const [signature, token] of [
   ['void PeriodElapsedCallback()', 'if (fd_rev_acquiring) return;'],
 ]) assert(functionBody(main, signature).includes(token), `Missing hook: ${signature}: ${token}`);
 const output = fs.mkdtempSync(path.join(os.tmpdir(), 'fd6288-host-tests-'));
-for (const variant of [0, 1, 2, 3, 4, 5]) {
+for (const variant of [0, 1, 2, 3, 4, 5, 7]) {
 const binary = path.join(output, `test-${variant}`);
 const compile = spawnSync(process.env.CC || 'cc', [
-  `-DFD6288_STARTUP_TIMING_FIX=${[1, 4, 5].includes(variant) ? 1 : 0}`,
+  `-DFD6288_STARTUP_TIMING_FIX=${[1, 4, 5, 7].includes(variant) ? 1 : 0}`,
   ...(variant >= 4 ? ['-DTARGET_STARTUP_SEQUENCE'] : []),
-  ...(variant === 5 ? ['-DTARGET_STARTUP_SEQUENCE_V2'] : []),
+  ...(variant >= 5 ? ['-DTARGET_STARTUP_SEQUENCE_V2'] : []),
+  ...(variant === 7 ? ['-DTARGET_STARTUP_FEEDBACK'] : []),
   ...(variant >= 2 ? ['-DTARGET_STARTUP_POWER_BENCH',
     `-DFD6288_STARTUP_POWER_EXTRA=${variant === 2 ? 0 : 40}`,
     `-DFD6288_TRACE_VARIANT=${variant}`] : []),

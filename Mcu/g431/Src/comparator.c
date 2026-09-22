@@ -85,7 +85,8 @@ static uint32_t adc_zcd_last_real_interval;
 #ifdef TARGET_STARTUP_SEQUENCE
 void adcZcdSeedHandoff(uint32_t period)
 {
-    /* Six real, phase-qualified adjacent edges preceded this handoff. */
+    /* Six real adjacent edges preceded this handoff. S2 additionally checks
+     * commanded-sector phase; S3 uses native-style event-led acquisition. */
     adc_zcd_drive_crossings = 5u;
     adc_zcd_last_real_interval = period;
 }
@@ -405,7 +406,8 @@ void changeCompInput(void)
         (gate_interval >> 1) : 0u;
 #ifdef TARGET_STARTUP_SEQUENCE
     /* In open loop CNT is time since commanded step, NOT since the previous
-     * ZC. The rev-up policy checks phase/period; the closed-loop half-period
+     * ZC. S2 checks phase/period; S3 immediately advances on early edges.
+     * The closed-loop half-period
      * gate is not meaningful until that timebase is rebased at handoff. */
     if (fd_rev_acquiring) adc_zcd_earliest = 0u;
 #endif

@@ -7,6 +7,9 @@
 #define TARGET_STARTUP_TRACE
 #define TARGET_STARTUP_SEQUENCE
 #define TARGET_STARTUP_PAIR_TRACE
+#ifndef FD6288_TRACE_VARIANT
+#define FD6288_TRACE_VARIANT 6u
+#endif
 char step = 1, old_routine = 1, forward = 1;
 volatile char rising = 1;
 uint8_t running = 1;
@@ -69,8 +72,14 @@ int main(int argc, char **argv)
         .directed_min = INT16_MAX, .directed_max = INT16_MIN,
         .duty_first = 400, .duty_last = 400, .pwm_first = 1334, .pwm_last = 1334,
         .trigger_first = 667, .trigger_last = 667, .input_first = 198, .input_last = 198,
-        .current_max = 100, .voltage_min = 800, .commanded_us = 30000,
-        .step = 1, .flags = 23, .stage = 1, .decision = 255, .sector_percent = 255 };
+        .current_max = 100, .voltage_min = 800,
+#ifdef TARGET_STARTUP_FEEDBACK
+        .commanded_us = 22500, .stage = 2,
+#else
+        .commanded_us = 30000, .stage = 1,
+#endif
+        .step = 1, .flags = 23, .decision = 255, .sector_percent = 255 };
+    assert(fd_startup_pair.variant == FD6288_TRACE_VARIANT);
     assert(memcmp(&expected, (const void *)&fd_startup_pair.banks[0].records[0], sizeof(expected)) == 0);
     reset(); begin(1);
     sample(30, FD_SAMPLE_UNARMED); sample(0, FD_SAMPLE_HYST);

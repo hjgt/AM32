@@ -4,6 +4,8 @@
 /* S2D diagnostic ABI 1. Two banks retain first failed completed trial and
  * first full closed-loop observation, NOT two motor-control state machines.
  * 72 sectors cover 30 ms alignment + <=270 ms at >=4 ms/sector (<=69).
+ * S3 event-led retries are not subject to S2's sector bound: repeated partial
+ * streaks may exceed 72; overflow is explicit and existing data is retained.
  * Counts/timestamps describe software-consumed samples, not rotor position. */
 #define FD_PAIR_MAGIC 0x46535031u
 #define FD_PAIR_SECTORS 72u

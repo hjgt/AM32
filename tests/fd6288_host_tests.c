@@ -518,7 +518,9 @@ static void test_period_and_forced_steps(void)
 
 int main(void)
 {
-#ifdef TARGET_STARTUP_SEQUENCE
+#ifdef TARGET_STARTUP_FEEDBACK
+    test_feedback();
+#elif defined(TARGET_STARTUP_SEQUENCE)
     test_sequence();
 #elif defined(TARGET_STARTUP_POWER_BENCH)
     test_power_adapter();

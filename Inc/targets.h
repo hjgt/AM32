@@ -3227,18 +3227,28 @@
 #endif
 #define TARGET_STARTUP_SEQUENCE
 #define TARGET_STARTUP_POWER_BENCH /* shared bounded trial / output interlocks */
-#if FD6288_STARTUP_SEQUENCE == 2
+#if FD6288_STARTUP_SEQUENCE == 2 || FD6288_STARTUP_SEQUENCE == 3
 #define TARGET_STARTUP_SEQUENCE_V2
+#if FD6288_STARTUP_SEQUENCE == 3
+#if !FD6288_STARTUP_PAIR_TRACE
+#error "S3 feedback acquisition requires paired diagnostics"
+#endif
+#define TARGET_STARTUP_FEEDBACK
+#endif
 #if FD6288_STARTUP_PAIR_TRACE
 #define TARGET_STARTUP_PAIR_TRACE
+#ifdef TARGET_STARTUP_FEEDBACK
+#define FD6288_TRACE_VARIANT 7u
+#else
 #define FD6288_TRACE_VARIANT 6u
+#endif
 #else
 #define FD6288_TRACE_VARIANT 5u
 #endif
 #elif FD6288_STARTUP_SEQUENCE == 1
 #define FD6288_TRACE_VARIANT 4u
 #else
-#error "FD6288_STARTUP_SEQUENCE must be 0, 1 (S1), or 2 (S2)"
+#error "FD6288_STARTUP_SEQUENCE must be 0, 1 (S1), 2 (S2), or 3 (S3)"
 #endif
 #elif defined(FD6288_STARTUP_POWER_BENCH) && FD6288_STARTUP_POWER_BENCH
 #if !defined(TARGET_STARTUP_TRACE) || FD6288_STARTUP_TIMING_FIX
@@ -3251,7 +3261,7 @@
 #define FD6288_TRACE_VARIANT (2u + (FD6288_STARTUP_POWER_EXTRA != 0))
 #endif
 #if FD6288_STARTUP_PAIR_TRACE && !defined(TARGET_STARTUP_PAIR_TRACE)
-#error "Paired trace requires S2: trace=1 timing_fix=1 sequence=2"
+#error "Paired trace requires trace=1 timing_fix=1 sequence=2 or 3"
 #endif
 #if FD6288_STARTUP_PAIR_TRACE != 0 && FD6288_STARTUP_PAIR_TRACE != 1
 #error "FD6288_STARTUP_PAIR_TRACE must be 0 or 1"

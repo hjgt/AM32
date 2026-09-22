@@ -116,3 +116,20 @@ not be used to predict S2 motor behavior using unchanged S1 edge timestamps.
 Capture tests use mock RPC only; pass explicit variant 5 for S2. Its summary
 reserved byte has stage in the low nibble and maximum streak in the high
 nibble. Earlier capture ABIs remain readable.
+
+### S3: event-led acquisition, paired variant 7
+
+`FD6288_STARTUP_SEQUENCE=3` requires trace=1, timing_fix=1 and pair_trace=1.
+The host runner now adds 773 assertions for the actual ADC/adapter/commutation
+path: first five qualified edges act immediately, second-edge period seeding,
+sixth-edge delayed handoff, retries without fake ZCs, recovery after retry,
+native threshold Off/On, stop/rearm/output interlocks, wrap and deadlines.
+The first 30 ms power envelope is preserved without an alignment dwell.
+Six consecutive edges no longer mean S2's fixed-sector phase qualification.
+
+The paired runner tests both variant 6 and 7 through the real C implementation
+and JS decoder, including reused-record initialization, retention, overflow,
+and read-only mock RPC. S3 may exceed the 72-record capacity after repeated
+partial streaks; explicit overflow is not silently treated as complete evidence.
+The decoder exposes `retry_deadline_us` for S3, not a commanded sector period.
+No tests here simulate a physical motor or validate flight/protection behavior.
