@@ -1,0 +1,2 @@
+# Preserve the generated artifact bytes so repository/download SHA matches.
+*.hex -text
