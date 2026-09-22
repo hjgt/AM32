@@ -109,20 +109,31 @@ void fdTraceEvent(uint8_t kind, uint16_t aux)
         if (b->sectors >= FD_PAIR_SECTORS) b->overflow++;
         else {
             s = &b->records[b->sectors++];
-            *s = (FdPairSector){ .began = at, .ended = FD_PAIR_NONE,
-                .last_sample = FD_PAIR_NONE, .first_pre = FD_PAIR_NONE,
-                .first_post = FD_PAIR_NONE, .forward_at = FD_PAIR_NONE,
-                .reverse_at = FD_PAIR_NONE, .accepted_at = FD_PAIR_NONE,
-                .min_adc = {UINT16_MAX, UINT16_MAX, UINT16_MAX},
-                .directed_min = INT16_MAX, .directed_max = INT16_MIN,
-                .duty_first = duty_cycle, .duty_last = duty_cycle,
-                .pwm_first = TIM1->CCR1, .pwm_last = TIM1->CCR1,
-                .trigger_first = TIM1->CCR4, .trigger_last = TIM1->CCR4,
-                .input_first = adjusted_input, .input_last = adjusted_input,
-                .current_max = actual_current, .voltage_min = battery_voltage,
-                .commanded_us = fd_pair_commanded_us, .step = step,
-                .flags = fdPairFlags(), .stage = fd_pair_stage,
-                .decision = 255u, .sector_percent = 255u };
+            /* Direct volatile stores: the compound-literal assignment used
+             * a stack temporary plus newlib memset/memcpy on this toolchain,
+             * costing ~12.4 us inside the commutation critical section.
+             * Initialize every ABI field, including reused-slot counters,
+             * without a temporary, bulk copy, or changes to drive policy. */
+            s->began = at;
+            s->ended = s->last_sample = s->first_pre = s->first_post =
+                s->forward_at = s->reverse_at = s->accepted_at = FD_PAIR_NONE;
+            for (unsigned i = 0u; i < 3u; i++) {
+                s->first_adc[i] = s->last_adc[i] = s->max_adc[i] = 0u;
+                s->min_adc[i] = UINT16_MAX;
+            }
+            s->directed_min = INT16_MAX; s->directed_max = INT16_MIN;
+            s->directed_first = s->directed_last = 0;
+            for (unsigned i = 0u; i < FD_SAMPLE_REASON_COUNT; i++) s->reasons[i] = 0u;
+            s->samples = s->no_fresh = s->forward_crossings = s->reverse_crossings = 0u;
+            s->duty_first = s->duty_last = duty_cycle;
+            s->pwm_first = s->pwm_last = TIM1->CCR1;
+            s->trigger_first = s->trigger_last = TIM1->CCR4;
+            s->input_first = s->input_last = adjusted_input;
+            s->current_max = actual_current; s->voltage_min = battery_voltage;
+            s->commanded_us = fd_pair_commanded_us; s->step = step;
+            s->flags = fdPairFlags(); s->stage = fd_pair_stage;
+            s->decision = s->sector_percent = 255u; s->confidence = 0u;
+            s->valid_samples = s->issues = 0u; s->reserved = 0u;
             fd_pair_side = 0u;
         }
         uint32_t cost = DWT->CYCCNT - began;

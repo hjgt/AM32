@@ -56,6 +56,22 @@ static void finish(unsigned success)
 static void interrupt_finish(void) { fdTraceTrialFinish(8, 2); }
 int main(int argc, char **argv)
 {
+    /* Poison an entire reused slot, then compare all 128 bytes with the
+     * previous initializer contract. No stale counters, extrema or padding. */
+    reset(); fdTraceTrial(1); fdTraceBegin();
+    memset((void *)&fd_startup_pair.banks[0].records[0], 0xa5, sizeof(FdPairSector));
+    fdTraceEvent(FD_EVENT_COMMUTATE, 0);
+    FdPairSector expected = { .began = 0, .ended = FD_PAIR_NONE,
+        .last_sample = FD_PAIR_NONE, .first_pre = FD_PAIR_NONE,
+        .first_post = FD_PAIR_NONE, .forward_at = FD_PAIR_NONE,
+        .reverse_at = FD_PAIR_NONE, .accepted_at = FD_PAIR_NONE,
+        .min_adc = {UINT16_MAX, UINT16_MAX, UINT16_MAX},
+        .directed_min = INT16_MAX, .directed_max = INT16_MIN,
+        .duty_first = 400, .duty_last = 400, .pwm_first = 1334, .pwm_last = 1334,
+        .trigger_first = 667, .trigger_last = 667, .input_first = 198, .input_last = 198,
+        .current_max = 100, .voltage_min = 800, .commanded_us = 30000,
+        .step = 1, .flags = 23, .stage = 1, .decision = 255, .sector_percent = 255 };
+    assert(memcmp(&expected, (const void *)&fd_startup_pair.banks[0].records[0], sizeof(expected)) == 0);
     reset(); begin(1);
     sample(30, FD_SAMPLE_UNARMED); sample(0, FD_SAMPLE_HYST);
     sample(-30, FD_SAMPLE_PRE); sample(40, FD_SAMPLE_ACCEPT);
