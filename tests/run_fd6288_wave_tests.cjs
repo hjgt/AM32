@@ -4,7 +4,7 @@ const root=path.resolve(__dirname,'..'), read=p=>fs.readFileSync(path.join(root,
 const strip=s=>s.replace(/^#include[^\n]*$/gm,'').replace(/^#pragma once$/gm,'');
 const impl=['Inc/fd6288_startup_wave.h','Inc/fd6288_startup_trace.h','Src/fd6288_startup_wave.c'].map(p=>strip(read(p))).join('\n');
 const source=read('tests/fd6288_wave_tests.c').replace('/* WAVE_IMPLEMENTATION */',impl);
-const variant=Number(process.argv[3]||9);assert([9,10].includes(variant));
+const variant=Number(process.argv[3]||9);assert([9,10,11].includes(variant));
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'fd6288-wave-')), exe=path.join(dir,'test'), fixture=exe+'.bin';
 for(const [cmd,args,input] of [
   [process.env.CC||'cc',[`-DFD6288_TRACE_VARIANT=${variant}`,'-std=c11','-O1','-g','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-x','c','-','-o',exe],source],
@@ -12,6 +12,7 @@ for(const [cmd,args,input] of [
 ]){const p=spawnSync(cmd,args,{input,encoding:'utf8'});process.stdout.write(p.stdout||'');process.stderr.write(p.stderr||'');assert.equal(p.status,0);}
 const {decode,SIZE}=require('../tools/scripts/fd6288_wave_capture.cjs'), raw=fs.readFileSync(fixture),d=decode(raw);
 assert.equal(raw.length,SIZE);
+assert.equal(d.header.variant,variant);
 assert.deepEqual(d.banks.map(b=>[b.header.trial_id,b.classification]),[[1,'no_lock'],[4,'post_handoff_loss'],[6,'success']]);
 assert.equal(d.banks[0].samples.overwritten,344);assert.equal(d.banks[0].events.overwritten,25);
 assert.equal(d.banks[1].samples.records.at(-1).stage,4);

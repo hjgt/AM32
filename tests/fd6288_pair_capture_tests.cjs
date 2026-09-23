@@ -55,6 +55,12 @@ function mock(opts = {}) {
   assert(good.closed && good.reads > 0); assert.deepEqual(fs.readFileSync(out), fixture);
   assert.deepEqual(d.banks, decoded.banks);
   assert.equal(d.header.active_bank, NONE); assert.equal(d.bench.header.trials, 7);
+  if (d.header.variant === 11) {
+    assert.equal(d.sampling_profile.name, 'S4');
+    assert.equal(d.bench.startup_profile.rescue_sector_ms, 8);
+    assert.equal(d.bench.startup_profile.closed_floor_end_ms, 450);
+    assert.equal(d.bench.startup_profile.all_retries_count_as_native_timeouts, true);
+  }
   if (d.header.variant === 8) {
     assert.deepEqual(d.bench.power_profile, {name:'S3-P', initial_request:540,
       acquisition_request:600, startup_cap:610, post_handoff_base:360,

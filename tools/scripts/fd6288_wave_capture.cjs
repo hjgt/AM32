@@ -10,7 +10,7 @@ function decode(b) {
   const u32 = o => b.readUInt32LE(o), u16 = o => b.readUInt16LE(o);
   const fields = ['magic','abi','variant','clock_hz','size','command','active_bank','no_lock_bank','lost_bank','success_bank','trials_seen','rejected_commands','max_finish_cycles'];
   const header = Object.fromEntries(fields.map((n,i)=>[n,u32(i*4)]));
-  assert(header.magic === 0x46535731 && header.abi === 1 && [9,10].includes(header.variant) && header.clock_hz === 160000000 && header.size === SIZE, 'Wrong S3-D ABI');
+  assert(header.magic === 0x46535731 && header.abi === 1 && [9,10,11].includes(header.variant) && header.clock_hz === 160000000 && header.size === SIZE, 'Wrong startup waveform ABI');
   assert.equal(header.active_bank, NONE, 'Active trace');
   const pins = [header.no_lock_bank,header.lost_bank,header.success_bank];
   assert(pins.every(i=>i===NONE || i<3));
@@ -62,8 +62,9 @@ function decode(b) {
     banks.push({bank:k,pinned:pins.includes(k),classification:states[h.state],header:h,samples,events:ev});
   }
   for(const i of pins) if(i!==NONE) assert(banks.some(b=>b.bank===i));
-  return {header,banks,sampling_profile:header.variant===10 ? {name:'S3-DT',dtg:206,deadtime_ticks:368,sample_floor_ticks:460,minimum_on_ticks:704} : {name:'S3-D',sample_floor_ticks:162,minimum_on_ticks:406},caveats:[
-    'S3 acquisition/power unchanged. Variant 10 corrects ADC window for fixed DTG=0xCE; variant 9 keeps original window. Software-consumed sequential ADC data, not simultaneous scope measurements or rotor direction.',
+  return {header,banks,sampling_profile:header.variant>=10 ? {name:header.variant===11?'S4':'S3-DT',dtg:206,deadtime_ticks:368,sample_floor_ticks:460,minimum_on_ticks:704} : {name:'S3-D',sample_floor_ticks:162,minimum_on_ticks:406},caveats:[
+    header.variant===11 ? 'S4: original 360/400 acquisition duty; once-only six 8 ms no-edge retry sectors after two 22.5 ms expiries. Any qualified edge cancels rescue. Closed floor holds 360 to 150 ms then fades to minimum by 450 ms, independent of 30-edge threshold. Native missing-feedback count includes all retries, so enabled protection can stop earlier. Bench only.' : 'S3 acquisition/power unchanged. Variant 10 corrects ADC window for fixed DTG=0xCE; variant 9 keeps original window.',
+    'Software-consumed sequential ADC data, not simultaneous scope measurements or rotor direction.',
     'Tail only: 256 samples spaced >=100 us; 96 events include every accepted ADC sample until overwritten. No guarantee of full startup history. Overwritten counts and timestamps are explicit.',
     'When 256 samples are retained, their timestamp span is >=25.5 ms. Short acquisitions or missing fresh samples can leave fewer records; inspect actual span and final sample-to-stop gap.',
     'First no-lock, first post-handoff loss and first full observation are pinned independently; operator-zero and safety stops remain unpinned. Last 16 trial summaries are separate.',

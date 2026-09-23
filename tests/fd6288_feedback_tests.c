@@ -50,14 +50,125 @@ static void feedbackLock(void)
 static void feedbackRetry(void)
 {
     char old_step = step;
-    sequenceTickAt(fd_rev.sector_at + FD_REV_RETRY_TICKS - 1u);
+    sequenceTickAt(fd_rev.sector_at + fd_rev.period - 1u);
     CHECK(step == old_step);
-    sequenceTickAt(fd_rev.sector_at + FD_REV_RETRY_TICKS);
+    sequenceTickAt(fd_rev.sector_at + fd_rev.period);
 }
+#ifdef TARGET_STARTUP_S4
+static void test_s4(void)
+{
+    /* Real retry adapter: six shorter NO-FEEDBACK sectors, never synthetic
+     * ADC edges, and only once per operator start in either direction. */
+    for (unsigned dir = 0; dir <= 1; dir++) {
+        feedbackReset(); forward = dir; benchStart();
+        const uint32_t began = fd_power_policy.started;
+        for (unsigned n = 1; n <= 11; n++) {
+            char previous = step;
+            feedbackRetry();
+            CHECK(step == (dir ? (previous == 6 ? 1 : previous + 1) :
+                (previous == 1 ? 6 : previous - 1)));
+            CHECK(fd_rev.period == (n >= 2 && n < 8 ? FD_S4_RESCUE_TICKS : FD_REV_RETRY_TICKS));
+            CHECK(!fd_rev.confidence && !zero_crosses && !adc_zcd_diag.accepted);
+            CHECK(bemf_timeout_happened == n);
+        }
+        CHECK((uint32_t)(DWT->CYCCNT - began) == 160500u * FD_REV_US);
+        CHECK(fd_rev.rescue_used && !fd_rev.rescue_left);
+        benchAt(300000); CHECK(fd_power_bench.last_reason == FD_BENCH_NO_LOCK);
+    }
+    /* A qualified edge before/during the attempt returns to ordinary S3
+     * event-led acquisition, even if a later edge is missing. */
+    for (unsigned retry = 0; retry <= 7; retry++) {
+        feedbackReset(); benchStart();
+        for (unsigned n = 0; n < retry; n++) feedbackRetry();
+        feedbackEdge(2000);
+        CHECK(fd_rev.rescue_used && !fd_rev.rescue_left && fd_rev.confidence == 1);
+        CHECK(fd_rev.period == FD_REV_RETRY_TICKS);
+        feedbackRetry(); feedbackRetry();
+        CHECK(fd_rev.period == FD_REV_RETRY_TICKS && !fd_rev.rescue_left);
+        feedbackLock(); CHECK(fd_rev.stage == FD_REV_CLOSED);
+    }
+    // Late edge cannot rescue an expired 8 ms sector; wrap-safe and no bursts.
+    FdRevPolicy p; fdRevBeginPolicy(&p, UINT32_MAX - 100u);
+    for (unsigned n = 0; n < 2; n++)
+        CHECK(fdRevAdvancePolicy(&p, p.sector_at + p.period) == FD_REV_RETRY);
+    CHECK(p.period == FD_S4_RESCUE_TICKS);
+    CHECK(!fdRevEdgePolicy(&p, p.sector_at + p.period, 16) && !p.confidence);
+    const uint32_t delayed = p.sector_at + 3u * p.period;
+    CHECK(fdRevAdvancePolicy(&p, delayed) == FD_REV_RETRY && p.rescue_left == 5);
+    CHECK(fdRevAdvancePolicy(&p, delayed) == FD_REV_NONE && p.rescue_left == 5);
+    CHECK(!fdRevEdgePolicy(&p, p.sector_at + p.period - 1u, 16) && p.confidence == 1);
+    CHECK(!p.rescue_left && p.period == FD_REV_RETRY_TICKS);
+
+    // Actual floor integration: 30-edge boundary no longer causes 360->277.
+    feedbackReset(); benchStart(); feedbackLock();
+    const uint32_t closed = fd_rev.closed_at;
+    DWT->CYCCNT = closed + 100000u * FD_REV_US;
+    for (unsigned z = 29; z <= 31; z++) {
+        zero_crosses = z; duty_cycle_setpoint = 277;
+        actualStartupFloor(); CHECK(duty_cycle_setpoint == 360);
+    }
+    unsigned previous = 360;
+    for (unsigned us = 100000; us <= 500000; us += 1000) {
+        DWT->CYCCNT = closed + us * FD_REV_US;
+        duty_cycle_setpoint = 277; actualStartupFloor();
+        CHECK(duty_cycle_setpoint <= previous && duty_cycle_setpoint >= 277);
+        CHECK(previous - duty_cycle_setpoint <= 1);
+        previous = duty_cycle_setpoint;
+        if (us <= 150000) CHECK(duty_cycle_setpoint == 360);
+        if (us == 300000) CHECK(duty_cycle_setpoint == 285);
+        if (us >= 450000) CHECK(duty_cycle_setpoint == 277 && !fd_power_bench.floor);
+    }
+    // Floor only: do not impose the 610 startup ceiling beyond original
+    // eligibility, or hold a high throttle request down for 450 ms.
+    DWT->CYCCNT = closed + 100000u * FD_REV_US;
+    duty_cycle_setpoint = 800; actualStartupFloor(); CHECK(duty_cycle_setpoint == 800);
+    zero_crosses = 29; duty_cycle_setpoint = 800; actualStartupFloor();
+    CHECK(duty_cycle_setpoint == 610);
+    zero_crosses = 100;
+    hard_cap = 250; duty_cycle_setpoint = 200;
+    actualStartupFloor(); CHECK(duty_cycle_setpoint == 250);
+    input = 0; duty_cycle_setpoint = 0;
+    actualStartupFloor(); CHECK(!duty_cycle_setpoint);
+    adjusted_input = newinput = 0; fdBenchService();
+    CHECK(!fd_power_bench.active_id && !fd_power_bench.floor);
+    // Arithmetic independently checked with a 64-bit reference; no overflow
+    // at normal floor delta 150 or the entire duty domain (0..2000).
+    for (unsigned base = 0; base <= 2000; base += 40) {
+        for (unsigned min = 0; min <= base; min += 20) {
+            for (unsigned us = 150000; us <= 450000; us += 10000) {
+                unsigned expected = us == 450000 ? 0 : min +
+                    (uint64_t)(base - min) * (450000 - us) / 300000;
+                CHECK(fdS4ClosedFloor(us * FD_REV_US, base, min) == expected);
+            }
+        }
+    }
+    CHECK(fdS4ClosedFloor(FD_S4_HOLD_TICKS, 200, 210) == 200);
+    // Safety/zero/native latch beat the next fast commutation.
+    for (unsigned reason = 0; reason < 3; reason++) {
+        feedbackReset(); benchStart(); feedbackRetry(); feedbackRetry();
+        CHECK(fd_rev.rescue_left == 6);
+        unsigned writes = gate_writes;
+        if (!reason) adjusted_input = newinput = 0;
+        if (reason == 1) drive_safety_limit_inhibit = 1;
+        if (reason == 2) { stuck_enabled = 1; bemf_timeout_happened = 11; CHECK(stuckRotorGuardInput()); }
+        sequenceTickAt(fd_rev.sector_at + fd_rev.period);
+        CHECK(gate_writes == writes && !fd_rev_acquiring);
+        if (reason) CHECK(!gates && !pwm && !running);
+    }
+    feedbackReset(); DWT->CYCCNT = UINT32_MAX - 100u; benchStart();
+    feedbackRetry(); feedbackRetry(); feedbackLock();
+    DWT->CYCCNT = fd_rev.closed_at + 300000u * FD_REV_US;
+    zero_crosses = 30; duty_cycle_setpoint = 277; actualStartupFloor();
+    CHECK(duty_cycle_setpoint == 285);
+}
+#endif
 static void test_feedback(void)
 {
     test_all_phases(); test_confirmation(); test_failed_start_edge_shape();
     test_time_gate_and_resets(); test_coast_unchanged();
+#ifdef TARGET_STARTUP_S4
+    test_s4();
+#endif
 #ifdef TARGET_STARTUP_S3_POWER
     // Higher REQUEST, same native initial output seed and ramp. No direct
     // jump to 540/600, no EEPROM edits, no extension of the powered window.

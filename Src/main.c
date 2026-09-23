@@ -1024,6 +1024,14 @@ static void fdBenchService(void)
                     uint32_t fade = now - fd_rev.edge_at;
                     requested = 360u + (fade < FD_POWER_FADE_TICKS ?
                         40u * (FD_POWER_FADE_TICKS - fade) / FD_POWER_FADE_TICKS : 0u);
+#ifdef TARGET_STARTUP_S4
+                    /* Keep the initial S3 400->360 release, then support the
+                     * newly closed loop independently of zero_crosses==30.
+                     * A time-bounded floor, NOT a speed/torque guarantee. */
+                    if (fade >= FD_POWER_FADE_TICKS)
+                        requested = fdS4ClosedFloor(now - fd_rev.closed_at,
+                            min_startup_duty, minimum_duty_cycle);
+#endif
                 }
 #ifdef TARGET_STARTUP_FEEDBACK
                 /* Preserve S2's initial power envelope independently of
@@ -2165,7 +2173,12 @@ if (!stepper_sine && armed) {
             }
         }
         if (!prop_brake_active) {
-            if (input >= 47 && (zero_crosses < (uint32_t)(30 >> EFFECTIVE_STALL_PROTECTION))) {
+            /* FD_STARTUP_FLOOR_BEGIN */
+            if (input >= 47 && (zero_crosses < (uint32_t)(30 >> EFFECTIVE_STALL_PROTECTION)
+#ifdef TARGET_STARTUP_S4
+                || fd_power_bench.active_id
+#endif
+                )) {
 #ifdef TARGET_STARTUP_POWER_BENCH
                 fdBenchService();
                 uint16_t startup_floor = fd_power_bench.floor;
@@ -2180,10 +2193,15 @@ if (!stepper_sine && armed) {
                     duty_cycle_setpoint = min_startup_duty;
                 }
 #endif
-                if (duty_cycle_setpoint > startup_max_duty_cycle) {
+                if (
+#ifdef TARGET_STARTUP_S4
+                    (fd_rev_acquiring || zero_crosses < (uint32_t)(30 >> EFFECTIVE_STALL_PROTECTION)) &&
+#endif
+                    duty_cycle_setpoint > startup_max_duty_cycle) {
                     duty_cycle_setpoint = startup_max_duty_cycle;
                 }
             }
+            /* FD_STARTUP_FLOOR_END */
 
 #ifdef DRIVE_SAFETY_LIMIT_PRIORITY
             if (stall_protection_adjust > 0 && input > 47) {

@@ -107,10 +107,14 @@ function decodeBench(b, variant = 3) {
     records.push(r);
   }
   return {header: h, records, omitted_earlier_trials: Math.max(0, h.trials - 16),
+    ...(variant === 11 ? {startup_profile: {name:'S4', initial_request:360, acquisition_request:400,
+      rescue_after_empty_retries:2, rescue_sector_ms:8, rescue_sectors:6,
+      closed_floor_hold_ms:150, closed_floor_fade_ms:300, closed_floor_end_ms:450,
+      all_retries_count_as_native_timeouts:true}} : {}),
     ...(variant === 8 ? {power_profile: {name: 'S3-P',initial_request: 540,acquisition_request: 600,startup_cap: 610,post_handoff_base: 360,release_ms: 20,legacy_extra_is_not_profile_amplitude: true}} : {}),
     caveats: [variant >= 9 ? 'Last 16 summaries. S3-D retains separate first no-lock, first post-handoff loss and first complete observation tails. Operator zero and other stops are not pinned.' : variant >= 6 ? 'Last 16 summaries. Paired acquisition banks separately retain first completed failure and first full closed-loop observation. Early operator zero does not pin a bank.' : variant >= 4 ? 'Last 16 summaries. Trace capture_id is the trial id; each start replaces a non-failure trace, first failed trial remains pinned until explicit ARM. Closed-loop stage alone is not proof of normal loaded operation.' : 'Last 16 trial summaries, not continuous waveforms. Main trace remains first-shot until explicitly rearmed.',
       'Observed times are service timestamps, not physical zero-cross timestamps. Current is a filtered software maximum, not peak phase current.',
-      variant >= 7 ? 'S3/S3-P: event-led acquisition <= 300 ms; streak counts consecutive ADC-qualified edges, NOT S2 phase-window qualification. Six edges earn <= 1 s observation; first runtime timeout aborts. Not a native stuck-trip proof or flight mode.' : variant >= 5 ? 'S2: acquisition <= 300 ms; only six-edge handoff earns <= 1 s observation; first runtime timeout aborts. Not a hardware current limiter, native stuck-trip proof or flight mode.' : 'The 300 ms bench window is a software stop request, not a hardware current limiter or a flight mode.']};
+      variant >= 7 ? 'S3 family (including S4): event-led acquisition <= 300 ms; streak counts consecutive ADC-qualified edges, NOT S2 phase-window qualification. Six edges earn <= 1 s observation; first runtime timeout aborts. Not a native stuck-trip proof or flight mode.' : variant >= 5 ? 'S2: acquisition <= 300 ms; only six-edge handoff earns <= 1 s observation; first runtime timeout aborts. Not a hardware current limiter, native stuck-trip proof or flight mode.' : 'The 300 ms bench window is a software stop request, not a hardware current limiter or a flight mode.']};
 }
 function parseHex(text) {
   let base = 0, eof = false;
