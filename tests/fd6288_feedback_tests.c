@@ -81,19 +81,32 @@ static void test_s4(void)
         feedbackReset(); benchStart();
         for (unsigned n = 0; n < retry; n++) feedbackRetry();
         feedbackEdge(2000);
-        CHECK(!fd_rev.rescue_left && fd_rev.confidence == 1);
+        CHECK(fd_rev.confidence == 1);
+#ifdef TARGET_STARTUP_RESCUE_BRIDGE
+        unsigned left = retry >= 2 ? 7 - retry : 0;
+        CHECK(fd_rev.rescue_left == left);
+        CHECK(fd_rev.period == (left ? FD_S4_RESCUE_TICKS : FD_REV_RETRY_TICKS));
+#else
+        CHECK(!fd_rev.rescue_left);
+        CHECK(fd_rev.period == FD_REV_RETRY_TICKS);
+#endif
 #ifdef TARGET_STARTUP_RESCUE_RETAIN
         CHECK(fd_rev.rescue_used == (retry >= 2) && !fd_rev.empty_retries);
 #else
         CHECK(fd_rev.rescue_used);
 #endif
-        CHECK(fd_rev.period == FD_REV_RETRY_TICKS);
         feedbackRetry(); feedbackRetry();
+#ifdef TARGET_STARTUP_RESCUE_BRIDGE
+        left = retry < 2 ? 6 : (left > 2 ? left - 2 : 0);
+        CHECK(fd_rev.rescue_left == left);
+        CHECK(fd_rev.period == (left ? FD_S4_RESCUE_TICKS : FD_REV_RETRY_TICKS));
+#else
 #ifdef TARGET_STARTUP_RESCUE_RETAIN
         CHECK(fd_rev.period == (retry >= 2 ? FD_REV_RETRY_TICKS : FD_S4_RESCUE_TICKS));
         CHECK(fd_rev.rescue_left == (retry >= 2 ? 0 : 6));
 #else
         CHECK(fd_rev.period == FD_REV_RETRY_TICKS && !fd_rev.rescue_left);
+#endif
 #endif
         feedbackLock(); CHECK(fd_rev.stage == FD_REV_CLOSED);
     }
@@ -107,7 +120,11 @@ static void test_s4(void)
     CHECK(fdRevAdvancePolicy(&p, delayed) == FD_REV_RETRY && p.rescue_left == 5);
     CHECK(fdRevAdvancePolicy(&p, delayed) == FD_REV_NONE && p.rescue_left == 5);
     CHECK(!fdRevEdgePolicy(&p, p.sector_at + p.period - 1u, 16) && p.confidence == 1);
+#ifdef TARGET_STARTUP_RESCUE_BRIDGE
+    CHECK(p.rescue_left == 4 && p.period == FD_S4_RESCUE_TICKS);
+#else
     CHECK(!p.rescue_left && p.period == FD_REV_RETRY_TICKS);
+#endif
 
     // Actual floor integration: 30-edge boundary no longer causes 360->277.
     feedbackReset(); benchStart(); feedbackLock();
@@ -251,9 +268,15 @@ static void test_retained_rescue(void)
         CHECK(fd_rev.period == FD_S4_RESCUE_TICKS);
         // First real edge interrupts the rescue, but never refunds budget.
         feedbackEdge(2000);
+#ifdef TARGET_STARTUP_RESCUE_BRIDGE
+        CHECK(fd_rev.rescue_used && fd_rev.rescue_left == 5);
+        feedbackRetry(); feedbackRetry();
+        CHECK(fd_rev.rescue_left == 3 && fd_rev.period == FD_S4_RESCUE_TICKS);
+#else
         CHECK(fd_rev.rescue_used && !fd_rev.rescue_left);
         feedbackRetry(); feedbackRetry();
         CHECK(fd_rev.period == FD_REV_RETRY_TICKS && !fd_rev.rescue_left);
+#endif
 #else
         CHECK(fd_rev.rescue_used && !fd_rev.rescue_left);
         CHECK(fd_rev.period == FD_REV_RETRY_TICKS);
@@ -311,6 +334,46 @@ static void test_retained_rescue(void)
 #endif
 static void test_feedback(void)
 {
+#ifdef TARGET_STARTUP_RESCUE_BRIDGE
+    for (unsigned dir = 0; dir <= 1; dir++) {
+        // #7: five fast sectors entered, isolated edge consumes fifth;
+        // only ONE short sector remains. Timeout cannot renew that budget.
+        feedbackReset(); forward = dir; benchStart();
+        for (unsigned i = 0; i < 6; i++) feedbackRetry();
+        CHECK(fd_rev.rescue_left == 2);
+        feedbackEdge(2243); CHECK(fd_rev.rescue_left == 1);
+        CHECK(fd_rev.confidence == 1 && fd_rev.period == FD_S4_RESCUE_TICKS);
+        feedbackRetry(); CHECK(!fd_rev.rescue_left && !fd_rev.confidence);
+        CHECK(fd_rev.period == FD_REV_RETRY_TICKS);
+        feedbackRetry(); CHECK(!fd_rev.rescue_left && fd_rev.rescue_used);
+        // #10: edge in the LAST short sector has no remaining budget.
+        feedbackReset(); forward = dir; benchStart();
+        for (unsigned i = 0; i < 7; i++) feedbackRetry();
+        CHECK(fd_rev.rescue_left == 1);
+        feedbackEdge(6691); CHECK(!fd_rev.rescue_left);
+        CHECK(fd_rev.period == FD_REV_RETRY_TICKS);
+        // Two consecutive edges give feedback sole control immediately.
+        feedbackReset(); forward = dir; benchStart();
+        feedbackRetry(); feedbackRetry(); feedbackEdge(2000);
+        CHECK(fd_rev.rescue_left == 5);
+        feedbackEdge(2000); CHECK(fd_rev.confidence == 2 && !fd_rev.rescue_left);
+        CHECK(fd_rev.period == FD_REV_RETRY_TICKS && fd_rev.rescue_used);
+        // Alternating solitary edges and timeouts consume, never replenish.
+        feedbackReset(); forward = dir; benchStart();
+        feedbackRetry(); feedbackRetry();
+        for (unsigned i = 0; i < 3; i++) {
+            feedbackEdge(1000); CHECK(fd_rev.rescue_left == 5 - 2 * i);
+            feedbackRetry(); CHECK(fd_rev.rescue_left == 4 - 2 * i);
+        }
+        CHECK(fd_rev.period == FD_REV_RETRY_TICKS && fd_rev.rescue_used);
+        // Native protection can stop the retained final sector before drive.
+        feedbackReset(); forward = dir; benchStart();
+        feedbackRetry(); feedbackRetry(); feedbackEdge(2000);
+        stuck_enabled = 1; bemf_timeout = bemf_timeout_happened;
+        unsigned writes = gate_writes; feedbackRetry();
+        CHECK(stuck_rotor_inhibit && !gates && !pwm && gate_writes == writes);
+    }
+#endif
     test_all_phases(); test_confirmation(); test_failed_start_edge_shape();
     test_time_gate_and_resets(); test_coast_unchanged();
 #ifdef TARGET_STARTUP_S4

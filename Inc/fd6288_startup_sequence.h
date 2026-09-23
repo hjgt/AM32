@@ -122,15 +122,30 @@ static inline uint8_t fdRevEdgePolicy(FdRevPolicy *s, uint32_t now, uint8_t adva
 #ifdef TARGET_STARTUP_RESCUE_RETAIN
     /* A real edge immediately wins. It resets the consecutive missing-sector
      * count, not the one-shot budget. Only starting rescue consumes budget
-     * (in fdRevAdvancePolicy); an interrupted rescue can never be resumed. */
+     * (in fdRevAdvancePolicy). S4C discards the remainder; S4D below keeps
+     * only the unspent sectors until a second consecutive edge. */
     s->empty_retries = 0u;
 #else
     /* Even one real edge cancels/prevents the rescue for this entire trial.
      * Feedback leads immediately; never run an open-loop schedule over it. */
     s->rescue_used = 1u;
 #endif
+#ifdef TARGET_STARTUP_RESCUE_BRIDGE
+    /* S4D: a solitary edge still leads commutation immediately, but does
+     * not discard the remaining short-sector budget. Consume this sector
+     * on an edge just as on a timeout; never refund or extend six sectors.
+     * A second consecutive edge cancels the remaining budget. This is only
+     * an acquisition deadline, never permission to generate synthetic ZCs. */
+    if (s->rescue_left && !s->confidence) {
+        if (!--s->rescue_left) s->period = FD_REV_RETRY_TICKS;
+    } else {
+        s->rescue_left = 0u;
+        s->period = FD_REV_RETRY_TICKS;
+    }
+#else
     s->rescue_left = 0u;
     s->period = FD_REV_RETRY_TICKS;
+#endif
 #endif
     if (s->confidence) {
 #ifdef TARGET_STARTUP_HANDOFF_REAL
