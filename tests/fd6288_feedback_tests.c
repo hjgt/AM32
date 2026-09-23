@@ -81,10 +81,20 @@ static void test_s4(void)
         feedbackReset(); benchStart();
         for (unsigned n = 0; n < retry; n++) feedbackRetry();
         feedbackEdge(2000);
-        CHECK(fd_rev.rescue_used && !fd_rev.rescue_left && fd_rev.confidence == 1);
+        CHECK(!fd_rev.rescue_left && fd_rev.confidence == 1);
+#ifdef TARGET_STARTUP_RESCUE_RETAIN
+        CHECK(fd_rev.rescue_used == (retry >= 2) && !fd_rev.empty_retries);
+#else
+        CHECK(fd_rev.rescue_used);
+#endif
         CHECK(fd_rev.period == FD_REV_RETRY_TICKS);
         feedbackRetry(); feedbackRetry();
+#ifdef TARGET_STARTUP_RESCUE_RETAIN
+        CHECK(fd_rev.period == (retry >= 2 ? FD_REV_RETRY_TICKS : FD_S4_RESCUE_TICKS));
+        CHECK(fd_rev.rescue_left == (retry >= 2 ? 0 : 6));
+#else
         CHECK(fd_rev.period == FD_REV_RETRY_TICKS && !fd_rev.rescue_left);
+#endif
         feedbackLock(); CHECK(fd_rev.stage == FD_REV_CLOSED);
     }
     // Late edge cannot rescue an expired 8 ms sector; wrap-safe and no bursts.
@@ -223,6 +233,82 @@ static void test_handoff_real_interval(void)
 #endif
 }
 #endif
+#ifdef TARGET_STARTUP_S4
+static void test_retained_rescue(void)
+{
+    // #3 shape: two early real edges, a timeout, one isolated real edge,
+    // then two missing sectors. Exercise the actual ADC and bridge adapter.
+    for (unsigned dir = 0; dir <= 1; dir++) {
+        feedbackReset(); forward = dir; benchStart();
+        feedbackEdge(19827); feedbackEdge(9282); feedbackRetry();
+        CHECK(bemf_timeout_happened == 1 && !fd_rev.confidence);
+        feedbackEdge(10466); CHECK(fd_rev.confidence == 1);
+        feedbackRetry(); CHECK(fd_rev.period == FD_REV_RETRY_TICKS);
+        feedbackRetry(); CHECK(!zero_crosses && adc_zcd_diag.accepted == 3);
+        CHECK(bemf_timeout_happened == 3);
+#ifdef TARGET_STARTUP_RESCUE_RETAIN
+        CHECK(fd_rev.rescue_used && fd_rev.rescue_left == 6);
+        CHECK(fd_rev.period == FD_S4_RESCUE_TICKS);
+        // First real edge interrupts the rescue, but never refunds budget.
+        feedbackEdge(2000);
+        CHECK(fd_rev.rescue_used && !fd_rev.rescue_left);
+        feedbackRetry(); feedbackRetry();
+        CHECK(fd_rev.period == FD_REV_RETRY_TICKS && !fd_rev.rescue_left);
+#else
+        CHECK(fd_rev.rescue_used && !fd_rev.rescue_left);
+        CHECK(fd_rev.period == FD_REV_RETRY_TICKS);
+#endif
+        feedbackLock(); CHECK(fd_rev.stage == FD_REV_CLOSED);
+        sequenceComplete(); CHECK(fd_power_bench.last_reason == FD_BENCH_WINDOW);
+    }
+#ifdef TARGET_STARTUP_RESCUE_RETAIN
+    // Non-consecutive timeouts cannot accumulate into rescue. Qualified
+    // feedback resets the missing-sector counter, not native fault count.
+    feedbackReset(); benchStart();
+    for (unsigned n = 0; n < 5; n++) {
+        feedbackEdge(1000); CHECK(!fd_rev.empty_retries && !fd_rev.rescue_used);
+        feedbackRetry(); CHECK(fd_rev.empty_retries == 1 && !fd_rev.rescue_used);
+        CHECK(bemf_timeout_happened == n + 1);
+    }
+    feedbackRetry(); CHECK(fd_rev.rescue_used && fd_rev.rescue_left == 6);
+    feedbackLock(); CHECK(fd_rev.stage == FD_REV_CLOSED && !fd_rev.rescue_left);
+    // Closed-loop loss must stop, never fall back into another attempt.
+    unsigned writes = gate_writes;
+    interval_timer = 45001; fd6288TimeoutStep();
+    CHECK(fd_power_bench.last_reason == FD_BENCH_LOST_FEEDBACK);
+    fdRevTick(); CHECK(gate_writes == writes && !gates && !pwm);
+    // Real operator zero/new trial renews the budget; forced internal zero
+    // or positive throttle cannot do so after the stopped trial.
+    CHECK(fdBenchGuardInput() && !fdBenchBegin());
+    adjusted_input = newinput = 0; CHECK(!fdBenchGuardInput());
+    benchStart(); CHECK(!fd_rev.rescue_used && !fd_rev.empty_retries);
+
+    // Native threshold wins before a prospective rescue drives a new step.
+    feedbackReset(); stuck_enabled = 1; bemf_timeout = 2; benchStart();
+    feedbackEdge(1000); feedbackRetry(); feedbackEdge(1000); feedbackRetry();
+    writes = gate_writes; feedbackRetry();
+    CHECK(stuck_rotor_inhibit && fd_power_bench.last_reason == FD_BENCH_NATIVE_STUCK);
+    CHECK(gate_writes == writes && !gates && !pwm);
+
+    // Delayed service near the deadline may start a rescue, but cannot
+    // extend 300 ms to complete its six sectors. Test across DWT wrap too.
+    feedbackReset(); DWT->CYCCNT = UINT32_MAX - 100u; benchStart();
+    feedbackEdge(1000);
+    sequenceTickAt(fd_power_policy.started + 272000u * FD_REV_US);
+    CHECK(fd_rev.empty_retries == 1 && !fd_rev.rescue_used);
+    feedbackRetry(); CHECK(fd_rev.rescue_left == 6);
+    writes = gate_writes;
+    sequenceTickAt(fd_power_policy.started + FD_REV_ACQUIRE_TICKS);
+    CHECK(fd_power_bench.last_reason == FD_BENCH_NO_LOCK && !gates && !pwm);
+    CHECK(gate_writes == writes);
+    // Genuine zero cancels an unused future opportunity without drive.
+    feedbackReset(); benchStart(); feedbackEdge(1000); feedbackRetry();
+    writes = gate_writes; adjusted_input = newinput = 0;
+    sequenceTickAt(fd_rev.sector_at + fd_rev.period);
+    CHECK(gate_writes == writes && !fd_rev_acquiring && !fd_power_bench.active_id);
+#endif
+}
+#endif
 static void test_feedback(void)
 {
     test_all_phases(); test_confirmation(); test_failed_start_edge_shape();
@@ -230,6 +316,7 @@ static void test_feedback(void)
 #ifdef TARGET_STARTUP_S4
     test_s4();
     test_handoff_real_interval();
+    test_retained_rescue();
 #endif
 #ifdef TARGET_STARTUP_S3_POWER
     // Higher REQUEST, same native initial output seed and ramp. No direct

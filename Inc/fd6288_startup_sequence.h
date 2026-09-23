@@ -39,7 +39,9 @@ typedef struct {
  * fixed-sector phase/period qualification. No claim of mechanical lock. */
 enum { FD_REV_RETRY_TICKS = 22500u * FD_REV_US };
 #ifdef TARGET_STARTUP_S4
-/* One bounded escape attempt ONLY if no qualified edge has ever appeared.
+/* S4/S4B: one escape attempt only if no qualified edge ever appeared.
+ * S4C: retain an UNUSED attempt after a broken acquisition streak; two
+ * consecutive no-feedback sectors are still required since the last edge.
  * Six shorter sectors are not six synthetic crossings or proof of rotation.
  * Every expiry still enters the native timeout counter/latch path. */
 enum { FD_S4_RESCUE_TICKS = 8000u * FD_REV_US, FD_S4_RESCUE_SECTORS = 6u,
@@ -117,9 +119,16 @@ static inline uint8_t fdRevEdgePolicy(FdRevPolicy *s, uint32_t now, uint8_t adva
     if (s->confidence && !elapsed) return 0u;
     s->seen = 1u;
 #ifdef TARGET_STARTUP_S4
+#ifdef TARGET_STARTUP_RESCUE_RETAIN
+    /* A real edge immediately wins. It resets the consecutive missing-sector
+     * count, not the one-shot budget. Only starting rescue consumes budget
+     * (in fdRevAdvancePolicy); an interrupted rescue can never be resumed. */
+    s->empty_retries = 0u;
+#else
     /* Even one real edge cancels/prevents the rescue for this entire trial.
      * Feedback leads immediately; never run an open-loop schedule over it. */
     s->rescue_used = 1u;
+#endif
     s->rescue_left = 0u;
     s->period = FD_REV_RETRY_TICKS;
 #endif
