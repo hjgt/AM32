@@ -1,0 +1,87 @@
+[
+  {
+    "at": "2026-09-23T15:17:06.472Z",
+    "stage": "stopped_before",
+    "value": {
+      "input": 0,
+      "newinput": 0,
+      "adjusted_input": 0,
+      "running": 0,
+      "heli_coast_active": 0,
+      "duty_cycle": 0,
+      "ccr": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "at": "2026-09-23T15:17:06.909Z",
+    "stage": "write_scope",
+    "value": {
+      "main_hex": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-startup-S4B-20260923/AM32_CUSTOM_FD6288_G431_S4B_REAL_HANDOFF_ACQ300_OBS1000.hex",
+      "sha256": "eb95423ec5554ee433b0a4d65a33ad37050ca11bfc680b3c691f125f84d35c3c",
+      "bytes": 35044,
+      "bl_and_f800_excluded": true
+    }
+  },
+  {
+    "at": "2026-09-23T15:17:06.948Z",
+    "stage": "reset_init",
+    "value": ""
+  },
+  {
+    "at": "2026-09-23T15:17:08.054Z",
+    "stage": "write_main",
+    "value": "auto erase enabled\nwrote 35088 bytes from file /Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-startup-S4B-20260923/AM32_CUSTOM_FD6288_G431_S4B_REAL_HANDOFF_ACQ300_OBS1000.hex in 1.103953s (31.039 KiB/s)\n"
+  },
+  {
+    "at": "2026-09-23T15:17:08.410Z",
+    "stage": "verify_main_once",
+    "value": "verified 35044 bytes in 0.354438s (96.555 KiB/s)\n"
+  },
+  {
+    "at": "2026-09-23T15:17:08.415Z",
+    "stage": "reset_run",
+    "value": ""
+  },
+  {
+    "at": "2026-09-23T15:17:12.938Z",
+    "stage": "stopped_after",
+    "value": {
+      "input": 0,
+      "newinput": 0,
+      "adjusted_input": 0,
+      "running": 0,
+      "heli_coast_active": 0,
+      "duty_cycle": 0,
+      "ccr": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "at": "2026-09-23T15:17:12.981Z",
+    "stage": "runtime_ok",
+    "value": {
+      "variant": 12,
+      "trial": 0,
+      "settings_ram_unchanged": true,
+      "armed": 1,
+      "minimum_duty_cycle": 210,
+      "min_startup_duty": 360,
+      "startup_max_duty_cycle": 610,
+      "stuck_rotor_inhibit": 0,
+      "drive_safety_limit_inhibit": 0,
+      "battery_voltage": 807,
+      "actual_current": 5,
+      "arr": 6665,
+      "dtg": 206
+    }
+  }
+]
