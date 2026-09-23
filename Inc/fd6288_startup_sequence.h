@@ -26,6 +26,9 @@ typedef struct {
 #ifdef TARGET_STARTUP_S4
     uint8_t empty_retries, rescue_left, rescue_used;
 #endif
+#ifdef TARGET_STARTUP_HANDOFF_REAL
+    uint32_t last_real_period;
+#endif
 } FdRevPolicy;
 #ifdef TARGET_STARTUP_FEEDBACK
 /* S3: return to native polling-style event-led acquisition. No fixed
@@ -89,6 +92,9 @@ static inline uint8_t fdRevAdvancePolicy(FdRevPolicy *s, uint32_t now)
     s->sector_at = now;
     s->seen = s->confidence = 0u;
     s->measured = 0u;
+#ifdef TARGET_STARTUP_HANDOFF_REAL
+    s->last_real_period = 0u;
+#endif
 #ifdef TARGET_STARTUP_S4
     if (s->rescue_left) {
         if (!--s->rescue_left) s->period = FD_REV_RETRY_TICKS;
@@ -118,11 +124,19 @@ static inline uint8_t fdRevEdgePolicy(FdRevPolicy *s, uint32_t now, uint8_t adva
     s->period = FD_REV_RETRY_TICKS;
 #endif
     if (s->confidence) {
+#ifdef TARGET_STARTUP_HANDOFF_REAL
+        /* Keep the newest adjacent REAL edge interval separate from the
+         * slow IIR. Only the first closed-loop ADC gate uses this value. */
+        s->last_real_period = elapsed;
+#endif
         s->measured = s->confidence == 1u ? elapsed :
             (3u * s->measured + elapsed) / 4u;
         s->decision = FD_REV_EDGE_GOOD;
     } else {
         s->measured = 0u; /* first edge is not a ZC-to-ZC period */
+#ifdef TARGET_STARTUP_HANDOFF_REAL
+        s->last_real_period = 0u;
+#endif
         s->decision = FD_REV_EDGE_SEED;
     }
     s->edge_at = now;

@@ -1166,7 +1166,13 @@ static void fdRevTick(void)
         average_interval = commutation_interval;
         last_average_interval = commutation_interval;
         desync_check = 0u;
+#ifdef TARGET_STARTUP_HANDOFF_REAL
+        /* Preserve the IIR/first commutation delay, but do not label the
+         * smoothed period as the latest real interval in the ADC guard. */
+        adcZcdSeedHandoff(fd_rev.last_real_period / 80u);
+#else
         adcZcdSeedHandoff(commutation_interval);
+#endif
         SET_INTERVAL_TIMER_COUNT((now - fd_rev.edge_at) / 80u);
         fdTraceEvent(FD_EVENT_REV_HANDOFF, fd_rev.confidence);
         commutate();

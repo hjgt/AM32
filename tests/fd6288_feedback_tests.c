@@ -162,12 +162,74 @@ static void test_s4(void)
     CHECK(duty_cycle_setpoint == 285);
 }
 #endif
+#ifdef TARGET_STARTUP_S4
+static void test_handoff_real_interval(void)
+{
+    // Reproduce #8/#17's accelerating edge intervals (rounded to us) through
+    // the actual acquisition, handoff and ADC guard, not a copied gate model.
+    const unsigned periods[2][6] = {
+        {2000,22084,10454,8262,7243,6732},
+        {2000,16473,10608,8620,7548,6631}
+    };
+    const unsigned crossing_us[2] = {5961,5298};
+    for (unsigned k = 0; k < 2; k++) {
+        for (unsigned dir = 0; dir <= 1; dir++) {
+            feedbackReset(); forward = dir; benchStart();
+            for (unsigned n = 0; n < 6; n++) feedbackEdge(periods[k][n]);
+            uint32_t smooth = fd_rev.measured, delay = fd_rev.delay;
+            CHECK(smooth / 80u > 2u * crossing_us[k]);
+            CHECK(delay == smooth / 2u - smooth * temp_advance / 64u);
+            sequenceTickAt(fd_rev.edge_at + delay);
+            CHECK(fd_rev.stage == FD_REV_CLOSED && commutation_interval == smooth / 80u);
+            CHECK(fd_rev.delay == delay); // leave first commutation timing alone
+#ifdef TARGET_STARTUP_HANDOFF_REAL
+            CHECK(fd_rev.last_real_period == periods[k][5] * FD_REV_US);
+            CHECK(adc_zcd_last_real_interval == 2u * periods[k][5]);
+            CHECK(adc_zcd_earliest == periods[k][5]);
+#else
+            CHECK(adc_zcd_earliest == (smooth / 80u) / 2u);
+#endif
+            unsigned accepted = adc_zcd_diag.accepted;
+            pre(delay / 80u + 200); pre(delay / 80u + 300); pre(delay / 80u + 400);
+            post(2u * crossing_us[k]); post(2u * crossing_us[k] + 104u);
+#ifdef TARGET_STARTUP_HANDOFF_REAL
+            CHECK(adc_zcd_diag.accepted == accepted + 1u && bemfcounter);
+#else
+            CHECK(adc_zcd_diag.accepted == accepted && !bemfcounter);
+            post(adc_zcd_earliest + 500u);
+            CHECK(adc_zcd_diag.accepted == accepted && !adc_zcd_before_seen);
+#endif
+        }
+    }
+#ifdef TARGET_STARTUP_HANDOFF_REAL
+    // Reset/first edge cannot carry an old trial's interval into handoff.
+    FdRevPolicy p; fdRevBeginPolicy(&p, UINT32_MAX - 100u);
+    CHECK(!p.last_real_period);
+    fdRevEdgePolicy(&p, p.sector_at + 1000u * FD_REV_US, 16);
+    CHECK(!p.last_real_period);
+    fdRevAdvancePolicy(&p, p.edge_at);
+    fdRevEdgePolicy(&p, p.sector_at + 2000u * FD_REV_US, 16);
+    CHECK(p.last_real_period == 2000u * FD_REV_US);
+    fdRevAdvancePolicy(&p, p.edge_at);
+    fdRevAdvancePolicy(&p, p.sector_at + p.period);
+    CHECK(!p.last_real_period && !p.confidence);
+    // The fix is initialization, NOT accepting an early pulse later when
+    // the clock passes the gate. That pulse still disarms the detector.
+    feedbackReset(); benchStart(); feedbackLock();
+    pre(500); pre(600); pre(700);
+    unsigned accepted = adc_zcd_diag.accepted;
+    post(adc_zcd_earliest); post(adc_zcd_earliest + 100);
+    CHECK(adc_zcd_diag.accepted == accepted && !adc_zcd_before_seen);
+#endif
+}
+#endif
 static void test_feedback(void)
 {
     test_all_phases(); test_confirmation(); test_failed_start_edge_shape();
     test_time_gate_and_resets(); test_coast_unchanged();
 #ifdef TARGET_STARTUP_S4
     test_s4();
+    test_handoff_real_interval();
 #endif
 #ifdef TARGET_STARTUP_S3_POWER
     // Higher REQUEST, same native initial output seed and ramp. No direct

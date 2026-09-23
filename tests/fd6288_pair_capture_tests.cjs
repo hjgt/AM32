@@ -55,8 +55,9 @@ function mock(opts = {}) {
   assert(good.closed && good.reads > 0); assert.deepEqual(fs.readFileSync(out), fixture);
   assert.deepEqual(d.banks, decoded.banks);
   assert.equal(d.header.active_bank, NONE); assert.equal(d.bench.header.trials, 7);
-  if (d.header.variant === 11) {
-    assert.equal(d.sampling_profile.name, 'S4');
+  if (d.header.variant >= 11) {
+    assert.equal(d.sampling_profile.name, d.header.variant === 12 ? 'S4B' : 'S4');
+    assert.equal(d.bench.startup_profile.latest_real_interval_at_handoff, d.header.variant === 12);
     assert.equal(d.bench.startup_profile.rescue_sector_ms, 8);
     assert.equal(d.bench.startup_profile.closed_floor_end_ms, 450);
     assert.equal(d.bench.startup_profile.all_retries_count_as_native_timeouts, true);
