@@ -334,6 +334,50 @@ static void test_retained_rescue(void)
 #endif
 static void test_feedback(void)
 {
+#ifdef TARGET_STARTUP_S4E
+    test_all_phases(); test_confirmation(); test_failed_start_edge_shape();
+    test_time_gate_and_resets(); test_coast_unchanged();
+    for (unsigned dir=0; dir<=1; dir++) {
+        feedbackReset(); forward=dir; benchStart();
+        feedbackRetry(); feedbackRetry(); feedbackEdge(512);
+        CHECK(fd_rev.rescue_left==5 && fd_rev.period==FD_REV_RETRY_TICKS);
+        unsigned writes=gate_writes;
+        sequenceTickAt(fd_rev.sector_at + 12000u*FD_REV_US);
+        CHECK(gate_writes==writes && fd_rev.confidence==1);
+        feedbackEdge(15000); CHECK(fd_rev.confidence==2 && !fd_rev.rescue_left);
+        // If extended feedback wait expires, resume only the remaining budget.
+        feedbackReset(); forward=dir; benchStart();
+        feedbackRetry(); feedbackRetry(); feedbackEdge(512); feedbackRetry();
+        CHECK(fd_rev.rescue_left==4 && fd_rev.period==FD_S4_RESCUE_TICKS);
+        CHECK(bemf_timeout_happened==3 && !fd_rev.confidence);
+        for(unsigned n=0;n<4;n++) feedbackRetry();
+        CHECK(!fd_rev.rescue_left && fd_rev.rescue_used);
+        benchAt(300000); CHECK(fd_power_bench.last_reason==FD_BENCH_NO_LOCK && !gates);
+        // One-second observation ends recording, not drive. Wrap cannot restore floor.
+        feedbackReset(); forward=dir; benchStart(); feedbackLock();
+        uint32_t closed=fd_rev.closed_at;
+        sequenceTickAt(closed+FD_REV_OBSERVE_TICKS);
+        CHECK(running && !fd_power_bench.inhibit && fd_power_bench.active_id);
+        CHECK(fd_rev.observation_done && !fd_power_bench.floor);
+        uint32_t duration=fd_power_work.elapsed_cycles;
+        sequenceTickAt(fd_power_policy.started+100u);
+        CHECK(!fd_power_bench.floor && fd_power_work.elapsed_cycles==duration);
+        CHECK(!fdBenchDeadlineExpired());
+        // First runtime timeout still latches bridge off after observation ends.
+        interval_timer=45001; fd6288TimeoutStep();
+        CHECK(fd_power_bench.last_reason==FD_BENCH_LOST_FEEDBACK && !gates && !pwm);
+        // Genuine operator zero and native protection remain authoritative.
+        feedbackReset(); forward=dir; benchStart(); feedbackLock();
+        sequenceTickAt(fd_rev.closed_at+FD_REV_OBSERVE_TICKS);
+        adjusted_input=newinput=0; fdBenchService();
+        CHECK(!fd_power_bench.active_id && !fd_power_bench.floor);
+        feedbackReset(); stuck_enabled=1; bemf_timeout=2; benchStart();
+        feedbackRetry(); feedbackRetry(); feedbackEdge(512);
+        writes=gate_writes; feedbackRetry();
+        CHECK(stuck_rotor_inhibit && !gates && gate_writes==writes);
+    }
+    return;
+#endif
 #ifdef TARGET_STARTUP_RESCUE_BRIDGE
     for (unsigned dir = 0; dir <= 1; dir++) {
         // #7: five fast sectors entered, isolated edge consumes fifth;

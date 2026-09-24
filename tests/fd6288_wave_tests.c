@@ -13,7 +13,7 @@
 #endif
 #if FD6288_TRACE_VARIANT == 15
 #define TARGET_STARTUP_ACQ_LOG
-#elif FD6288_TRACE_VARIANT == 16
+#elif FD6288_TRACE_VARIANT >= 16
 #define TARGET_STARTUP_EDGE_LOG
 #endif
 char step = 1, old_routine = 1, forward = 1;

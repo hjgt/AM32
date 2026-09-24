@@ -906,6 +906,11 @@ static uint8_t fdBenchConfigOk(void)
 static void fdBenchObserve(uint32_t now)
 {
     if (!fd_power_bench.active_id) return;
+#ifdef TARGET_STARTUP_S4E
+    /* Freeze the diagnostic window, not the drive; avoid DWT/count wrap in
+     * a long manual run. Final stop reason remains recorded separately. */
+    if (fd_rev.observation_done) return;
+#endif
     fd_power_work.elapsed_cycles = now - fd_power_policy.started;
     fd_power_work.accepted = adc_zcd_diag.accepted - fd_power_accepted_start;
     fd_power_work.timeouts = adc_zcd_diag.resets[ADC_ZCD_RESET_TIMEOUT] -
@@ -996,6 +1001,13 @@ static void fdBenchService(void)
         } else if (!armed || (!running && !fd_power_starting) || heli_coast_active) {
             fdBenchStop(FD_BENCH_NOT_RUNNING);
         } else {
+#ifdef TARGET_STARTUP_S4E
+            if (fd_rev.stage == FD_REV_CLOSED && !fd_rev.observation_done &&
+                (uint32_t)(now - fd_rev.closed_at) >= FD_REV_OBSERVE_TICKS) {
+                fdTraceTrialFinish(FD_BENCH_WINDOW, FD_REV_CLOSED);
+                fd_rev.observation_done = 1u;
+            }
+#endif
 #ifdef TARGET_STARTUP_SEQUENCE
 #ifdef TARGET_STARTUP_SEQUENCE_V2
             if (fdRevDeadlinePolicy(&fd_rev, now, fd_power_policy.started)) {
@@ -1041,6 +1053,11 @@ static void fdBenchService(void)
                     requested = 360u;
 #endif
 #endif /* TARGET_STARTUP_S3_POWER */
+#ifdef TARGET_STARTUP_S4E
+                /* Never revive startup support after the raw cycle counter
+                 * wraps. The floor has already finished fading before 1 s. */
+                if (fd_rev.observation_done) requested = 0u;
+#endif
                 uint16_t cap = driveEffectiveDutyLimit();
                 fd_power_bench.floor = requested < cap ? requested : cap;
                 if (!cap) fdBenchStop(FD_BENCH_SAFETY_CAP);

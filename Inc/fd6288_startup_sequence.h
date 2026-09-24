@@ -25,6 +25,9 @@ typedef struct {
 #endif
 #ifdef TARGET_STARTUP_S4
     uint8_t empty_retries, rescue_left, rescue_used;
+#ifdef TARGET_STARTUP_S4E
+    uint8_t observation_done;
+#endif
 #endif
 #ifdef TARGET_STARTUP_HANDOFF_REAL
     uint32_t last_real_period;
@@ -99,7 +102,13 @@ static inline uint8_t fdRevAdvancePolicy(FdRevPolicy *s, uint32_t now)
 #endif
 #ifdef TARGET_STARTUP_S4
     if (s->rescue_left) {
+#ifdef TARGET_STARTUP_S4E
+        /* A feedback-led waiting sector timed out: consume its existing
+         * budget and resume the remaining blind 8 ms attempt, never refill. */
+        s->period = --s->rescue_left ? FD_S4_RESCUE_TICKS : FD_REV_RETRY_TICKS;
+#else
         if (!--s->rescue_left) s->period = FD_REV_RETRY_TICKS;
+#endif
     } else if (!s->rescue_used && ++s->empty_retries == 2u) {
         s->rescue_used = 1u;
         s->rescue_left = FD_S4_RESCUE_SECTORS;
@@ -138,6 +147,11 @@ static inline uint8_t fdRevEdgePolicy(FdRevPolicy *s, uint32_t now, uint8_t adva
      * an acquisition deadline, never permission to generate synthetic ZCs. */
     if (s->rescue_left && !s->confidence) {
         if (!--s->rescue_left) s->period = FD_REV_RETRY_TICKS;
+#ifdef TARGET_STARTUP_S4E
+        /* First real edge leads immediately, but next feedback may need
+         * longer than the blind probe cadence. Preserve only unspent budget. */
+        s->period = FD_REV_RETRY_TICKS;
+#endif
     } else {
         s->rescue_left = 0u;
         s->period = FD_REV_RETRY_TICKS;
@@ -269,6 +283,9 @@ static inline uint8_t fdRevEdgePolicy(FdRevPolicy *s, uint32_t now, uint8_t adva
 static inline uint8_t fdRevDeadlinePolicy(const FdRevPolicy *s, uint32_t now,
     uint32_t started)
 {
+#ifdef TARGET_STARTUP_S4E
+    if (s->stage == FD_REV_CLOSED) return 0u;
+#endif
     /* Only the explicit six-edge handoff earns an observation window. A
      * partial streak or pending handoff never extends acquisition. */
     return s->stage == FD_REV_CLOSED ?

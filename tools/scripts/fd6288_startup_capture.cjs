@@ -107,7 +107,8 @@ function decodeBench(b, variant = 3) {
     records.push(r);
   }
   return {header: h, records, omitted_earlier_trials: Math.max(0, h.trials - 16),
-    ...(variant >= 11 ? {startup_profile: {name:variant>=14?'S4D':variant===13?'S4C':variant===12?'S4B':'S4', initial_request:360, acquisition_request:400,
+    ...(variant >= 11 ? {startup_profile: {name:variant===17?'S4E':variant>=14?'S4D':variant===13?'S4C':variant===12?'S4B':'S4', initial_request:360, acquisition_request:400,
+      feedback_wait_us:variant===17?22500:null, motor_stops_at_observation_end:variant!==17,
       latest_real_interval_at_handoff:variant>=12, retains_unused_rescue:variant>=13, bridges_solitary_rescue_edge:variant>=14,
       rescue_after_empty_retries:2, rescue_sector_ms:8, rescue_sectors:6,
       closed_floor_hold_ms:150, closed_floor_fade_ms:300, closed_floor_end_ms:450,
@@ -115,6 +116,7 @@ function decodeBench(b, variant = 3) {
     ...(variant === 8 ? {power_profile: {name: 'S3-P',initial_request: 540,acquisition_request: 600,startup_cap: 610,post_handoff_base: 360,release_ms: 20,legacy_extra_is_not_profile_amplitude: true}} : {}),
     caveats: [variant >= 9 ? 'Last 16 summaries. S3-D retains separate first no-lock, first post-handoff loss and first complete observation tails. Operator zero and other stops are not pinned.' : variant >= 6 ? 'Last 16 summaries. Paired acquisition banks separately retain first completed failure and first full closed-loop observation. Early operator zero does not pin a bank.' : variant >= 4 ? 'Last 16 summaries. Trace capture_id is the trial id; each start replaces a non-failure trace, first failed trial remains pinned until explicit ARM. Closed-loop stage alone is not proof of normal loaded operation.' : 'Last 16 trial summaries, not continuous waveforms. Main trace remains first-shot until explicitly rearmed.',
       'Observed times are service timestamps, not physical zero-cross timestamps. Current is a filtered software maximum, not peak phase current.',
+      variant===17 ? 'S4E: 300 ms acquisition STOP remains. After handoff, motor has NO one-second stop. Metrics freeze at one-second observation; elapsed/current/counters are NOT full-run totals. Summary final reason reflects eventual stop, possibly later than the stored metrics. First runtime timeout still stops drive.' : 'Motor stops at the bounded observation deadline.',
       variant >= 7 ? 'S3 family (including S4): event-led acquisition <= 300 ms; streak counts consecutive ADC-qualified edges, NOT S2 phase-window qualification. Six edges earn <= 1 s observation; first runtime timeout aborts. Not a native stuck-trip proof or flight mode.' : variant >= 5 ? 'S2: acquisition <= 300 ms; only six-edge handoff earns <= 1 s observation; first runtime timeout aborts. Not a hardware current limiter, native stuck-trip proof or flight mode.' : 'The 300 ms bench window is a software stop request, not a hardware current limiter or a flight mode.']};
 }
 function parseHex(text) {
