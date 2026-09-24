@@ -4,7 +4,7 @@ const root=path.resolve(__dirname,'..'), read=p=>fs.readFileSync(path.join(root,
 const strip=s=>s.replace(/^#include[^\n]*$/gm,'').replace(/^#pragma once$/gm,'');
 const impl=['Inc/fd6288_startup_wave.h','Inc/fd6288_startup_trace.h','Src/fd6288_startup_wave.c'].map(p=>strip(read(p))).join('\n');
 const source=read('tests/fd6288_wave_tests.c').replace('/* WAVE_IMPLEMENTATION */',impl);
-const variant=Number(process.argv[3]||9);assert([9,10,11,12,13,14,15].includes(variant));
+const variant=Number(process.argv[3]||9);assert([9,10,11,12,13,14,15,16].includes(variant));
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'fd6288-wave-')), exe=path.join(dir,'test'), fixture=exe+'.bin';
 for(const [cmd,args,input] of [
   [process.env.CC||'cc',[`-DFD6288_TRACE_VARIANT=${variant}`,'-std=c11','-O1','-g','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-x','c','-','-o',exe],source],
@@ -14,9 +14,10 @@ const {decode,SIZE}=require('../tools/scripts/fd6288_wave_capture.cjs'), raw=fs.
 assert.equal(raw.length,SIZE);
 assert.equal(d.header.variant,variant);
 assert.deepEqual(d.banks.map(b=>[b.header.trial_id,b.classification]),[[1,'no_lock'],[4,'post_handoff_loss'],[6,'success']]);
-assert.equal(d.banks[0].samples.overwritten,variant===15?0:344);assert.equal(d.banks[0].events.overwritten,25);
+assert.equal(d.banks[0].samples.overwritten,variant>=15?0:344);assert.equal(d.banks[0].events.overwritten,25);
 assert.equal(d.banks[1].samples.records.at(-1).stage,variant===15?2:4);
 if(variant===15) {assert.equal(d.banks[0].samples.records.length,50);assert.equal(d.recording_profile.sample_spacing_us,1200);}
+if(variant===16) {assert.equal(d.banks[0].samples.records.length,121);assert.equal(d.banks[0].first_edge.at_us,50);assert.deepEqual(d.banks[0].first_edge.adc,[1500,10,780]);assert.equal(d.banks[0].samples.records.at(-1).at_us,12050);}
 assert.equal(d.banks[2].events.records.at(-1).adc[2],780);
 for(const [offset,value] of [[0,0],[4,2],[8,8],[24,0],[28,3],[32,0],[64,1],[64+20,7],[64+28,0],[64+32,1000001]]) {
   const b=Buffer.from(raw);b.writeUInt32LE(value,offset);assert.throws(()=>decode(b),`invalid field ${offset}`);
@@ -27,6 +28,11 @@ if(variant===15) {
     const b=Buffer.from(raw);b.writeUInt32LE(value,offset);assert.throws(()=>decode(b));
   }
   const b=Buffer.from(raw);b[64+128+19]=4;assert.throws(()=>decode(b));
+}
+if(variant===16) {
+  for(const [offset,value] of [[52,192000],[56,0],[64+108,0xffffffff],[64+112,5000],[64+124,0]]) {
+    const b=Buffer.from(raw);b.writeUInt32LE(value,offset);assert.throws(()=>decode(b));
+  }
 }
 console.log('PASS S3-D C -> JS layout, tail ordering, coverage, class metadata and corrupt input rejection');
 if(process.argv[2]) {

@@ -50,6 +50,10 @@ void fdTraceInit(void)
 #ifdef TARGET_STARTUP_ACQ_LOG
     fd_startup_wave.reserved[0] = FD_WAVE_SAMPLE_TICKS;
 #endif
+#ifdef TARGET_STARTUP_EDGE_LOG
+    fd_startup_wave.reserved[0] = FD_WAVE_SAMPLE_TICKS;
+    fd_startup_wave.reserved[1] = FD_WAVE_EDGE_POST_TICKS;
+#endif
     fd_startup_wave.active_bank = fd_startup_wave.no_lock_bank =
         fd_startup_wave.lost_bank = fd_startup_wave.success_bank = FD_WAVE_NONE;
 }
@@ -70,6 +74,9 @@ void fdTraceTrial(uint32_t id)
         b->max_sample_cycles = b->max_event_cycles = b->last_sample_at = 0u;
         for (unsigned n = 0; n < 10u; n++) b->decisions[n] = 0u;
         for (unsigned n = 0; n < 5u; n++) b->reserved[n] = 0u;
+#ifdef TARGET_STARTUP_EDGE_LOG
+        b->reserved[0] = FD_WAVE_NONE; /* first accepted ADC timestamp */
+#endif
         fd_wave_stage = 2u; fd_startup_wave.active_bank = i;
         break;
     }
@@ -115,11 +122,28 @@ void fdTraceSample(uint16_t va, uint16_t vb, uint16_t vc, int16_t margin,
         if (reason < FD_SAMPLE_REASON_COUNT) b->decisions[reason]++;
         if (reason == FD_SAMPLE_ACCEPT) {
             b->accepted++;
+#ifdef TARGET_STARTUP_EDGE_LOG
+            if (b->reserved[0] == FD_WAVE_NONE) {
+                b->reserved[0] = at;
+                b->reserved[1] = va | ((uint32_t)vb << 16);
+                b->reserved[2] = vc | ((uint32_t)(uint16_t)INTERVAL_TIMER_COUNT << 16);
+                b->reserved[3] = (uint16_t)TIM1->CCR1 | ((uint32_t)(uint16_t)TIM1->CCR4 << 16);
+                b->reserved[4] = (uint8_t)step | ((uint32_t)fdWaveFlags() << 8) |
+                    ((uint32_t)fd_wave_stage << 16);
+            }
+#endif
             /* Preserve exact accepted sample even when it lies between the
              * decimated waveform samples. Never shorten waveform tail span. */
             fdWaveEventStore(b, at, FD_WAVE_ADC_ACCEPT, va, vb, vc);
         }
         if (
+#ifdef TARGET_STARTUP_EDGE_LOG
+            /* Same 100 us ring, frozen 12 ms after the FIRST ADC acceptance.
+             * Later edges never move the trigger. No-edge trials retain tail.
+             * Preserve exact first-edge values in header even if event wraps. */
+            (b->reserved[0] == FD_WAVE_NONE ||
+                at - b->reserved[0] <= FD_WAVE_EDGE_POST_TICKS) &&
+#endif
 #ifdef TARGET_STARTUP_ACQ_LOG
             /* Retain acquisition from the first sample. Never wrap or let
              * closed-loop observation overwrite startup. Counters and exact

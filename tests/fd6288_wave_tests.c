@@ -13,6 +13,8 @@
 #endif
 #if FD6288_TRACE_VARIANT == 15
 #define TARGET_STARTUP_ACQ_LOG
+#elif FD6288_TRACE_VARIANT == 16
+#define TARGET_STARTUP_EDGE_LOG
 #endif
 char step = 1, old_routine = 1, forward = 1;
 volatile char rising = 1;
@@ -69,6 +71,9 @@ int main(int argc,char **argv) {
 #ifdef TARGET_STARTUP_ACQ_LOG
     assert(b->samples_stored==50);
     uint32_t first=0;
+#elif defined(TARGET_STARTUP_EDGE_LOG)
+    assert(b->samples_stored==121 && b->reserved[0]==8000);
+    uint32_t first=0;
 #else
     assert(b->samples_stored==600);
     uint32_t first=(b->samples_stored-256u)%256u;
@@ -93,6 +98,9 @@ int main(int argc,char **argv) {
 #ifdef TARGET_STARTUP_ACQ_LOG
     assert(fd_startup_wave.banks[1].samples_stored==1);
     assert(fd_startup_wave.banks[1].samples[0].state==(2u|8u|32u));
+#elif defined(TARGET_STARTUP_EDGE_LOG)
+    assert(fd_startup_wave.banks[1].samples_stored==121);
+    assert(fd_startup_wave.banks[1].samples[120].state==(4u|8u|32u));
 #else
     assert(fd_startup_wave.banks[1].samples_stored==301);
     assert(fd_startup_wave.banks[1].samples[300%256].state==(4u|8u|32u));
@@ -129,6 +137,29 @@ int main(int argc,char **argv) {
     assert(b->samples_stored==1 && b->events==2);
     assert(b->events_ring[1].kind==FD_WAVE_ADC_ACCEPT && b->events_ring[1].values[2]==780);
     assert(duty_cycle==400 && pwm.CCR1==1334 && pwm.CCR4==667 && running==1);
+#ifdef TARGET_STARTUP_EDGE_LOG
+    // Late first edge: ring contains prehistory, exact trigger and 12 ms post.
+    reset(); begin(1);
+    for(unsigned i=0;i<2000;i++) sample(FD_SAMPLE_PRE);
+    b=&fd_startup_wave.banks[0];
+    assert(b->samples_stored==1000 && b->reserved[0]==FD_WAVE_NONE);
+    sample(FD_SAMPLE_ACCEPT);
+    uint32_t triggered=b->reserved[0];
+    for(unsigned i=0;i<400;i++) sample(FD_SAMPLE_ACCEPT);
+    assert(b->reserved[0]==triggered && b->samples_stored==1121);
+    assert(b->samples[(1121-256)%256].at < triggered);
+    assert(b->samples[1120%256].at==triggered+FD_WAVE_EDGE_POST_TICKS);
+    FdWaveSample held=b->samples[1120%256];
+    for(unsigned i=0;i<2000;i++) sample(FD_SAMPLE_PRE);
+    assert(!memcmp(&held,(const void *)&b->samples[1120%256],sizeof(held)));
+    assert((b->reserved[1]&65535u)==1500 && (b->reserved[1]>>16)==10);
+    assert((b->reserved[2]&65535u)==780);
+    assert((b->reserved[3]&65535u)==1334 && (b->reserved[3]>>16)==667);
+    // No first edge: retain rolling tail rather than freeze empty startup.
+    reset(); begin(1); for(unsigned i=0;i<6000;i++) sample(FD_SAMPLE_PRE);
+    assert(fd_startup_wave.banks[0].reserved[0]==FD_WAVE_NONE);
+    assert(fd_startup_wave.banks[0].samples_stored==3000);
+#endif
 #ifdef TARGET_STARTUP_ACQ_LOG
     // Full 300 ms across DWT wrap, then late service: no prefix overwrite.
     reset(); begin(1);

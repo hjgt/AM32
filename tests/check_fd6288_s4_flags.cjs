@@ -18,6 +18,7 @@ function preprocess(overrides) {
     {input,encoding:'utf8'});
 }
 for (const [overrides,variant] of [
+  [{FD6288_STARTUP_HANDOFF_REAL:1,FD6288_STARTUP_RESCUE_RETAIN:1,FD6288_STARTUP_RESCUE_BRIDGE:1,FD6288_STARTUP_ACQ_LOG:2},16],
   [{FD6288_STARTUP_HANDOFF_REAL:1,FD6288_STARTUP_RESCUE_RETAIN:1,FD6288_STARTUP_RESCUE_BRIDGE:1,FD6288_STARTUP_ACQ_LOG:1},15],
   [{FD6288_STARTUP_HANDOFF_REAL:1,FD6288_STARTUP_RESCUE_RETAIN:1,FD6288_STARTUP_RESCUE_BRIDGE:1},14],
   [{FD6288_STARTUP_HANDOFF_REAL:1,FD6288_STARTUP_RESCUE_RETAIN:1},13],
@@ -32,6 +33,7 @@ for (const [overrides,variant] of [
   assert.equal(/^#define TARGET_STARTUP_RESCUE_RETAIN[ \t]*$/m.test(r.stdout),variant>=13);
   assert.equal(/^#define TARGET_STARTUP_RESCUE_BRIDGE[ \t]*$/m.test(r.stdout),variant>=14);
   assert.equal(/^#define TARGET_STARTUP_ACQ_LOG[ \t]*$/m.test(r.stdout),variant===15);
+  assert.equal(/^#define TARGET_STARTUP_EDGE_LOG[ \t]*$/m.test(r.stdout),variant===16);
 }
 for (const overrides of [
   {FD6288_STARTUP_S4:2}, {FD6288_STARTUP_S4:-1},
@@ -46,6 +48,6 @@ for (const overrides of [
   {FD6288_STARTUP_RESCUE_RETAIN:-1},
   {FD6288_STARTUP_RESCUE_BRIDGE:1}, {FD6288_STARTUP_RESCUE_BRIDGE:2},
   {FD6288_STARTUP_RESCUE_BRIDGE:-1},
-  {FD6288_STARTUP_ACQ_LOG:1}, {FD6288_STARTUP_ACQ_LOG:2}, {FD6288_STARTUP_ACQ_LOG:-1},
+  {FD6288_STARTUP_ACQ_LOG:1}, {FD6288_STARTUP_ACQ_LOG:2}, {FD6288_STARTUP_ACQ_LOG:3}, {FD6288_STARTUP_ACQ_LOG:-1},
 ]) assert.notEqual(preprocess(overrides).status,0,JSON.stringify(overrides));
 console.log('PASS actual target flags: S3/S3-D/S3-DT/S4 identities; incompatible S4 builds rejected');
