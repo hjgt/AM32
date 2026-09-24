@@ -1,0 +1,7 @@
+[
+  {
+    "at": "2026-09-23T15:58:08.540Z",
+    "stage": "error",
+    "value": "AssertionError [ERR_ASSERTION]: ERR:read_memory: failed to read memory\n    at /Users/nxf75465/codex/am32_on_omp_esc/AM32-main/tools/scripts/fd6288_startup_capture.cjs:173:24\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async mem ([stdin]:6:55)\n    at async [stdin]:7:114"
+  }
+]
