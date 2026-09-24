@@ -1,0 +1,89 @@
+[
+  {
+    "at": "2026-09-24T00:48:14.124Z",
+    "stage": "stopped_before",
+    "value": {
+      "input": 0,
+      "newinput": 0,
+      "adjusted_input": 0,
+      "running": 0,
+      "heli_coast_active": 0,
+      "duty_cycle": 0,
+      "ccr": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "at": "2026-09-24T00:48:14.562Z",
+    "stage": "write_scope",
+    "value": {
+      "main_hex": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-startup-S4D-EDGE-20260924/AM32_CUSTOM_FD6288_G431_S4D_EDGE_ACQ300_OBS1000.hex",
+      "sha256": "0e69ac25819666e24b11ad55766bfb55727a68b83b9e55ba00c101bbdacebe17",
+      "bytes": 35264,
+      "bl_and_f800_excluded": true
+    }
+  },
+  {
+    "at": "2026-09-24T00:48:14.628Z",
+    "stage": "reset_init",
+    "value": ""
+  },
+  {
+    "at": "2026-09-24T00:48:15.728Z",
+    "stage": "write_main",
+    "value": "auto erase enabled\nwrote 35304 bytes from file /Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-startup-S4D-EDGE-20260924/AM32_CUSTOM_FD6288_G431_S4D_EDGE_ACQ300_OBS1000.hex in 1.097991s (31.400 KiB/s)\n"
+  },
+  {
+    "at": "2026-09-24T00:48:16.083Z",
+    "stage": "verify_main_once",
+    "value": "verified 35264 bytes in 0.353809s (97.334 KiB/s)\n"
+  },
+  {
+    "at": "2026-09-24T00:48:16.087Z",
+    "stage": "reset_run",
+    "value": ""
+  },
+  {
+    "at": "2026-09-24T00:48:20.613Z",
+    "stage": "stopped_after",
+    "value": {
+      "input": 0,
+      "newinput": 0,
+      "adjusted_input": 0,
+      "running": 0,
+      "heli_coast_active": 0,
+      "duty_cycle": 0,
+      "ccr": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "at": "2026-09-24T00:48:20.660Z",
+    "stage": "runtime_ok",
+    "value": {
+      "variant": 16,
+      "trial": 0,
+      "sample_spacing_ticks": 16000,
+      "post_trigger_ticks": 1920000,
+      "settings_ram_unchanged": true,
+      "armed": 1,
+      "minimum_duty_cycle": 210,
+      "min_startup_duty": 360,
+      "startup_max_duty_cycle": 610,
+      "stuck_rotor_inhibit": 0,
+      "drive_safety_limit_inhibit": 0,
+      "battery_voltage": 820,
+      "actual_current": 5,
+      "arr": 6665,
+      "dtg": 206
+    }
+  }
+]
