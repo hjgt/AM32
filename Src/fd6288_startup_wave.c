@@ -47,6 +47,9 @@ void fdTraceInit(void)
     fd_startup_wave.variant = FD6288_TRACE_VARIANT;
     fd_startup_wave.clock_hz = 160000000u;
     fd_startup_wave.size = sizeof(FdStartupWave);
+#ifdef TARGET_STARTUP_ACQ_LOG
+    fd_startup_wave.reserved[0] = FD_WAVE_SAMPLE_TICKS;
+#endif
     fd_startup_wave.active_bank = fd_startup_wave.no_lock_bank =
         fd_startup_wave.lost_bank = fd_startup_wave.success_bank = FD_WAVE_NONE;
 }
@@ -116,7 +119,15 @@ void fdTraceSample(uint16_t va, uint16_t vb, uint16_t vc, int16_t margin,
              * decimated waveform samples. Never shorten waveform tail span. */
             fdWaveEventStore(b, at, FD_WAVE_ADC_ACCEPT, va, vb, vc);
         }
-        if (!b->samples_stored || at - b->last_sample_at >= FD_WAVE_SAMPLE_TICKS) {
+        if (
+#ifdef TARGET_STARTUP_ACQ_LOG
+            /* Retain acquisition from the first sample. Never wrap or let
+             * closed-loop observation overwrite startup. Counters and exact
+             * accepted-edge event logging above remain active throughout. */
+            fd_wave_stage != 4u && at <= 48000000u &&
+            b->samples_stored < FD_WAVE_SAMPLES &&
+#endif
+            (!b->samples_stored || at - b->last_sample_at >= FD_WAVE_SAMPLE_TICKS)) {
             volatile FdWaveSample *s = &b->samples[b->samples_stored % FD_WAVE_SAMPLES];
             s->at = at; s->va = va; s->vb = vb; s->vc = vc;
             s->elapsed = INTERVAL_TIMER_COUNT;

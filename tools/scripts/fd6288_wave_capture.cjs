@@ -10,7 +10,10 @@ function decode(b) {
   const u32 = o => b.readUInt32LE(o), u16 = o => b.readUInt16LE(o);
   const fields = ['magic','abi','variant','clock_hz','size','command','active_bank','no_lock_bank','lost_bank','success_bank','trials_seen','rejected_commands','max_finish_cycles'];
   const header = Object.fromEntries(fields.map((n,i)=>[n,u32(i*4)]));
-  assert(header.magic === 0x46535731 && header.abi === 1 && [9,10,11,12,13,14].includes(header.variant) && header.clock_hz === 160000000 && header.size === SIZE, 'Wrong startup waveform ABI');
+  assert(header.magic === 0x46535731 && header.abi === 1 && [9,10,11,12,13,14,15].includes(header.variant) && header.clock_hz === 160000000 && header.size === SIZE, 'Wrong startup waveform ABI');
+  const acquisition = header.variant === 15;
+  const sampleTicks = acquisition ? 192000 : 16000;
+  if(acquisition) assert.equal(u32(52),sampleTicks,'Wrong acquisition spacing');
   assert.equal(header.active_bank, NONE, 'Active trace');
   const pins = [header.no_lock_bank,header.lost_bank,header.success_bank];
   assert(pins.every(i=>i===NONE || i<3));
@@ -51,7 +54,11 @@ function decode(b) {
       const phase=[0,2,0,1,2,0,1][step], margin=adc[phase]-neutral;
       return {adc,margin,directed_margin:flags&2?margin:-margin,elapsed_ticks:u16(o+10),pwm:u16(o+12),trigger:u16(o+14),step,flags,reason:reasons[reason],stage:state&7,pre_seen:!!(state&8),confirmations:state>>4};
     });
-    for(let i=1;i<samples.records.length;i++) assert(samples.records[i].at_cycles-samples.records[i-1].at_cycles>=16000,'Bad sample decimation');
+    for(let i=1;i<samples.records.length;i++) assert(samples.records[i].at_cycles-samples.records[i-1].at_cycles>=sampleTicks,'Bad sample decimation');
+    if(acquisition) {
+      assert(h.samples_stored<=256 && !samples.overwritten);
+      assert(samples.records.every(r=>r.at_cycles<=48000000 && r.stage!==4 && (h.handoff_at===NONE || r.at_cycles<=h.handoff_at)), 'Not acquisition-only samples');
+    }
     const ev=ring(h.events,96,5248,o=>{
       const kind=b[o+18], step=b[o+16], flags=b[o+17], stage=b[o+19];
       assert(kind>0 && kind<events.length && step>=1 && step<=6 && flags<32 && stage>=2 && stage<=4);
@@ -62,13 +69,13 @@ function decode(b) {
     banks.push({bank:k,pinned:pins.includes(k),classification:states[h.state],header:h,samples,events:ev});
   }
   for(const i of pins) if(i!==NONE) assert(banks.some(b=>b.bank===i));
-  return {header,banks,sampling_profile:header.variant>=10 ? {name:header.variant===14?'S4D':header.variant===13?'S4C':header.variant===12?'S4B':header.variant===11?'S4':'S3-DT',dtg:206,deadtime_ticks:368,sample_floor_ticks:460,minimum_on_ticks:704} : {name:'S3-D',sample_floor_ticks:162,minimum_on_ticks:406},caveats:[
-    header.variant>=11 ? 'S4 family: original 360/400 acquisition duty; once-only six 8 ms no-edge retry sectors after two 22.5 ms expiries. Any qualified edge cancels rescue. Closed floor holds 360 to 150 ms then fades to minimum by 450 ms, independent of 30-edge threshold. Native missing-feedback count includes all retries, so enabled protection can stop earlier. Bench only.' : 'S3 acquisition/power unchanged. Variant 10 corrects ADC window for fixed DTG=0xCE; variant 9 keeps original window.',
+  return {header,banks,recording_profile:{mode:acquisition?'acquisition_prefix':'tail',sample_spacing_us:sampleTicks/160},sampling_profile:header.variant>=10 ? {name:header.variant===15?'S4D-LOG':header.variant===14?'S4D':header.variant===13?'S4C':header.variant===12?'S4B':header.variant===11?'S4':'S3-DT',dtg:206,deadtime_ticks:368,sample_floor_ticks:460,minimum_on_ticks:704} : {name:'S3-D',sample_floor_ticks:162,minimum_on_ticks:406},caveats:[
+    header.variant>=11 ? 'S4 family: original 360/400 acquisition duty; once-only six 8 ms retry sectors after two 22.5 ms expiries. Edge cancellation depends on variant below. Closed floor holds 360 to 150 ms then fades to minimum by 450 ms. Native missing-feedback count includes all retries. Bench only.' : 'S3 acquisition/power unchanged. Variant 10 corrects ADC window for fixed DTG=0xCE; variant 9 keeps original window.',
     header.variant>=12 ? 'S4B/S4C seed the ADC handoff guard with the latest real adjacent interval, not the IIR. IIR, first commutation delay and early-pulse rejection are unchanged.' : 'Original handoff guard initialization.',
-    header.variant===14 ? 'S4D keeps only the remaining short-sector budget after a solitary edge during rescue. Both edges and timeouts consume sectors; a second consecutive edge cancels the remainder. No refund, new attempt or acquisition extension.' : header.variant===13 ? 'S4C retains an unused rescue after early real edges. Two consecutive missing-feedback sectors since the latest edge are required; starting rescue consumes its one-shot budget. An interrupted rescue is never resumed; no rescue after handoff. Original 300 ms acquisition deadline remains.' : 'S4/S4B cancel even an unused rescue permanently on the first real edge.',
+    header.variant>=14 ? 'S4D/S4D-LOG keep only the remaining short-sector budget after a solitary edge during rescue. Both edges and timeouts consume sectors; a second consecutive edge cancels the remainder. No refund, new attempt or acquisition extension.' : header.variant===13 ? 'S4C retains an unused rescue after early real edges. Two consecutive missing-feedback sectors since the latest edge are required; starting rescue consumes its one-shot budget. An interrupted rescue is never resumed; no rescue after handoff. Original 300 ms acquisition deadline remains.' : 'S4/S4B cancel even an unused rescue permanently on the first real edge.',
     'Software-consumed sequential ADC data, not simultaneous scope measurements or rotor direction.',
-    'Tail only: 256 samples spaced >=100 us; 96 events include every accepted ADC sample until overwritten. No guarantee of full startup history. Overwritten counts and timestamps are explicit.',
-    'When 256 samples are retained, their timestamp span is >=25.5 ms. Short acquisitions or missing fresh samples can leave fewer records; inspect actual span and final sample-to-stop gap.',
+    acquisition ? 'Acquisition prefix: >=1200 us spacing, up to 256 samples, no sample overwrite, stops at handoff or 300 ms. No closed-loop ADC waveform. Sub-ms crossings may fall between samples; exact accepted-edge events remain in the separate 96-event tail and may be overwritten during successful observation.' : 'Tail only: 256 samples spaced >=100 us; 96 events include every accepted ADC sample until overwritten. No guarantee of full startup history.',
+    'Missing fresh samples may leave gaps; inspect actual timestamps, counts and event overwrite. Software direction flags are commands, not measured rotor direction.',
     'First no-lock, first post-handoff loss and first full observation are pinned independently; operator-zero and safety stops remain unpinned. Last 16 trial summaries are separate.',
     'PWM/trigger fields read preload registers at consumption, not latched compare values at ADC trigger. Gate/ADC pin analog correctness needs external measurement if software traces remain ambiguous.',
     'Cycle maxima measure inner logger only, not full ISR. No physical protection/flight validation.'

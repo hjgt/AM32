@@ -11,6 +11,9 @@
 #ifndef FD6288_TRACE_VARIANT
 #define FD6288_TRACE_VARIANT 9u
 #endif
+#if FD6288_TRACE_VARIANT == 15
+#define TARGET_STARTUP_ACQ_LOG
+#endif
 char step = 1, old_routine = 1, forward = 1;
 volatile char rising = 1;
 uint8_t running = 1;
@@ -62,11 +65,17 @@ int main(int argc,char **argv) {
         if(i%20==0) fdTraceEvent(FD_EVENT_COMMUTATE,0);
     }
     volatile FdWaveBank *b=&fd_startup_wave.banks[0];
-    assert(b->samples_seen==1200 && b->samples_stored==600 && b->accepted==60);
-    assert(b->events==121 && b->no_fresh==1200);
+    assert(b->samples_seen==1200 && b->accepted==60);
+#ifdef TARGET_STARTUP_ACQ_LOG
+    assert(b->samples_stored==50);
+    uint32_t first=0;
+#else
+    assert(b->samples_stored==600);
     uint32_t first=(b->samples_stored-256u)%256u;
+#endif
+    assert(b->events==121 && b->no_fresh==1200);
     uint32_t last=(b->samples_stored-1u)%256u;
-    assert(b->samples[last].at-b->samples[first].at==255u*16000u);
+    assert(b->samples[last].at-b->samples[first].at==(last>=first?last-first:255u)*FD_WAVE_SAMPLE_TICKS);
     assert(b->samples[last].va==1500 && b->samples[last].pwm==1334);
     assert(b->samples[last].state==(2u|8u|32u));
     assert(b->events_ring[(b->events-1u)%96u].kind==FD_EVENT_COMMUTATE);
@@ -80,8 +89,14 @@ int main(int argc,char **argv) {
     fdTraceEvent(FD_EVENT_REV_HANDOFF,6); fdTraceEvent(FD_EVENT_COMMUTATE,0);
     for(unsigned i=0;i<600;i++) sample(FD_SAMPLE_UNARMED);
     fdTraceEvent(FD_EVENT_TIMEOUT,0); finish(9,4);
-    assert(fd_startup_wave.lost_bank==1 && fd_startup_wave.banks[1].samples_stored==301);
+    assert(fd_startup_wave.lost_bank==1);
+#ifdef TARGET_STARTUP_ACQ_LOG
+    assert(fd_startup_wave.banks[1].samples_stored==1);
+    assert(fd_startup_wave.banks[1].samples[0].state==(2u|8u|32u));
+#else
+    assert(fd_startup_wave.banks[1].samples_stored==301);
     assert(fd_startup_wave.banks[1].samples[300%256].state==(4u|8u|32u));
+#endif
     begin(5); fdTraceEvent(FD_EVENT_REV_HANDOFF,6); finish(9,4);
     assert(fd_startup_wave.lost_bank==1);
     begin(6); sample(FD_SAMPLE_ACCEPT); fdTraceEvent(FD_EVENT_REV_HANDOFF,6);
@@ -114,5 +129,21 @@ int main(int argc,char **argv) {
     assert(b->samples_stored==1 && b->events==2);
     assert(b->events_ring[1].kind==FD_WAVE_ADC_ACCEPT && b->events_ring[1].values[2]==780);
     assert(duty_cycle==400 && pwm.CCR1==1334 && pwm.CCR4==667 && running==1);
+#ifdef TARGET_STARTUP_ACQ_LOG
+    // Full 300 ms across DWT wrap, then late service: no prefix overwrite.
+    reset(); begin(1);
+    for(unsigned i=0;i<6000;i++) sample(FD_SAMPLE_PRE);
+    b=&fd_startup_wave.banks[0];
+    assert(b->samples_stored==250 && b->samples[0].at==8000);
+    FdWaveSample first_sample=b->samples[0], last_sample=b->samples[249];
+    for(unsigned i=0;i<2000;i++) sample(FD_SAMPLE_PRE);
+    assert(b->samples_stored==250 && b->samples_seen==8000);
+    assert(!memcmp(&first_sample,(const void *)&b->samples[0],sizeof(first_sample)));
+    assert(!memcmp(&last_sample,(const void *)&b->samples[249],sizeof(last_sample)));
+    // Accepted edge between coarse samples remains exact in event channel.
+    reset(); begin(1); sample(FD_SAMPLE_PRE); sample(FD_SAMPLE_ACCEPT);
+    assert(fd_startup_wave.banks[0].samples_stored==1);
+    assert(fd_startup_wave.banks[0].events_ring[1].at==16000);
+#endif
     puts("PASS S3-D actual C: independent classes, pinned immutability, reuse, rings, wrap, decimation, accepted ADC events, aborts, preemption, no output writes");
 }

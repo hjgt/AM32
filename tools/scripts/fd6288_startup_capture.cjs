@@ -107,8 +107,8 @@ function decodeBench(b, variant = 3) {
     records.push(r);
   }
   return {header: h, records, omitted_earlier_trials: Math.max(0, h.trials - 16),
-    ...(variant >= 11 ? {startup_profile: {name:variant===14?'S4D':variant===13?'S4C':variant===12?'S4B':'S4', initial_request:360, acquisition_request:400,
-      latest_real_interval_at_handoff:variant>=12, retains_unused_rescue:variant>=13, bridges_solitary_rescue_edge:variant===14,
+    ...(variant >= 11 ? {startup_profile: {name:variant>=14?'S4D':variant===13?'S4C':variant===12?'S4B':'S4', initial_request:360, acquisition_request:400,
+      latest_real_interval_at_handoff:variant>=12, retains_unused_rescue:variant>=13, bridges_solitary_rescue_edge:variant>=14,
       rescue_after_empty_retries:2, rescue_sector_ms:8, rescue_sectors:6,
       closed_floor_hold_ms:150, closed_floor_fade_ms:300, closed_floor_end_ms:450,
       all_retries_count_as_native_timeouts:true}} : {}),

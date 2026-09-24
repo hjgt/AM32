@@ -1,14 +1,19 @@
 #pragma once
 #include <stdint.h>
 
-/* S3-D: three outcome classes, bounded RAM, no drive policy changes.
- * Tail only: samples decimated by TIME, events retain all accepted edges.
+/* Three outcome classes, bounded RAM, no drive policy changes.
+ * Default: ADC tail. ACQ_LOG: non-overwriting 300 ms acquisition prefix.
+ * Samples decimated by TIME, event ring retains accepted edges until wrapped.
  * These are software-consumed sequential ADC results, not scope samples. */
 #define FD_WAVE_MAGIC 0x46535731u
 #define FD_WAVE_NONE 0xffffffffu
 #define FD_WAVE_SAMPLES 256u
 #define FD_WAVE_EVENTS 96u
+#ifdef TARGET_STARTUP_ACQ_LOG
+#define FD_WAVE_SAMPLE_TICKS 192000u /* >=1200 us, full acquisition in 256 slots */
+#else
 #define FD_WAVE_SAMPLE_TICKS 16000u /* >=100 us between stored samples */
+#endif
 #define FD_PAIR_HYSTERESIS 8 /* shared detector compile-time contract */
 enum { FD_WAVE_EMPTY, FD_WAVE_ACTIVE, FD_WAVE_ABORTED,
     FD_WAVE_NO_LOCK, FD_WAVE_LOST, FD_WAVE_SUCCESS };
