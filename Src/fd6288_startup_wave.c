@@ -17,6 +17,9 @@ _Static_assert(offsetof(FdStartupWave, banks) == 64, "wave header ABI");
 _Static_assert(sizeof(FdStartupWave) == 21568, "wave RAM budget");
 volatile FdStartupWave fd_startup_wave;
 static uint8_t fd_wave_begun, fd_wave_stage;
+#ifdef TARGET_STARTUP_LOSS_LOG
+static uint8_t fd_wave_sample_frozen;
+#endif
 static inline volatile FdWaveBank *fdWaveActive(void)
 {
     if (fd_startup_wave.active_bank >= 3u || !fd_wave_begun) return 0;
@@ -53,6 +56,9 @@ void fdTraceInit(void)
 #ifdef TARGET_STARTUP_EDGE_LOG
     fd_startup_wave.reserved[0] = FD_WAVE_SAMPLE_TICKS;
     fd_startup_wave.reserved[1] = FD_WAVE_EDGE_POST_TICKS;
+#ifdef TARGET_STARTUP_LOSS_LOG
+    fd_startup_wave.reserved[1] = 0u; /* event-triggered, not a timed window */
+#endif
 #endif
     fd_startup_wave.active_bank = fd_startup_wave.no_lock_bank =
         fd_startup_wave.lost_bank = fd_startup_wave.success_bank = FD_WAVE_NONE;
@@ -62,6 +68,9 @@ void fdTraceTrial(uint32_t id)
     /* Existing bench critical section; clear header only, never the arrays. */
     fd_startup_wave.trials_seen = id;
     fd_startup_wave.active_bank = FD_WAVE_NONE; fd_wave_begun = 0u;
+#ifdef TARGET_STARTUP_LOSS_LOG
+    fd_wave_sample_frozen = 0u;
+#endif
     for (uint32_t i = 0; i < 3u; i++) {
         if (i == fd_startup_wave.no_lock_bank || i == fd_startup_wave.lost_bank ||
             i == fd_startup_wave.success_bank) continue;
@@ -96,6 +105,17 @@ void fdTraceEvent(uint8_t kind, uint16_t aux)
     volatile FdWaveBank *b = fdWaveActive();
     if (b) {
         uint32_t began = DWT->CYCCNT, at = began - b->started;
+#ifdef TARGET_STARTUP_LOSS_LOG
+        /* Freeze only the first post-feedback acquisition timeout, or the
+         * successful handoff. Blind retries before any acceptance do not
+         * trigger. Continue all counters/events; never touch drive state. */
+        if (!fd_wave_sample_frozen &&
+            ((kind == FD_EVENT_TIMEOUT && b->accepted && fd_wave_stage != 4u) ||
+                kind == FD_EVENT_REV_HANDOFF)) {
+            fd_wave_sample_frozen = 1u;
+            b->reserved[4] |= (kind == FD_EVENT_TIMEOUT ? 1u : 2u) << 24;
+        }
+#endif
         if (kind == FD_EVENT_ZC) b->closed_zc++;
         if (kind == FD_EVENT_TIMEOUT) b->timeouts++;
         if (kind == FD_EVENT_REV_STEP) fd_wave_stage = 2u;
@@ -137,7 +157,9 @@ void fdTraceSample(uint16_t va, uint16_t vb, uint16_t vc, int16_t margin,
             fdWaveEventStore(b, at, FD_WAVE_ADC_ACCEPT, va, vb, vc);
         }
         if (
-#ifdef TARGET_STARTUP_EDGE_LOG
+#ifdef TARGET_STARTUP_LOSS_LOG
+            !fd_wave_sample_frozen &&
+#elif defined(TARGET_STARTUP_EDGE_LOG)
             /* Same 100 us ring, frozen 12 ms after the FIRST ADC acceptance.
              * Later edges never move the trigger. No-edge trials retain tail.
              * Preserve exact first-edge values in header even if event wraps. */

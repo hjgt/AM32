@@ -18,6 +18,7 @@ function preprocess(overrides) {
     {input,encoding:'utf8'});
 }
 for (const [overrides,variant] of [
+  [{FD6288_STARTUP_HANDOFF_REAL:1,FD6288_STARTUP_RESCUE_RETAIN:1,FD6288_STARTUP_RESCUE_BRIDGE:1,FD6288_STARTUP_ACQ_LOG:2,FD6288_STARTUP_S4E:1,FD6288_STARTUP_LOSS_LOG:1},18],
   [{FD6288_STARTUP_HANDOFF_REAL:1,FD6288_STARTUP_RESCUE_RETAIN:1,FD6288_STARTUP_RESCUE_BRIDGE:1,FD6288_STARTUP_ACQ_LOG:2,FD6288_STARTUP_S4E:1},17],
   [{FD6288_STARTUP_HANDOFF_REAL:1,FD6288_STARTUP_RESCUE_RETAIN:1,FD6288_STARTUP_RESCUE_BRIDGE:1,FD6288_STARTUP_ACQ_LOG:2},16],
   [{FD6288_STARTUP_HANDOFF_REAL:1,FD6288_STARTUP_RESCUE_RETAIN:1,FD6288_STARTUP_RESCUE_BRIDGE:1,FD6288_STARTUP_ACQ_LOG:1},15],
@@ -35,9 +36,11 @@ for (const [overrides,variant] of [
   assert.equal(/^#define TARGET_STARTUP_RESCUE_BRIDGE[ \t]*$/m.test(r.stdout),variant>=14);
   assert.equal(/^#define TARGET_STARTUP_ACQ_LOG[ \t]*$/m.test(r.stdout),variant===15);
   assert.equal(/^#define TARGET_STARTUP_EDGE_LOG[ \t]*$/m.test(r.stdout),variant>=16);
-  assert.equal(/^#define TARGET_STARTUP_S4E[ \t]*$/m.test(r.stdout),variant===17);
+  assert.equal(/^#define TARGET_STARTUP_S4E[ \t]*$/m.test(r.stdout),variant>=17);
+  assert.equal(/^#define TARGET_STARTUP_LOSS_LOG[ \t]*$/m.test(r.stdout),variant===18);
 }
 for (const overrides of [
+  {FD6288_STARTUP_LOSS_LOG:1}, {FD6288_STARTUP_LOSS_LOG:2}, {FD6288_STARTUP_LOSS_LOG:-1},
   {FD6288_STARTUP_S4E:1}, {FD6288_STARTUP_S4E:2}, {FD6288_STARTUP_S4E:-1},
   {FD6288_STARTUP_S4:2}, {FD6288_STARTUP_S4:-1},
   {FD6288_STARTUP_SEQUENCE:0}, {FD6288_STARTUP_SEQUENCE:2},

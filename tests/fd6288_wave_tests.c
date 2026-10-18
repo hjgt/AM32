@@ -16,6 +16,9 @@
 #elif FD6288_TRACE_VARIANT >= 16
 #define TARGET_STARTUP_EDGE_LOG
 #endif
+#if FD6288_TRACE_VARIANT == 18
+#define TARGET_STARTUP_LOSS_LOG
+#endif
 char step = 1, old_routine = 1, forward = 1;
 volatile char rising = 1;
 uint8_t running = 1;
@@ -71,7 +74,7 @@ int main(int argc,char **argv) {
 #ifdef TARGET_STARTUP_ACQ_LOG
     assert(b->samples_stored==50);
     uint32_t first=0;
-#elif defined(TARGET_STARTUP_EDGE_LOG)
+#elif defined(TARGET_STARTUP_EDGE_LOG) && !defined(TARGET_STARTUP_LOSS_LOG)
     assert(b->samples_stored==121 && b->reserved[0]==8000);
     uint32_t first=0;
 #else
@@ -95,7 +98,7 @@ int main(int argc,char **argv) {
     for(unsigned i=0;i<600;i++) sample(FD_SAMPLE_UNARMED);
     fdTraceEvent(FD_EVENT_TIMEOUT,0); finish(9,4);
     assert(fd_startup_wave.lost_bank==1);
-#ifdef TARGET_STARTUP_ACQ_LOG
+#if defined(TARGET_STARTUP_ACQ_LOG) || defined(TARGET_STARTUP_LOSS_LOG)
     assert(fd_startup_wave.banks[1].samples_stored==1);
     assert(fd_startup_wave.banks[1].samples[0].state==(2u|8u|32u));
 #elif defined(TARGET_STARTUP_EDGE_LOG)
@@ -137,7 +140,7 @@ int main(int argc,char **argv) {
     assert(b->samples_stored==1 && b->events==2);
     assert(b->events_ring[1].kind==FD_WAVE_ADC_ACCEPT && b->events_ring[1].values[2]==780);
     assert(duty_cycle==400 && pwm.CCR1==1334 && pwm.CCR4==667 && running==1);
-#ifdef TARGET_STARTUP_EDGE_LOG
+#if defined(TARGET_STARTUP_EDGE_LOG) && !defined(TARGET_STARTUP_LOSS_LOG)
     // Late first edge: ring contains prehistory, exact trigger and 12 ms post.
     reset(); begin(1);
     for(unsigned i=0;i<2000;i++) sample(FD_SAMPLE_PRE);
@@ -159,6 +162,34 @@ int main(int argc,char **argv) {
     reset(); begin(1); for(unsigned i=0;i<6000;i++) sample(FD_SAMPLE_PRE);
     assert(fd_startup_wave.banks[0].reserved[0]==FD_WAVE_NONE);
     assert(fd_startup_wave.banks[0].samples_stored==3000);
+#endif
+#ifdef TARGET_STARTUP_LOSS_LOG
+    reset(); begin(1);
+    for(unsigned i=0;i<1000;i++) sample(FD_SAMPLE_PRE);
+    fdTraceEvent(FD_EVENT_TIMEOUT,0); // Blind retry must not freeze.
+    assert(!fd_wave_sample_frozen);
+    sample(FD_SAMPLE_ACCEPT);
+    for(unsigned i=0;i<246;i++) sample(FD_SAMPLE_PRE);
+    sample(FD_SAMPLE_ACCEPT); // Second edge after ~12.3 ms.
+    uint32_t second=timer.CYCCNT-fd_startup_wave.banks[0].started;
+    for(unsigned i=0;i<450;i++) sample(FD_SAMPLE_UNARMED);
+    fdTraceEvent(FD_EVENT_TIMEOUT,0);
+    b=&fd_startup_wave.banks[0];
+    assert(fd_wave_sample_frozen && (b->reserved[4]>>24)==1);
+    uint32_t stored=b->samples_stored;
+    assert(b->samples[(stored-256)%256].at < second);
+    assert(b->samples[(stored-1)%256].at >= second+22400u*160u);
+    FdWaveBank saved_loss=*b;
+    for(unsigned i=0;i<1000;i++) sample(FD_SAMPLE_ACCEPT);
+    fdTraceEvent(FD_EVENT_TIMEOUT,0);
+    assert(b->samples_stored==stored && b->accepted>saved_loss.accepted);
+    assert(!memcmp((const void *)b->samples,saved_loss.samples,sizeof(saved_loss.samples)));
+    // New trial resets trigger; handoff freezes independently of early loss.
+    finish(8,2); begin(2); assert(!fd_wave_sample_frozen);
+    sample(FD_SAMPLE_ACCEPT); sample(FD_SAMPLE_PRE);
+    fdTraceEvent(FD_EVENT_REV_HANDOFF,6);
+    assert(fd_wave_sample_frozen);
+    assert((fd_startup_wave.banks[1].reserved[4]>>24)==2);
 #endif
 #ifdef TARGET_STARTUP_ACQ_LOG
     // Full 300 ms across DWT wrap, then late service: no prefix overwrite.
