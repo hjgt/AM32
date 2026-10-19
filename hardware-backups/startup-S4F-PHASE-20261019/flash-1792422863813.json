@@ -1,0 +1,76 @@
+[
+  {
+    "at": "2026-10-19T15:14:23.998Z",
+    "stage": "preflight_stopped",
+    "value": {
+      "state": "running",
+      "vtor": 134221824,
+      "input": 0,
+      "newinput": 0,
+      "adjusted_input": 0,
+      "running": 0,
+      "heli_coast_active": 0,
+      "duty_cycle": 0
+    }
+  },
+  {
+    "at": "2026-10-19T15:14:24.433Z",
+    "stage": "write_scope",
+    "value": {
+      "hex": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-startup-S4F-PHASE-20261019/AM32_CUSTOM_FD6288_G431_S4F_PHASE_ACQ300_MANUAL_STOP.hex",
+      "sha256": "9e9ed46c33a38f403f0f3def74f19196e8dd1b4731257a6e17ed2ad8b6727cb1",
+      "main_only": true,
+      "bl_f800_excluded": true
+    }
+  },
+  {
+    "at": "2026-10-19T15:14:24.476Z",
+    "stage": "reset init",
+    "value": ""
+  },
+  {
+    "at": "2026-10-19T15:14:25.586Z",
+    "stage": "flash write_image erase {/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-startup-S4F-PHASE-20261019/AM32_CUSTOM_FD6288_G431_S4F_PHASE_ACQ300_MANUAL_STOP.hex}",
+    "value": "auto erase enabled\nwrote 36088 bytes from file /Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-startup-S4F-PHASE-20261019/AM32_CUSTOM_FD6288_G431_S4F_PHASE_ACQ300_MANUAL_STOP.hex in 1.108724s (31.786 KiB/s)\n"
+  },
+  {
+    "at": "2026-10-19T15:14:25.944Z",
+    "stage": "verify_image {/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-startup-S4F-PHASE-20261019/AM32_CUSTOM_FD6288_G431_S4F_PHASE_ACQ300_MANUAL_STOP.hex}",
+    "value": "verified 36048 bytes in 0.356815s (98.659 KiB/s)\n"
+  },
+  {
+    "at": "2026-10-19T15:14:25.949Z",
+    "stage": "reset run",
+    "value": ""
+  },
+  {
+    "at": "2026-10-19T15:14:30.475Z",
+    "stage": "postflash_stopped",
+    "value": {
+      "state": "running",
+      "vtor": 134221824,
+      "input": 0,
+      "newinput": 0,
+      "adjusted_input": 0,
+      "running": 0,
+      "heli_coast_active": 0,
+      "duty_cycle": 0
+    }
+  },
+  {
+    "at": "2026-10-19T15:14:30.514Z",
+    "stage": "success",
+    "value": {
+      "variant": 19,
+      "trials": 0,
+      "spacing": 16000,
+      "post_trigger": 0,
+      "settings_unchanged": true,
+      "armed": 1,
+      "stuck_rotor_inhibit": 0,
+      "drive_safety_limit_inhibit": 0,
+      "battery_voltage": 782,
+      "actual_current": 16
+    }
+  }
+]
