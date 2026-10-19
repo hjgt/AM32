@@ -4,7 +4,7 @@ const root=path.resolve(__dirname,'..'), read=p=>fs.readFileSync(path.join(root,
 const strip=s=>s.replace(/^#include[^\n]*$/gm,'').replace(/^#pragma once$/gm,'');
 const impl=['Inc/fd6288_startup_wave.h','Inc/fd6288_startup_trace.h','Src/fd6288_startup_wave.c'].map(p=>strip(read(p))).join('\n');
 const source=read('tests/fd6288_wave_tests.c').replace('/* WAVE_IMPLEMENTATION */',impl);
-const variant=Number(process.argv[3]||9);assert([9,10,11,12,13,14,15,16,17,18,19].includes(variant));
+const variant=Number(process.argv[3]||9);assert([9,10,11,12,13,14,15,16,17,18,19,20].includes(variant));
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'fd6288-wave-')), exe=path.join(dir,'test'), fixture=exe+'.bin';
 for(const [cmd,args,input] of [
   [process.env.CC||'cc',[`-DFD6288_TRACE_VARIANT=${variant}`,'-std=c11','-O1','-g','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-x','c','-','-o',exe],source],

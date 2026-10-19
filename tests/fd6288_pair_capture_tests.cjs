@@ -56,7 +56,7 @@ function mock(opts = {}) {
   assert.deepEqual(d.banks, decoded.banks);
   assert.equal(d.header.active_bank, NONE); assert.equal(d.bench.header.trials, 7);
   if (d.header.variant >= 11) {
-    assert.equal(d.sampling_profile.name, d.header.variant === 19 ? 'S4F-PHASE' : d.header.variant === 18 ? 'S4E-LOSS' : d.header.variant === 17 ? 'S4E' : d.header.variant === 16 ? 'S4D-EDGE' : d.header.variant === 15 ? 'S4D-LOG' : d.header.variant === 14 ? 'S4D' : d.header.variant === 13 ? 'S4C' : d.header.variant === 12 ? 'S4B' : 'S4');
+    assert.equal(d.sampling_profile.name, d.header.variant === 20 ? 'S4G-SEED' : d.header.variant === 19 ? 'S4F-PHASE' : d.header.variant === 18 ? 'S4E-LOSS' : d.header.variant === 17 ? 'S4E' : d.header.variant === 16 ? 'S4D-EDGE' : d.header.variant === 15 ? 'S4D-LOG' : d.header.variant === 14 ? 'S4D' : d.header.variant === 13 ? 'S4C' : d.header.variant === 12 ? 'S4B' : 'S4');
     assert.equal(d.bench.startup_profile.latest_real_interval_at_handoff, d.header.variant >= 12);
     assert.equal(d.bench.startup_profile.retains_unused_rescue, d.header.variant >= 13);
     assert.equal(d.bench.startup_profile.bridges_solitary_rescue_edge, d.header.variant >= 14);

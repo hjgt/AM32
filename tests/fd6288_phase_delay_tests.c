@@ -10,6 +10,11 @@
 #define TARGET_STARTUP_RESCUE_BRIDGE
 #define TARGET_STARTUP_PHASE_DELAY
 #include "../Inc/fd6288_startup_sequence.h"
+#ifdef TARGET_STARTUP_SEED_DELAY
+enum { SEED_DELAY = 500u * FD_REV_US };
+#else
+enum { SEED_DELAY = 0u };
+#endif
 int main(void)
 {
     for (unsigned wrap=0; wrap<2; wrap++) {
@@ -23,8 +28,14 @@ int main(void)
             assert(s.rescue_left==6 && s.period==FD_S4_RESCUE_TICKS);
             uint32_t edge=s.sector_at+1000u*FD_REV_US;
             fdRevEdgePolicy(&s,edge,adv);
-            assert(s.confidence==1 && s.delay==0 && s.rescue_left==5);
-            assert(fdRevAdvancePolicy(&s,edge)==FD_REV_STEP);
+            assert(s.confidence==1 && s.delay==SEED_DELAY && s.rescue_left==5);
+            assert(!s.measured && !s.last_real_period);
+            if(SEED_DELAY) {
+                assert(fdRevAdvancePolicy(&s,edge+SEED_DELAY-1)==FD_REV_NONE);
+                assert(!fdRevEdgePolicy(&s,edge+1,adv));
+                assert(s.confidence==1 && s.delay==SEED_DELAY);
+            }
+            assert(fdRevAdvancePolicy(&s,edge+SEED_DELAY)==FD_REV_STEP);
             for(unsigned n=2;n<=6;n++) {
                 edge+=12000u*FD_REV_US;
                 fdRevEdgePolicy(&s,edge,adv);
@@ -40,16 +51,17 @@ int main(void)
             }
         }
     }
-    /* A timeout invalidates the old pair: next seed must again be immediate. */
+    /* A timeout invalidates the old pair: next seed uses only its seed rule. */
     FdRevPolicy s;
     fdRevBeginPolicy(&s,0);
-    fdRevEdgePolicy(&s,160000,16);fdRevAdvancePolicy(&s,160000);
+    fdRevEdgePolicy(&s,160000,16);fdRevAdvancePolicy(&s,160000+SEED_DELAY);
     fdRevEdgePolicy(&s,480000,16);
     assert(s.delay==80000);
     fdRevAdvancePolicy(&s,560000);
     assert(fdRevAdvancePolicy(&s,560000+FD_REV_RETRY_TICKS)==FD_REV_RETRY);
     assert(!s.confidence && !s.last_real_period);
     fdRevEdgePolicy(&s,s.sector_at+160000,16);
-    assert(s.confidence==1 && !s.delay);
+    assert(s.confidence==1 && s.delay==SEED_DELAY);
+    assert(!s.measured && !s.last_real_period);
     puts("PASS phase delay: all advance values, cap, wrap, duplicate, handoff and timeout reset");
 }

@@ -24,7 +24,10 @@ static void feedbackEdge(unsigned us)
     zcfound = 1; zcfoundroutine();
     CHECK(primask == 0u);
 #ifdef TARGET_STARTUP_PHASE_DELAY
-    if (fd_rev.confidence >= 2u && fd_rev.confidence < 6u) {
+    if (fd_rev.confidence < 6u && fd_rev.delay > 0u) {
+#ifdef TARGET_STARTUP_SEED_DELAY
+        if (fd_rev.confidence == 1u) CHECK(fd_rev.delay == 500u * FD_REV_US);
+#endif
         CHECK(fd_rev.stage == FD_REV_PENDING && fd_rev.delay > 0u);
         CHECK(fd_rev.delay <= 3000u * FD_REV_US);
         unsigned writes = gate_writes;
@@ -41,7 +44,7 @@ static void feedbackLock(void)
         char old_step = step;
 #ifdef TARGET_STARTUP_PHASE_DELAY
         /* Keep actual edge-to-edge period 2ms despite delayed commutation. */
-        feedbackEdge(2000u - (n >= 3u ? fd_rev.delay / FD_REV_US : 0u));
+        feedbackEdge(2000u - (n >= 2u ? fd_rev.delay / FD_REV_US : 0u));
 #else
         feedbackEdge(2000u);
 #endif
@@ -356,9 +359,11 @@ static void test_feedback(void)
 #ifdef TARGET_STARTUP_PHASE_DELAY
     /* Delayed commutation cannot outrank zero, native trip or 300ms stop. */
     for (unsigned cause=0;cause<3;cause++) {
+      for (unsigned confidence=1;confidence<=2;confidence++) {
         feedbackReset(); benchStart();
-        fd_rev.stage=FD_REV_PENDING; fd_rev.confidence=2;
-        fd_rev.edge_at=DWT->CYCCNT; fd_rev.delay=3000u*FD_REV_US;
+        fd_rev.stage=FD_REV_PENDING; fd_rev.confidence=confidence;
+        fd_rev.edge_at=DWT->CYCCNT;
+        fd_rev.delay=(confidence==1 ? 500u : 3000u)*FD_REV_US;
         unsigned writes=gate_writes;
         if(cause==0) adjusted_input=newinput=0;
         if(cause==1) {
@@ -371,6 +376,7 @@ static void test_feedback(void)
         /* Zero output handling belongs to the input/coast path; this tick
          * must cancel its delayed work, not introduce a new output path. */
         if(cause) CHECK(!gates && !pwm);
+      }
     }
 #endif
     for (unsigned dir=0; dir<=1; dir++) {

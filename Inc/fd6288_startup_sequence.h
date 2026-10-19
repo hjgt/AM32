@@ -38,7 +38,8 @@ typedef struct {
  * alignment dwell or accelerating commutation table. The first five
  * qualified ADC edges advance immediately (as native zero_crosses < 5).
  * The sixth earns a measured post-ZC delay, then a bounded observation.
- * S4F optionally delays edges 2..5; the seed and sixth handoff stay native.
+ * S4F optionally delays edges 2..5; S4G also adds a fixed seed dwell.
+ * Neither changes the sixth-edge handoff.
  * "confidence" here counts consecutive ADC-qualified edges, NOT S2's
  * fixed-sector phase/period qualification. No claim of mechanical lock. */
 enum { FD_REV_RETRY_TICKS = 22500u * FD_REV_US };
@@ -182,6 +183,13 @@ static inline uint8_t fdRevEdgePolicy(FdRevPolicy *s, uint32_t now, uint8_t adva
     s->confidence++;
     if (s->confidence > s->max_confidence) s->max_confidence = s->confidence;
     s->delay = 0u;
+#ifdef TARGET_STARTUP_SEED_DELAY
+    /* S4G bench A/B: no valid period exists for a seed. A fixed 500us
+     * dwell tests first-edge commutation phase without inventing a period.
+     * Applies again only after a real acquisition timeout resets the streak.
+     * No budget refill or deadline extension; not a rotor-position estimate. */
+    if (s->confidence == 1u) s->delay = 500u * FD_REV_US;
+#endif
 #ifdef TARGET_STARTUP_PHASE_DELAY
     /* S4F bench A/B: the seed has no real period. Edges 2..5 wait a
      * bounded post-ZC phase delay using adjacent REAL edge timestamps.
