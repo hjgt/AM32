@@ -1,6 +1,6 @@
 # S4G-NOEDGE：完全无过零时保留300ms全程粗采样
 
-2026-10-19，variant21，已生成未烧录。控制策略仍S4G-SEED。
+2026-10-19，variant21，已烧录并一次校验通过。控制策略仍S4G-SEED。
 本版只改诊断，不是启动问题已修复或可飞行版。
 
 ## 原因与改动
@@ -45,4 +45,13 @@ make -B -j1 CUSTOM_FD6288_G431 OBJ=obj-startup-S4G-noedge ARM_SDK_PREFIX=arm-non
 同设置分组测试；出现失败即回零、停稳并保持供电读取，尤其记录是否
 卡顿移动/反向抽动。异常不要增加油门硬顶，正常也主动回零。若前5次
 均正常可先报告，不需要为了造失败长时间重复带载。
-回滚S4G-SEED原HEX即可，BL/F800不动。本轮未操作硬件，板上仍variant20。
+回滚S4G-SEED原HEX即可，BL/F800不动。
+
+## 实际烧录
+
+用户授权后停止态门禁通过，只写主固件，36116 B一次校验通过。
+BL/F800不在写入范围，设置RAM前后相同。重启variant21、trial=0、
+armed=1、输入及四路CCR零，7.67 V、软件电流0.03 A。
+记录器spacing=16000、post_trigger=0、noedge_spacing=192000，符合构建。
+日志：`../../hardware-backups/startup-S4G-NOEDGE-20261019/flash-1792424749444.json`。
+等待用户短测，尚无新的实机结果。
