@@ -3308,9 +3308,21 @@
 #endif
 #if FD6288_STARTUP_LOSS_LOG
 #if !FD6288_STARTUP_S4E
-#error "Loss-window logger requires unchanged S4E policy"
+#error "Loss-window logger requires S4E base"
 #endif
 #define TARGET_STARTUP_LOSS_LOG
+#endif
+#ifndef FD6288_STARTUP_PHASE_DELAY
+#define FD6288_STARTUP_PHASE_DELAY 0
+#endif
+#if FD6288_STARTUP_PHASE_DELAY != 0 && FD6288_STARTUP_PHASE_DELAY != 1
+#error "FD6288_STARTUP_PHASE_DELAY must be 0 or 1"
+#endif
+#if FD6288_STARTUP_PHASE_DELAY
+#if !FD6288_STARTUP_LOSS_LOG
+#error "Phase-delay experiment requires S4E loss-window diagnostics"
+#endif
+#define TARGET_STARTUP_PHASE_DELAY
 #endif
 #if FD6288_ZCD_ACTUAL_DEADTIME != 0 && FD6288_ZCD_ACTUAL_DEADTIME != 1
 #error "FD6288_ZCD_ACTUAL_DEADTIME must be 0 or 1"
@@ -3360,7 +3372,9 @@
 #define TARGET_STARTUP_PAIR_TRACE
 #ifdef TARGET_STARTUP_FEEDBACK
 #ifdef TARGET_STARTUP_WAVE_TRACE
-#ifdef TARGET_STARTUP_LOSS_LOG
+#ifdef TARGET_STARTUP_PHASE_DELAY
+#define FD6288_TRACE_VARIANT 19u
+#elif defined(TARGET_STARTUP_LOSS_LOG)
 #define FD6288_TRACE_VARIANT 18u
 #elif defined(TARGET_STARTUP_S4E)
 #define FD6288_TRACE_VARIANT 17u

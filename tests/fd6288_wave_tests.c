@@ -16,7 +16,7 @@
 #elif FD6288_TRACE_VARIANT >= 16
 #define TARGET_STARTUP_EDGE_LOG
 #endif
-#if FD6288_TRACE_VARIANT == 18
+#if FD6288_TRACE_VARIANT >= 18
 #define TARGET_STARTUP_LOSS_LOG
 #endif
 char step = 1, old_routine = 1, forward = 1;

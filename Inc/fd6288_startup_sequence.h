@@ -38,6 +38,7 @@ typedef struct {
  * alignment dwell or accelerating commutation table. The first five
  * qualified ADC edges advance immediately (as native zero_crosses < 5).
  * The sixth earns a measured post-ZC delay, then a bounded observation.
+ * S4F optionally delays edges 2..5; the seed and sixth handoff stay native.
  * "confidence" here counts consecutive ADC-qualified edges, NOT S2's
  * fixed-sector phase/period qualification. No claim of mechanical lock. */
 enum { FD_REV_RETRY_TICKS = 22500u * FD_REV_US };
@@ -181,6 +182,17 @@ static inline uint8_t fdRevEdgePolicy(FdRevPolicy *s, uint32_t now, uint8_t adva
     s->confidence++;
     if (s->confidence > s->max_confidence) s->max_confidence = s->confidence;
     s->delay = 0u;
+#ifdef TARGET_STARTUP_PHASE_DELAY
+    /* S4F bench A/B: the seed has no real period. Edges 2..5 wait a
+     * bounded post-ZC phase delay using adjacent REAL edge timestamps.
+     * Do not change sixth-edge handoff, rescue budget or retry accounting.
+     * 3 ms is an experimental cap, not a validated motor parameter. */
+    if (s->confidence >= 2u && s->confidence < FD_REV_REQUIRED_EDGES) {
+        uint8_t advance = advance64 > 24u ? 24u : advance64;
+        s->delay = elapsed / 2u - elapsed * advance / 64u;
+        if (s->delay > 3000u * FD_REV_US) s->delay = 3000u * FD_REV_US;
+    }
+#endif
     if (s->confidence == FD_REV_REQUIRED_EDGES) {
         if (advance64 > 24u) advance64 = 24u;
         s->delay = s->measured / 2u - s->measured * advance64 / 64u;

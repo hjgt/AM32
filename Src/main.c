@@ -1231,8 +1231,8 @@ static void fdRevObserveEdge(void)
         fdTraceEvent(FD_EVENT_REV_DECISION, (fd_rev.phase_percent << 8) | fd_rev.decision);
 #endif
 #ifdef TARGET_STARTUP_FEEDBACK
-        /* Native-style early edges act now, not at a preprogrammed boundary
-         * or at the next 20 kHz tick. The sixth still observes its ZC delay. */
+        /* Service immediately; the policy decides whether a post-ZC delay
+         * is pending (S4F edges 2..5 and the existing sixth-edge handoff). */
         fdRevTick();
 #endif
     }

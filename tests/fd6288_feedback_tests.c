@@ -23,12 +23,28 @@ static void feedbackEdge(unsigned us)
     CHECK(adc_zcd_diag.accepted == accepted + 1u && bemfcounter);
     zcfound = 1; zcfoundroutine();
     CHECK(primask == 0u);
+#ifdef TARGET_STARTUP_PHASE_DELAY
+    if (fd_rev.confidence >= 2u && fd_rev.confidence < 6u) {
+        CHECK(fd_rev.stage == FD_REV_PENDING && fd_rev.delay > 0u);
+        CHECK(fd_rev.delay <= 3000u * FD_REV_US);
+        unsigned writes = gate_writes;
+        sequenceTickAt(fd_rev.edge_at + fd_rev.delay - 1u);
+        CHECK(gate_writes == writes && fd_rev.stage == FD_REV_PENDING);
+        sequenceTickAt(fd_rev.edge_at + fd_rev.delay);
+        CHECK(gate_writes > writes && fd_rev.stage == FD_REV_OPEN);
+    }
+#endif
 }
 static void feedbackLock(void)
 {
     for (unsigned n = 1; n <= 6u; n++) {
         char old_step = step;
+#ifdef TARGET_STARTUP_PHASE_DELAY
+        /* Keep actual edge-to-edge period 2ms despite delayed commutation. */
+        feedbackEdge(2000u - (n >= 3u ? fd_rev.delay / FD_REV_US : 0u));
+#else
         feedbackEdge(2000u);
+#endif
         CHECK(fd_rev.confidence == n && zero_crosses == 0u);
         if (n < 6u) {
             CHECK(fd_rev.stage == FD_REV_OPEN && step != old_step);
@@ -337,6 +353,26 @@ static void test_feedback(void)
 #ifdef TARGET_STARTUP_S4E
     test_all_phases(); test_confirmation(); test_failed_start_edge_shape();
     test_time_gate_and_resets(); test_coast_unchanged();
+#ifdef TARGET_STARTUP_PHASE_DELAY
+    /* Delayed commutation cannot outrank zero, native trip or 300ms stop. */
+    for (unsigned cause=0;cause<3;cause++) {
+        feedbackReset(); benchStart();
+        fd_rev.stage=FD_REV_PENDING; fd_rev.confidence=2;
+        fd_rev.edge_at=DWT->CYCCNT; fd_rev.delay=3000u*FD_REV_US;
+        unsigned writes=gate_writes;
+        if(cause==0) adjusted_input=newinput=0;
+        if(cause==1) {
+            stuck_enabled=1;bemf_timeout=2;bemf_timeout_happened=3;
+            CHECK(stuckRotorGuardInput());
+        }
+        sequenceTickAt(cause==2 ? fd_power_policy.started+FD_REV_ACQUIRE_TICKS :
+            fd_rev.edge_at+fd_rev.delay);
+        CHECK(gate_writes==writes && !fd_rev_acquiring);
+        /* Zero output handling belongs to the input/coast path; this tick
+         * must cancel its delayed work, not introduce a new output path. */
+        if(cause) CHECK(!gates && !pwm);
+    }
+#endif
     for (unsigned dir=0; dir<=1; dir++) {
         feedbackReset(); forward=dir; benchStart();
         feedbackRetry(); feedbackRetry(); feedbackEdge(512);
