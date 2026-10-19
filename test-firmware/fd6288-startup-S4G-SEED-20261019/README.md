@@ -1,6 +1,6 @@
 # S4G-SEED：首个合格过零后500us换相等待对照
 
-2026-10-19，variant20，已生成未烧录。基线S4F-PHASE variant19。
+2026-10-19，variant20，已烧录并一次校验通过。基线S4F-PHASE variant19。
 仅台架实验，尚无实机改善/堵转保护可用/可飞行结论。
 
 ## 单变量
@@ -53,4 +53,7 @@ pending期间回零取消、故障/300ms优先、超时清零、重复边沿拒�
 回零，不用高油门硬顶；停稳后保持供电读数据。正常也主动回零。
 若没有优势，回滚S4F原HEX，不改变BL/F800；不要用少量样本宣称成功率。
 回滚：`../fd6288-startup-S4F-PHASE-20261019/AM32_CUSTOM_FD6288_G431_S4F_PHASE_ACQ300_MANUAL_STOP.hex`。
-本轮未操作硬件，板上仍variant19。
+已按用户授权只写主固件，36044 B一次校验通过，BL/F800不在写入范围。
+设置RAM前后相同；重启variant20、trial=0、armed=1、输入及四路CCR零。
+电压7.74 V、软件电流0.05 A。等待用户短测，尚无实机改善结论。
+日志：`../../hardware-backups/startup-S4G-SEED-20261019/flash-1792423902136.json`。

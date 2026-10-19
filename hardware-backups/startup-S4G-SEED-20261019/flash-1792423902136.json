@@ -1,0 +1,93 @@
+[
+  {
+    "at": "2026-10-19T15:31:42.323Z",
+    "stage": "preflight_stopped",
+    "value": {
+      "state": "running",
+      "vtor": 134221824,
+      "input": 0,
+      "newinput": 0,
+      "adjusted_input": 0,
+      "running": 0,
+      "heli_coast_active": 0,
+      "duty_cycle": 0,
+      "gpioA": 49152,
+      "gpioF": 0,
+      "ccr": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "at": "2026-10-19T15:31:42.757Z",
+    "stage": "write_scope",
+    "value": {
+      "hex": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-startup-S4G-SEED-20261019/AM32_CUSTOM_FD6288_G431_S4G_SEED_ACQ300_MANUAL_STOP.hex",
+      "sha256": "214dd2c49cf71c8c8c874e026b41b6d839ce0235dad8083bae3ba0d81ea39758",
+      "data_bytes": 36044,
+      "main_only": true,
+      "bl_f800_excluded": true
+    }
+  },
+  {
+    "at": "2026-10-19T15:31:42.797Z",
+    "stage": "reset init",
+    "value": ""
+  },
+  {
+    "at": "2026-10-19T15:31:43.910Z",
+    "stage": "flash write_image erase {/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-startup-S4G-SEED-20261019/AM32_CUSTOM_FD6288_G431_S4G_SEED_ACQ300_MANUAL_STOP.hex}",
+    "value": "auto erase enabled\nwrote 36088 bytes from file /Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-startup-S4G-SEED-20261019/AM32_CUSTOM_FD6288_G431_S4G_SEED_ACQ300_MANUAL_STOP.hex in 1.109861s (31.754 KiB/s)\n"
+  },
+  {
+    "at": "2026-10-19T15:31:44.271Z",
+    "stage": "verify_image {/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-startup-S4G-SEED-20261019/AM32_CUSTOM_FD6288_G431_S4G_SEED_ACQ300_MANUAL_STOP.hex}",
+    "value": "verified 36044 bytes in 0.360014s (97.772 KiB/s)\n"
+  },
+  {
+    "at": "2026-10-19T15:31:44.276Z",
+    "stage": "reset run",
+    "value": ""
+  },
+  {
+    "at": "2026-10-19T15:31:48.798Z",
+    "stage": "postflash_stopped",
+    "value": {
+      "state": "running",
+      "vtor": 134221824,
+      "input": 0,
+      "newinput": 0,
+      "adjusted_input": 0,
+      "running": 0,
+      "heli_coast_active": 0,
+      "duty_cycle": 0,
+      "gpioA": 49152,
+      "gpioF": 0,
+      "ccr": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "at": "2026-10-19T15:31:48.838Z",
+    "stage": "success",
+    "value": {
+      "variant": 20,
+      "trials": 0,
+      "spacing": 16000,
+      "post_trigger": 0,
+      "settings_unchanged": true,
+      "armed": 1,
+      "stuck_rotor_inhibit": 0,
+      "drive_safety_limit_inhibit": 0,
+      "battery_voltage": 774,
+      "actual_current": 5
+    }
+  }
+]
