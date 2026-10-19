@@ -50,6 +50,9 @@ void fdTraceInit(void)
     fd_startup_wave.variant = FD6288_TRACE_VARIANT;
     fd_startup_wave.clock_hz = 160000000u;
     fd_startup_wave.size = sizeof(FdStartupWave);
+#ifdef TARGET_STARTUP_NOEDGE_LOG
+    fd_startup_wave.reserved[2] = 192000u; /* >=1.2ms before first acceptance */
+#endif
 #ifdef TARGET_STARTUP_ACQ_LOG
     fd_startup_wave.reserved[0] = FD_WAVE_SAMPLE_TICKS;
 #endif
@@ -173,7 +176,17 @@ void fdTraceSample(uint16_t va, uint16_t vb, uint16_t vc, int16_t margin,
             fd_wave_stage != 4u && at <= 48000000u &&
             b->samples_stored < FD_WAVE_SAMPLES &&
 #endif
+#ifdef TARGET_STARTUP_NOEDGE_LOG
+            /* No accepted edge: retain the entire bounded acquisition at
+             * coarse spacing. Once accepted, permanently switch this trial
+             * to the existing 100us ring/freeze logic. No buffer reset, no IO.
+             * Late service must not overwrite a no-edge 300ms prefix. */
+            (b->accepted || at <= 48000000u) &&
+            (!b->samples_stored || at - b->last_sample_at >=
+                (b->accepted ? FD_WAVE_SAMPLE_TICKS : 192000u))) {
+#else
             (!b->samples_stored || at - b->last_sample_at >= FD_WAVE_SAMPLE_TICKS)) {
+#endif
             volatile FdWaveSample *s = &b->samples[b->samples_stored % FD_WAVE_SAMPLES];
             s->at = at; s->va = va; s->vb = vb; s->vc = vc;
             s->elapsed = INTERVAL_TIMER_COUNT;

@@ -19,6 +19,9 @@
 #if FD6288_TRACE_VARIANT >= 18
 #define TARGET_STARTUP_LOSS_LOG
 #endif
+#if FD6288_TRACE_VARIANT == 21
+#define TARGET_STARTUP_NOEDGE_LOG
+#endif
 char step = 1, old_routine = 1, forward = 1;
 volatile char rising = 1;
 uint8_t running = 1;
@@ -164,6 +167,32 @@ int main(int argc,char **argv) {
     assert(fd_startup_wave.banks[0].samples_stored==3000);
 #endif
 #ifdef TARGET_STARTUP_LOSS_LOG
+#ifdef TARGET_STARTUP_NOEDGE_LOG
+    reset(); begin(1);
+    for(unsigned i=0;i<6000;i++) sample(FD_SAMPLE_PRE);
+    b=&fd_startup_wave.banks[0];
+    assert(b->samples_stored==250 && b->samples[0].at==8000);
+    assert(b->samples[249].at==8000+249u*192000u);
+    assert(!b->accepted && b->reserved[0]==FD_WAVE_NONE);
+    FdWaveBank prefix=*b;
+    for(unsigned i=0;i<100;i++) sample(FD_SAMPLE_PRE);
+    assert(b->samples_stored==250);
+    assert(!memcmp((const void *)b->samples,prefix.samples,sizeof(prefix.samples)));
+    // A new trial restores coarse rate; first edge switches to fast rate.
+    finish(8,2);
+    char prefix_path[1024];
+    assert(snprintf(prefix_path,sizeof(prefix_path),"%s.noedge",argv[1])>0);
+    FILE *prefix_file=fopen(prefix_path,"wb"); assert(prefix_file);
+    assert(fwrite((const void *)&fd_startup_wave,1,sizeof(fd_startup_wave),prefix_file)==sizeof(fd_startup_wave));
+    assert(!fclose(prefix_file));
+    begin(2);
+    for(unsigned i=0;i<24;i++) sample(FD_SAMPLE_PRE);
+    b=&fd_startup_wave.banks[1]; assert(b->samples_stored==1);
+    sample(FD_SAMPLE_ACCEPT); assert(b->samples_stored==2);
+    sample(FD_SAMPLE_PRE); assert(b->samples_stored==2);
+    sample(FD_SAMPLE_PRE); assert(b->samples_stored==3);
+    assert(b->samples[2].at-b->samples[1].at==16000u);
+#endif
     reset(); begin(1);
     for(unsigned i=0;i<1000;i++) sample(FD_SAMPLE_PRE);
     fdTraceEvent(FD_EVENT_TIMEOUT,0); // Blind retry must not freeze.
