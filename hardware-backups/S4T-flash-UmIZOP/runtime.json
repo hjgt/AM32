@@ -1,0 +1,13 @@
+{
+  "armed": 1,
+  "input": 0,
+  "adjusted_input": 0,
+  "running": 0,
+  "duty_cycle": 0,
+  "ccr": [
+    0,
+    0,
+    0,
+    0
+  ]
+}

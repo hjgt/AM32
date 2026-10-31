@@ -1,0 +1,1 @@
+Experimental checkpoints, not production releases. See ../../docs/HANDOFF-20261031.md. STARTUP-EVENT is currently flashed and has failed startup trials. Match ELF to flashed HEX for RAM reads. SHA256.json records exact bytes.

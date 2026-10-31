@@ -1,0 +1,62 @@
+[
+  {
+    "at": "2026-09-20T14:57:42.471Z",
+    "stage": "fresh_backup",
+    "value": {
+      "directory": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/hardware-backups/startup-A-flash-SqiEvV",
+      "sha256": "65b582318e42f338fbe736b63d246003383b160f499f09bb47f33efbd2b047d7",
+      "stopped": {
+        "input": 0,
+        "newinput": 0,
+        "adjusted_input": 0,
+        "running": 0,
+        "heli_coast_active": 0,
+        "duty_cycle": 0
+      }
+    }
+  },
+  {
+    "at": "2026-09-20T14:57:42.627Z",
+    "stage": "reset-init",
+    "value": ""
+  },
+  {
+    "at": "2026-09-20T14:57:42.631Z",
+    "stage": "flash_banks",
+    "value": "#0 : stm32g4x.flash (stm32l4x) at 0x08000000, size 0x00000000, buswidth 0, chipwidth 0\n#1 : stm32g4x.otp (stm32l4x) at 0x1fff7000, size 0x00000000, buswidth 0, chipwidth 0\n"
+  },
+  {
+    "at": "2026-09-20T14:57:45.489Z",
+    "stage": "write-main",
+    "value": "auto erase enabled\nwrote 30888 bytes from file /Users/nxf75465/codex/am32_on_omp_esc/AM32-main/obj-startup-trace-A/AM32_CUSTOM_FD6288_G431_2.20.hex in 2.855683s (10.563 KiB/s)\n"
+  },
+  {
+    "at": "2026-09-20T14:57:46.233Z",
+    "stage": "verify-main",
+    "value": "verified 30848 bytes in 0.739920s (40.714 KiB/s)\n"
+  },
+  {
+    "at": "2026-09-20T14:57:49.844Z",
+    "stage": "all_regions_verified",
+    "value": {
+      "main_hex_data_bytes": 30848,
+      "bootloader_unchanged": true,
+      "settings_unchanged": true,
+      "flash_sha256": "5285553bc0420fc5c7d1689a2c96d53806fb2d4d615c16142b46a0cdb41dc5eb",
+      "settings_sha256": "852293fdb1c158518b9b9b4575dad3fbf74b2e7205fee5f73b44fb461b725e08"
+    }
+  },
+  {
+    "at": "2026-09-20T14:57:49.860Z",
+    "stage": "reset-run",
+    "value": ""
+  },
+  {
+    "at": "2026-09-20T14:57:49.861Z",
+    "stage": "finished",
+    "value": {
+      "directory": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/hardware-backups/startup-A-flash-SqiEvV",
+      "note": "Main A flashed and verified; no throttle command. Runtime check still required."
+    }
+  }
+]

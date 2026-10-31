@@ -111,9 +111,23 @@ async function dump(elf, out, stopped, connection = connect, format = null) {
     const protection = {};
     for (const n of ['stuck_rotor_inhibit', 'stuck_rotor_trip_count', 'bemf_timeout', 'bemf_timeout_happened']) protection[n] = await scalar(n);
     const settings = await mem(syms.eepromBuffer.address, syms.eepromBuffer.size);
+    let asyncDiagnostics;
+    if (d.header.variant >= 25 && layout.mode === 'wave') {
+      const s = syms.fd_async_diag;
+      assert(s && s.size === 76 && s.address >= 0x20000000 && s.address + s.size <= 0x20008000);
+      const raw = await mem(s.address, s.size);
+      const names = ['abi','irq_count','irq_last_at','irq_max_cycles','accepted_at','deadline','executed_at','late_max_cycles','scheduled','executed','cancelled','stale','late_stop','epoch','request_epoch','sample_collisions','pending','request_coast','request_forward'];
+      asyncDiagnostics = Object.fromEntries(names.map((n,i)=>[n,raw.readUInt32LE(i*4)]));
+      assert.equal(asyncDiagnostics.abi,1);
+      assert.equal(asyncDiagnostics.pending,0,'Commutation still pending');
+      asyncDiagnostics.note = 'Session totals; IRQ fields may advance at zero throttle. Times are DWT software arrival/acceptance, not hardware sample timestamps. Not attributed to individual trials.';
+      asyncDiagnostics.irq_max_us = asyncDiagnostics.irq_max_cycles / 160;
+      asyncDiagnostics.late_max_us = asyncDiagnostics.late_max_cycles / 160;
+    }
     await stop();
     assert.deepEqual(await mem(syms[layout.symbol].address, 64), pair.subarray(0, 64), 'Trial changed during capture');
     const data = {...d, bench, metadata: {capturedAt: new Date().toISOString(), elf, hex_sha256: sha(hex), trace_sha256: sha(pair), identity: 'known_session_selected_functions_not_full_flash', settings_ram_hex: settings.toString('hex'), protection_after_zero: protection, bench_raw_hex: benchRaw.toString('hex')}};
+    if (asyncDiagnostics) data.async_diagnostics = asyncDiagnostics;
     fs.mkdirSync(path.dirname(path.resolve(out)), {recursive: true});
     fs.writeFileSync(out, pair, {flag: 'wx'}); fs.writeFileSync(out + '.json', JSON.stringify(data, null, 2) + '\n', {flag: 'wx'});
     console.log(JSON.stringify({saved: path.resolve(out), trials: bench.header.trials, banks: d.banks.map(b => ({trial: b.header.trial_id, result: b.classification, sectors: b.header.sectors, samples_stored: b.header.samples_stored, events: b.header.events, overflow: b.header.overflow, max_sample_cycles: b.header.max_sample_cycles, max_event_cycles: b.header.max_event_cycles, max_boundary_cycles: b.header.max_boundary_cycles}))}, null, 2));

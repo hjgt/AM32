@@ -107,10 +107,10 @@ function decodeBench(b, variant = 3) {
     records.push(r);
   }
   return {header: h, records, omitted_earlier_trials: Math.max(0, h.trials - 16),
-    ...(variant >= 11 ? {startup_profile: {name:variant===21?'S4G-NOEDGE':variant===20?'S4G-SEED':variant===19?'S4F-PHASE':variant>=17?'S4E':variant>=14?'S4D':variant===13?'S4C':variant===12?'S4B':'S4', initial_request:360, acquisition_request:400,
-      feedback_wait_us:variant>=17?22500:null, motor_stops_at_observation_end:variant<17,
+    ...(variant >= 11 ? {startup_profile: {name:variant===27?'S4K-DENSE':variant===26?'S4J-JEOS':variant===25?'S4J-ASYNC':variant===24?'S4I-FIRST30':variant===23?'S4H-SPLIT':variant===22?'S4H-RAMP':variant===21?'S4G-NOEDGE':variant===20?'S4G-SEED':variant===19?'S4F-PHASE':variant>=17?'S4E':variant>=14?'S4D':variant===13?'S4C':variant===12?'S4B':'S4', initial_request:360, acquisition_request:400,
+      first_sector_wait_us:variant>=24?30000:22500, feedback_wait_us:variant>=17?22500:null, motor_stops_at_observation_end:variant<17,
       latest_real_interval_at_handoff:variant>=12, retains_unused_rescue:variant>=13, bridges_solitary_rescue_edge:variant>=14,
-      rescue_after_empty_retries:2, rescue_sector_ms:8, rescue_sectors:6,
+      rescue_after_empty_retries:2, rescue_sector_ms:variant>=22?null:8, rescue_periods_ms:variant>=22?[16,14,12,10,9,8]:[8,8,8,8,8,8], rescue_sectors:6,
       closed_floor_hold_ms:150, closed_floor_fade_ms:300, closed_floor_end_ms:450,
       all_retries_count_as_native_timeouts:true}} : {}),
     ...(variant === 8 ? {power_profile: {name: 'S3-P',initial_request: 540,acquisition_request: 600,startup_cap: 610,post_handoff_base: 360,release_ms: 20,legacy_extra_is_not_profile_amplitude: true}} : {}),

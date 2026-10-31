@@ -11,6 +11,7 @@ const decoded = decode(fixture);
 function mock(opts = {}) {
   const ram = Buffer.alloc(32768), traceAt = syms[traceSymbol].address - 0x20000000;
   fixture.copy(ram, traceAt);
+  if (syms.fd_async_diag) ram.writeUInt32LE(1, syms.fd_async_diag.address - 0x20000000);
   if (opts.active) ram.writeUInt32LE(0, traceAt + 24);
   if (opts.badABI) ram.writeUInt32LE(9, traceAt + 4);
   if (opts.moving) ram[syms.adjusted_input.address - 0x20000000] = 100;
@@ -56,11 +57,12 @@ function mock(opts = {}) {
   assert.deepEqual(d.banks, decoded.banks);
   assert.equal(d.header.active_bank, NONE); assert.equal(d.bench.header.trials, 7);
   if (d.header.variant >= 11) {
-    assert.equal(d.sampling_profile.name, d.header.variant === 21 ? 'S4G-NOEDGE' : d.header.variant === 20 ? 'S4G-SEED' : d.header.variant === 19 ? 'S4F-PHASE' : d.header.variant === 18 ? 'S4E-LOSS' : d.header.variant === 17 ? 'S4E' : d.header.variant === 16 ? 'S4D-EDGE' : d.header.variant === 15 ? 'S4D-LOG' : d.header.variant === 14 ? 'S4D' : d.header.variant === 13 ? 'S4C' : d.header.variant === 12 ? 'S4B' : 'S4');
+    assert.equal(d.sampling_profile.name, d.header.variant === 27 ? 'S4K-DENSE' : d.header.variant === 26 ? 'S4J-JEOS' : d.header.variant === 25 ? 'S4J-ASYNC' : d.header.variant === 24 ? 'S4I-FIRST30' : d.header.variant === 23 ? 'S4H-SPLIT' : d.header.variant === 22 ? 'S4H-RAMP' : d.header.variant === 21 ? 'S4G-NOEDGE' : d.header.variant === 20 ? 'S4G-SEED' : d.header.variant === 19 ? 'S4F-PHASE' : d.header.variant === 18 ? 'S4E-LOSS' : d.header.variant === 17 ? 'S4E' : d.header.variant === 16 ? 'S4D-EDGE' : d.header.variant === 15 ? 'S4D-LOG' : d.header.variant === 14 ? 'S4D' : d.header.variant === 13 ? 'S4C' : d.header.variant === 12 ? 'S4B' : 'S4');
     assert.equal(d.bench.startup_profile.latest_real_interval_at_handoff, d.header.variant >= 12);
     assert.equal(d.bench.startup_profile.retains_unused_rescue, d.header.variant >= 13);
     assert.equal(d.bench.startup_profile.bridges_solitary_rescue_edge, d.header.variant >= 14);
-    assert.equal(d.bench.startup_profile.rescue_sector_ms, 8);
+    assert.equal(d.bench.startup_profile.rescue_sector_ms, d.header.variant >= 22 ? null : 8);
+    assert.deepEqual(d.bench.startup_profile.rescue_periods_ms, d.header.variant >= 22 ? [16,14,12,10,9,8] : [8,8,8,8,8,8]);
     assert.equal(d.bench.startup_profile.closed_floor_end_ms, 450);
     assert.equal(d.bench.startup_profile.all_retries_count_as_native_timeouts, true);
   }

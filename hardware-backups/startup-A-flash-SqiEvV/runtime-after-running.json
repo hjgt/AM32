@@ -1,0 +1,72 @@
+{
+  "at": "2026-09-20T14:59:07.103Z",
+  "state": "running",
+  "vtor": 134221824,
+  "runtime": {
+    "input": 0,
+    "newinput": 0,
+    "adjusted_input": 0,
+    "running": 0,
+    "armed": 1,
+    "heli_coast_active": 0,
+    "duty_cycle": 0,
+    "minimum_duty_cycle": 210,
+    "min_startup_duty": 360,
+    "startup_max_duty_cycle": 610,
+    "forward": 1,
+    "battery_voltage": 771,
+    "actual_current": 5,
+    "SystemCoreClock": 160000000,
+    "stuck_rotor_inhibit": 0,
+    "stuck_rotor_trip_count": 0
+  },
+  "trace": {
+    "magic": 1179866161,
+    "abi": 1,
+    "variant": 0,
+    "clock_hz": 160000000,
+    "state": 1,
+    "command": 0,
+    "capture_id": 0,
+    "start_cycles": 0,
+    "end_cycles": 0,
+    "end_reason": 0,
+    "sample_sequence": 0,
+    "event_sequence": 0,
+    "no_fresh": 0,
+    "decisions": {
+      "invalid": 0,
+      "blank": 0,
+      "pre": 0,
+      "hysteresis": 0,
+      "early": 0,
+      "unarmed": 0,
+      "confirmation": 0,
+      "accepted": 0,
+      "reported": 0,
+      "coast": 0
+    },
+    "max_sample_cycles": 0,
+    "max_event_cycles": 0,
+    "rejected_commands": 0
+  },
+  "regs": {
+    "gpioa_idr": 49152,
+    "gpiof_idr": 0,
+    "ccr": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "tim1_arr": 6665,
+    "tim1_bdtr": 33595598,
+    "dwt_ctrl": 1073741825,
+    "dwt_cycles_before": 3775598975,
+    "dwt_cycles_after": 3777587336
+  },
+  "settings_sha256": "852293fdb1c158518b9b9b4575dad3fbf74b2e7205fee5f73b44fb461b725e08",
+  "settings_unchanged": true,
+  "settings_ram_equals_flash": true,
+  "note": "A variant, zero throttle; logger boot-armed. No motor test yet."
+}

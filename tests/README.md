@@ -168,3 +168,34 @@ Variant 10 uses decoded fixed DTG 0xCE = 368 ticks, floor 460 and minimum pulse
 704, without changing bridge dead time or S3 power. Variant 9 retains floor
 162 and minimum 406. CKD=DIV1/PSC=0 assumptions are checked in timer init source.
 Neither tests analog margins, full-ISR time, motor startup or physical protection.
+
+### S4H-SPLIT: independent startup prefix and first-edge window (variant23/ABI2)
+
+```sh
+node tests/run_fd6288_split_tests.cjs obj-startup-S4H-split/AM32_CUSTOM_FD6288_G431_2.20.elf
+```
+
+Same 21568-byte allocation. Packed counts are ABI2 only, with explicit decoder
+validation. Tests compile the actual logger with ASan/UBSan, exercise immutable
+50ms/400us prefix and independent128-slot100us ring ending6ms after first
+acceptance, earlier handoff/timeout, no-edge300ms bound, DWT wrap, bank reuse,
+pinning/preemption and event-prefix overflow. C fixtures go through JS decoder
+and stopped-state read-only mock capture. Older ABI1 remains separately tested.
+This changes diagnostic interrupt work, not drive policy; real logger cycle
+maxima must be checked on the next board capture.
+# S4J asynchronous commutation tests (2026-10-21)
+
+`node tests/run_fd6288_async_tests.cjs` compiles the actual main.c scheduler and JEOS service with mocked hardware and ASan/UBSan. It covers deadlines, wrap, cancellation and output gates; it is not an IRQ-latency or motor simulation. `run_fd6288_split_tests.cjs ELF 25` / `26` validate the matching capture format. Build only the custom target using `node tools/scripts/build_fd6288_s4j.cjs off|async|jeos`; the disabled build matches S4I-FIRST30 byte-for-byte.
+# S4L double alignment
+
+`tests/fd6288_double_align_tests.c` can be compiled with C11, `-Wall -Wextra -Werror -fsanitize=address,undefined` and run directly. It tests the actual header-only policy for both directions, dwell boundaries, power requests, wrap, rejected positioning edges, acquisition deadline and handoff.
+`node tests/run_fd6288_async_tests.cjs --align` additionally compiles the actual JEOS service with positioning enabled and verifies that it discards conversions during positioning and resumes in acquisition. The unflagged run remains a baseline regression.
+`node tools/scripts/build_fd6288_s4j.cjs align` builds only CUSTOM_FD6288_G431 with no waveform recorder. Host tests do not establish physical alignment or flight readiness.
+# 2026-10-25 additions
+
+- `node tests/run_fd6288_recovery_tests.cjs`: offline finite running-recovery
+  policy only, no MCU adapter or hardware validation.
+- `node tests/run_fd6288_sector_tests.cjs`: reused acquisition aggregation ABI,
+  boundaries/freeze/wrap and decoder checks.
+- `node tests/check_fd6288_s4_flags.cjs`: includes clean acquisition-statistics
+  and alignment-hold compatibility/variant tests.

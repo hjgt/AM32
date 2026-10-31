@@ -1,0 +1,82 @@
+{
+  "purpose": "SWD settings-only repair; not an am32.ca main-firmware upload",
+  "address": "0x0800F800",
+  "length": 2048,
+  "preserved": "all bytes except the ten listed changes",
+  "beforeFlashSHA256": "7b02978f7a774f2183adc847fef9ff557c51ddb1704704c096fa8a091154eeee",
+  "beforeSettingsSHA256": "389db72e2940c471c963ed9a48208be42d8dca76f286bde6c9e24eb6784a468d",
+  "repairedSettingsSHA256": "852293fdb1c158518b9b9b4575dad3fbf74b2e7205fee5f73b44fb461b725e08",
+  "repairedHexSHA256": "5558d71199ac21f0a33e6efa854e27bb3d965666912e3e7c946d591583b50964",
+  "changes": [
+    {
+      "offset": 5,
+      "address": "0x800f805",
+      "field": "max_ramp",
+      "before": 85,
+      "after": 160
+    },
+    {
+      "offset": 6,
+      "address": "0x800f806",
+      "field": "minimum_duty_cycle",
+      "before": 110,
+      "after": 1
+    },
+    {
+      "offset": 7,
+      "address": "0x800f807",
+      "field": "disable_stick_calibration",
+      "before": 107,
+      "after": 0
+    },
+    {
+      "offset": 8,
+      "address": "0x800f808",
+      "field": "absolute_voltage_cutoff",
+      "before": 110,
+      "after": 10
+    },
+    {
+      "offset": 9,
+      "address": "0x800f809",
+      "field": "current_P",
+      "before": 111,
+      "after": 100
+    },
+    {
+      "offset": 10,
+      "address": "0x800f80a",
+      "field": "current_I",
+      "before": 119,
+      "after": 0
+    },
+    {
+      "offset": 11,
+      "address": "0x800f80b",
+      "field": "current_D",
+      "before": 110,
+      "after": 100
+    },
+    {
+      "offset": 12,
+      "address": "0x800f80c",
+      "field": "active_brake_power",
+      "before": 32,
+      "after": 0
+    },
+    {
+      "offset": 24,
+      "address": "0x800f818",
+      "field": "pwm_frequency",
+      "before": 48,
+      "after": 24
+    },
+    {
+      "offset": 47,
+      "address": "0x800f82f",
+      "field": "auto_advance",
+      "before": 255,
+      "after": 1
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+[
+  {
+    "stage": "stopped_bridge_before",
+    "value": true
+  },
+  {
+    "stage": "reset_init",
+    "value": ""
+  },
+  {
+    "stage": "write",
+    "value": "auto erase enabled\nwrote 40384 bytes from file /Users/nxf75465/codex/am32_on_omp_esc/AM32-main/obj-first500-20261030/AM32_CUSTOM_FD6288_G431_2.20.hex in 1.203051s (32.781 KiB/s)\n"
+  },
+  {
+    "stage": "verify",
+    "value": "verified 40344 bytes in 0.390903s (100.788 KiB/s)\n"
+  },
+  {
+    "stage": "settings_unchanged",
+    "value": true
+  },
+  {
+    "stage": "reset_run",
+    "value": ""
+  },
+  {
+    "stage": "stopped_after_reset",
+    "value": {
+      "armed": 1,
+      "input": 0,
+      "adjusted_input": 0,
+      "running": 0,
+      "duty_cycle": 0
+    }
+  },
+  {
+    "stage": "zero_outputs",
+    "value": true
+  }
+]

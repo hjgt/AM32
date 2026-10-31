@@ -1,0 +1,12 @@
+{
+  "Inc/fd6288_edge_raw.h": "7a8b34e53192c4264f18d401e096f8cd08fb579a12f01dde1e00dddbd06e5b44",
+  "Inc/fd6288_edge_observe.h": "040259d98eaffa9e8e4ae4215ca2ada98daf1034dfe251b20e50617fdd5249f9",
+  "Inc/targets.h": "ab5e716075bafcd3a26d035165851c726de73ec3f57e2797c318078150bdf3b3",
+  "Mcu/g431/Src/comparator.c": "57e060467e7f373ee2a08b672ae3cd1fa70fa88b7d5cf999d48bfe8719e12804",
+  "tools/scripts/fd6288_edge_decode.cjs": "b1fba0943d45903926058e98eac756f6870a9a567bea4fecac52f2105301fe38",
+  "tools/scripts/fd6288_sector_capture.cjs": "e31d58cd5adc41e141eff8181ec1921ab147bbbb718de2e38995e836bd0fdf5b",
+  "tools/scripts/build_fd6288_s4j.cjs": "1f7682838d27e6e2b53502d1abd2f5f93a98a20fc048995a6dafc7392f491c8b",
+  "obj-raw-observe-20261030/AM32_CUSTOM_FD6288_G431_2.20.elf": "08f2e9e90e39313a22a01461ad036eda868bd2e128f2ec7803ce174d0d75bd87",
+  "obj-raw-observe-20261030/debug.elf": "08f2e9e90e39313a22a01461ad036eda868bd2e128f2ec7803ce174d0d75bd87",
+  "obj-raw-observe-20261030/AM32_CUSTOM_FD6288_G431_2.20.hex": "2afdf1ecb383d13471be695ca78fb125261c1532b4c5248bd0e30dd1d74f4eb7"
+}

@@ -15,6 +15,9 @@ void maskPhaseInterrupts(void);
 void changeCompInput(void);
 void enableCompInterrupts(void);
 uint8_t getCompOutputLevel(void);
+#ifdef TARGET_FD_STARTUP_LEVEL
+uint8_t adcZcdEventIsCrossing(void);
+#endif
 
 /* Returns 1 only when a fresh, post-blanking ADC ZCD sample was produced. */
 uint8_t getCompOutputSample(uint8_t *level);

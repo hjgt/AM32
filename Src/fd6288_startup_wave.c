@@ -3,6 +3,22 @@
 #include <stddef.h>
 #include "common.h"
 #include "peripherals.h"
+#include "fd6288_sector_diag.h"
+#ifdef TARGET_FD_SECTOR_DIAG
+volatile FdSectorDiagnostics fd_sector_diag;
+#endif
+#ifdef TARGET_FD_EDGE_OBSERVE
+volatile FdEdgeObserve fd_edge_observe;
+#endif
+#ifdef TARGET_FD_QUIET_LOG
+void fdTraceInit(void)
+{
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+}
+#elif defined(TARGET_FD_DENSE_LOG)
+#include "fd6288_startup_dense.inc"
+#else
 
 extern char step, old_routine;
 extern volatile char rising;
@@ -34,19 +50,31 @@ static inline __attribute__((always_inline)) void fdWaveEventStore(
     volatile FdWaveBank *b, uint32_t at, uint8_t kind,
     uint16_t a, uint16_t c, uint16_t d)
 {
+#ifdef TARGET_STARTUP_SPLIT_LOG
+    uint32_t index = b->events;
+    b->events = index + 1u;
+    if (index >= FD_WAVE_EVENTS) return;
+    volatile FdWaveEvent *e = &b->events_ring[index];
+#else
     volatile FdWaveEvent *e = &b->events_ring[b->events % FD_WAVE_EVENTS];
+#endif
     e->at = at; e->elapsed = INTERVAL_TIMER_COUNT;
     e->interval = commutation_interval;
     e->values[0] = a; e->values[1] = c; e->values[2] = d;
     e->duty = duty_cycle; e->step = step; e->flags = fdWaveFlags();
     e->kind = kind; e->stage = fd_wave_stage;
+#ifndef TARGET_STARTUP_SPLIT_LOG
     b->events++;
+#endif
 }
 void fdTraceInit(void)
 {
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
     fd_startup_wave.magic = FD_WAVE_MAGIC; fd_startup_wave.abi = 1u;
+#ifdef TARGET_STARTUP_SPLIT_LOG
+    fd_startup_wave.abi = 2u;
+#endif
     fd_startup_wave.variant = FD6288_TRACE_VARIANT;
     fd_startup_wave.clock_hz = 160000000u;
     fd_startup_wave.size = sizeof(FdStartupWave);
@@ -62,6 +90,11 @@ void fdTraceInit(void)
 #ifdef TARGET_STARTUP_LOSS_LOG
     fd_startup_wave.reserved[1] = 0u; /* event-triggered, not a timed window */
 #endif
+#endif
+#ifdef TARGET_STARTUP_SPLIT_LOG
+    fd_startup_wave.reserved[0] = FD_WAVE_SAMPLE_TICKS;
+    fd_startup_wave.reserved[1] = FD_WAVE_SPLIT_POST;
+    fd_startup_wave.reserved[2] = FD_WAVE_PREFIX_TICKS;
 #endif
     fd_startup_wave.active_bank = fd_startup_wave.no_lock_bank =
         fd_startup_wave.lost_bank = fd_startup_wave.success_bank = FD_WAVE_NONE;
@@ -159,6 +192,32 @@ void fdTraceSample(uint16_t va, uint16_t vb, uint16_t vc, int16_t margin,
              * decimated waveform samples. Never shorten waveform tail span. */
             fdWaveEventStore(b, at, FD_WAVE_ADC_ACCEPT, va, vb, vc);
         }
+#ifdef TARGET_STARTUP_SPLIT_LOG
+        /* Two independent destinations. Prefix never freezes on an edge;
+         * ring never overwrites prefix. Bound the ring before uint16 wraps. */
+        uint32_t prefix = b->samples_stored & 0xffffu;
+        uint32_t ring = b->samples_stored >> 16;
+        uint8_t save_prefix = at <= FD_WAVE_PREFIX_END && prefix < 128u &&
+            (!prefix || at - b->samples[prefix - 1u].at >= FD_WAVE_PREFIX_TICKS);
+        uint8_t save_ring = !fd_wave_sample_frozen && at <= 48000000u &&
+            (b->reserved[0] == FD_WAVE_NONE ||
+                at - b->reserved[0] <= FD_WAVE_SPLIT_POST) &&
+            (!ring || at - b->last_sample_at >= FD_WAVE_SAMPLE_TICKS);
+        for (unsigned destination = 0; destination < 2u; destination++) {
+            if (!(destination ? save_ring : save_prefix)) continue;
+            unsigned index = destination ? 128u + ring % 128u : prefix;
+            volatile FdWaveSample *s = &b->samples[index];
+            s->at = at; s->va = va; s->vb = vb; s->vc = vc;
+            s->elapsed = INTERVAL_TIMER_COUNT;
+            s->pwm = TIM1->CCR1; s->trigger = TIM1->CCR4;
+            s->step = step; s->flags = fdWaveFlags(); s->reason = reason;
+            s->state = fd_wave_stage | (pre_seen ? 8u : 0u) |
+                ((confirmations > 15u ? 15u : confirmations) << 4);
+        }
+        if (save_prefix) prefix++;
+        if (save_ring) { ring++; b->last_sample_at = at; }
+        b->samples_stored = prefix | (ring << 16);
+#else
         if (
 #ifdef TARGET_STARTUP_LOSS_LOG
             !fd_wave_sample_frozen &&
@@ -196,6 +255,7 @@ void fdTraceSample(uint16_t va, uint16_t vb, uint16_t vc, int16_t margin,
                 ((confirmations > 15u ? 15u : confirmations) << 4);
             b->last_sample_at = at; b->samples_stored++;
         }
+#endif
         uint32_t cost = DWT->CYCCNT - began;
         if (cost > b->max_sample_cycles) b->max_sample_cycles = cost;
     }
@@ -239,4 +299,5 @@ void fdTraceControlTick(void)
         fd_startup_wave.command = 0u; fd_startup_wave.rejected_commands++;
     }
 }
+#endif
 #endif

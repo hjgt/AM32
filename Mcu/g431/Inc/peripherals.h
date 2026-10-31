@@ -81,12 +81,20 @@
  *   incomplete clean ON window -> 0 (PWM1 CH4 stays low: no falling trigger)
  *   normal                     -> clamp(duty/2, floor, latest safe trigger)
  */
+#ifdef TARGET_FD_ALIGN_SAMPLE_PAIR
+extern volatile uint8_t fd_align_sample_late;
+#endif
 static inline uint16_t zcd_ccr4_from_duty(uint16_t duty)
 {
     if (duty < ZCD_MINIMUM_ON_TICKS) {
         return 0u;
     }
 
+#ifdef TARGET_FD_ALIGN_SAMPLE_PAIR
+    /* Diagnostic only at the fixed second alignment compare=1200.
+     * 900+244 <1200; actual sampling aperture remains unmeasured. */
+    if (fd_align_sample_late && duty == 1200u) return 900u;
+#endif
     uint16_t mid = (uint16_t)(duty >> 1);
     uint16_t ccr4 = (mid < ZCD_SAMPLE_FLOOR) ? ZCD_SAMPLE_FLOOR : mid;
     uint16_t latest = (uint16_t)(duty - ZCD_ADC_WINDOW_TICKS);

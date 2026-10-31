@@ -1,0 +1,29 @@
+DW_MACRO_define_strp - lineno : 3164 macro : DEAD_TIME 70
+DW_MACRO_define_strp - lineno : 3172 macro : TARGET_FIXED_DEAD_TIME_CODE 0xCEu
+DW_MACRO_define_strp - lineno : 3173 macro : TARGET_FIXED_DEAD_TIME_COMPENSATION 200u
+DW_MACRO_define_strp - lineno : 3206 macro : TARGET_ADC_ZCD_GUARD
+DW_MACRO_define_strp - lineno : 3390 macro : TARGET_FD_ASYNC_COMM
+DW_MACRO_define_strp - lineno : 3393 macro : TARGET_FD_ADC_JEOS
+DW_MACRO_define_strp - lineno : 3408 macro : TARGET_FD_DOUBLE_ALIGN
+DW_MACRO_define_strp - lineno : 3420 macro : TARGET_FD_ALIGN_BUDGET
+DW_MACRO_define_strp - lineno : 3459 macro : TARGET_FD_NO_DIAGNOSTICS
+DW_MACRO_define_strp - lineno : 3465 macro : TARGET_FD_NATIVE_EARLY
+DW_MACRO_define_strp - lineno : 3477 macro : TARGET_FD_ALIGN_HOLD
+DW_MACRO_define_strp - lineno : 3490 macro : TARGET_FD_ACQ_STATS
+DW_MACRO_define_strp - lineno : 3491 macro : TARGET_FD_SECTOR_DIAG
+DW_MACRO_define_strp - lineno : 3503 macro : TARGET_FD_LAUNCH_ADVANCE
+DW_MACRO_define_strp - lineno : 3515 macro : TARGET_FD_ALIGN_SETTLE
+DW_MACRO_define_strp - lineno : 3539 macro : TARGET_FD_REPOSITION
+DW_MACRO_define_strp - lineno : 3551 macro : TARGET_FD_FULL_RETRY
+DW_MACRO_define_strp - lineno : 3563 macro : TARGET_FD_RETRY_ADJACENT
+DW_MACRO_define_strp - lineno : 3575 macro : TARGET_FD_STALE_RETRY
+DW_MACRO_define_strp - lineno : 3605 macro : TARGET_FD_QUIET_LOG
+DW_MACRO_define_strp - lineno : 3638 macro : TARGET_ADC_ZCD_ACTUAL_DEADTIME
+DW_MACRO_define_strp - lineno : 3687 macro : FD6288_TRACE_VARIANT 45u
+DW_MACRO_define_strp - lineno : 3794 macro : TARGET_MIN_BEMF_COUNTS 0
+DW_MACRO_define_strp - lineno : 5856 macro : CPU_FREQUENCY_MHZ 160
+DW_MACRO_define_strp - lineno : 60 macro : ZCD_SAMPLE_FLOOR ((uint16_t)(ZCD_DTG_TICKS(TARGET_FIXED_DEAD_TIME_CODE) + 92u))
+DW_MACRO_define_strp - lineno : 6030 macro : LOOP_FREQUENCY_HZ 20000
+DW_MACRO_define_strp - lineno : 6033 macro : PID_LOOP_DIVIDER (LOOP_FREQUENCY_HZ / 1000)
+DW_MACRO_define_strp - lineno : 6051 macro : TIM1_AUTORELOAD ((uint16_t)(CPU_FREQUENCY_MHZ * 1000U * 1000U / NOMINAL_PWM)-1)
+DW_MACRO_define_strp - lineno : 6055 macro : POLLING_MODE_THRESHOLD 2000

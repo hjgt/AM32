@@ -1,0 +1,7 @@
+[
+  {
+    "at": "2026-10-27T10:59:07.397Z",
+    "stage": "error",
+    "value": "AssertionError [ERR_ASSERTION]: ERR:read_memory: failed to read memory"
+  }
+]

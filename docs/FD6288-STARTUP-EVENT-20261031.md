@@ -1,0 +1,18 @@
+# 启动推进与接管证据分离候选（未烧录）
+
+基于STARTUP-LEVEL，继续使用FD6288_STARTUP_LEVEL开关；独立产物obj-startup-event-20261031。保留上一版HEX/ELF作为当前板上读取依据，不覆盖。
+
+ADC仍需7个连续有效后侧组才能发布事件。启动分支额外记录本扇区消隐后是否观察过directed<-8，发布时给出crossing标志。仅后侧累计属于level；曾见pre再后侧确认属于crossing候选，并非机械位置证明。无效组仍打断确认，沿用原before_seen寿命。
+
+主流程在立即服务时读取标志。level经既有策略产生PENDING和原500us等待，但confidence在策略前后归零、measured/last_real_period归零、不增加真实穿越轻量计数，不能触发HANDOFF；edge_at只作为该次待换相的绝对定时基准。保留原超时预算/救援消费行为，不给额外预算。observed_once不因level置位。最大证据连续数不计入level。
+
+crossing沿用原边沿策略。必须连续6个crossing才可能接管，中间level或超时打断。第一个crossing只种下时间戳，不形成周期；第二个起仅用相邻crossing间隔估算。ADC私有drive_crossings和last_real_interval遇level也清零，接管仍由既有真实间隔seed路径初始化。闭环资格及TIM16截止调度不变。
+
+轻量日志edges现在仅计crossing，扇区accepted仍计所有推进事件；两者不应再直接比较为相同含义。扇区pre统计可用于辅助识别。未扩大记录器。
+
+间隔校验边界：保留现有不接受零间隔/已过期扇区、必须连续相邻证据的检查；没有擅自加一个未验证的周期倍率阈值。因而这是修正事件与周期证据混用的候选，不是完成物理转子锁定验证的版本。若六个伪穿越连续出现，软件分类仍不足以证明正确转向。更强的周期一致性阈值需独立证据，不能以当前改动冒称已经解决。
+
+验证：实际ADC资格函数提取编译测试双极性、7组计数、反侧/滞环打断、level/crossing分类、一次发布、闭环pre要求通过。实际策略头文件tests/fd6288_startup_event_tests.c覆盖12次交替level/crossing不接管、不生成周期；level打断已有证据；连续6个crossing可接管；DWT回绕两种情况。原host回归通过。单目标编译通过，日志docs/startup-event-20261031/build.log，既有链接警告保留。git diff --check通过。
+
+HEX SHA256：6b0819ff2a8f27b42b8a5028b7bd7c7c44214f24c74a6b6f4632699d70a64f2d。
+本次未访问硬件、未烧录、未修改EEPROM。主机测试不验证电机时序/ISR开销/启动成功率。

@@ -1,0 +1,34 @@
+{
+  "input": 0,
+  "newinput": 0,
+  "adjusted_input": 0,
+  "running": 0,
+  "armed": 1,
+  "duty_cycle": 0,
+  "battery_voltage": 774,
+  "actual_current": 6,
+  "gpioa": [
+    49152
+  ],
+  "gpiof": [
+    0
+  ],
+  "ccr": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "scan": [
+    1179666737,
+    1,
+    512,
+    1,
+    0,
+    0,
+    1,
+    2863333375,
+    4294961855,
+    3932222
+  ]
+}

@@ -877,15 +877,29 @@ volatile char input_ready = 0;
 #ifdef TARGET_STARTUP_POWER_BENCH
 /* FD_POWER_BENCH_ADAPTER_BEGIN -- every policy/summary access is serialized.
  * This is an opt-in, short-shot bench image, NOT a flight/production mode. */
+#include "fd6288_light_log.h"
+#ifdef TARGET_FD_REPOSITION
+/* magic, trial, release/re-align/first-retry-edge/handoff ages, reason, end age.
+ * Event-only observer; UINT32_MAX means absent, no ADC waveform writes. */
+volatile uint32_t fd_reposition_diag[8];
+#endif
+#ifdef TARGET_FD_ALIGN_SETTLE
+#include "fd6288_align_observe.h"
+volatile FdAlignObserve fd_align_observe;
+#endif
 _Static_assert(sizeof(FdPowerSummary) == 32u, "power summary ABI");
+#ifndef TARGET_FD_NO_DIAGNOSTICS
 _Static_assert(sizeof(FdPowerDiagnostics) == 552u, "power diagnostics ABI");
+#endif
 volatile FdPowerDiagnostics fd_power_bench = {
     .magic = FD_POWER_BENCH_MAGIC, .abi = 1u,
     .extra = FD6288_STARTUP_POWER_EXTRA
 };
 static FdPowerPolicy fd_power_policy;
+#ifndef TARGET_FD_NO_DIAGNOSTICS
 static FdPowerSummary fd_power_work;
 static uint32_t fd_power_accepted_start, fd_power_timeouts_start;
+#endif
 static uint8_t fd_power_starting;
 #ifdef TARGET_STARTUP_SEQUENCE
 static FdRevPolicy fd_rev;
@@ -905,6 +919,9 @@ static uint8_t fdBenchConfigOk(void)
 
 static void fdBenchObserve(uint32_t now)
 {
+#ifdef TARGET_FD_NO_DIAGNOSTICS
+    (void)now;
+#else
     if (!fd_power_bench.active_id) return;
 #ifdef TARGET_STARTUP_S4E
     /* Freeze the diagnostic window, not the drive; avoid DWT/count wrap in
@@ -926,15 +943,31 @@ static void fdBenchObserve(uint32_t now)
         fd_power_work.min_voltage = battery_voltage;
     if (duty_cycle > fd_power_work.max_duty)
         fd_power_work.max_duty = duty_cycle;
+#endif
 }
 
 static void fdBenchFinish(uint8_t reason)
 {
     if (!fd_power_bench.active_id) return;
-    fdBenchObserve(DWT->CYCCNT);
+    fdEdgeFinish(DWT->CYCCNT);
+#ifdef TARGET_FD_REPOSITION
+    fd_reposition_diag[6] = reason;
+    fd_reposition_diag[7] = DWT->CYCCNT-fd_power_policy.started;
+#endif
+#ifdef TARGET_FD_ALIGN_SETTLE
+    fd_align_observe.frozen = 1u;
+#endif
+    fdLightFinish(reason, fd_rev.stage, adjusted_input, INTERVAL_TIMER_COUNT,
+                  actual_current);
+    FD_DIAG(fdBenchObserve(DWT->CYCCNT));
+#ifdef TARGET_FD_NO_DIAGNOSTICS
+    (void)reason;
+#endif
+    fdSectorFinish(DWT->CYCCNT, reason);
 #ifdef TARGET_STARTUP_PAIR_TRACE
     fdTraceTrialFinish(reason, fd_rev.stage);
 #endif
+#ifndef TARGET_FD_NO_DIAGNOSTICS
     fd_power_work.reason = reason;
 #ifdef TARGET_STARTUP_SEQUENCE
     fd_power_work.reserved = fd_rev.stage; /* S1 ABI extension: final stage */
@@ -945,6 +978,7 @@ static void fdBenchFinish(uint8_t reason)
     fd_power_bench.records[(fd_power_work.id - 1u) % FD_POWER_SUMMARIES] = fd_power_work;
     __DMB();
     fd_power_bench.completed++;
+#endif
     fd_power_bench.active_id = 0u;
 }
 
@@ -966,8 +1000,8 @@ static void fdBenchStop(uint8_t reason)
         fd_rev_acquiring = 0u;
 #endif
         fdBenchFinish(reason);
-        fd_power_bench.stops++;
-        fd_power_bench.last_reason = reason;
+        FD_DIAG(fd_power_bench.stops++);
+        FD_DIAG(fd_power_bench.last_reason = reason);
         fdTraceEvent(FD_EVENT_BENCH_STOP, reason);
         fdTraceFreeze(FD_END_BENCH);
         fdPowerRequestStop(&fd_power_policy, FD_POWER_WINDOW_END);
@@ -1058,6 +1092,13 @@ static void fdBenchService(void)
                  * wraps. The floor has already finished fading before 1 s. */
                 if (fd_rev.observation_done) requested = 0u;
 #endif
+#ifdef TARGET_FD_DOUBLE_ALIGN
+                if (fd_rev.stage == FD_REV_ALIGN)
+                    requested = fdDoubleAlignDuty(&fd_rev, now);
+#endif
+#ifdef TARGET_FD_REPOSITION
+                if (fd_rev.stage == FD_REV_RELAX) requested = 0u;
+#endif
                 uint16_t cap = driveEffectiveDutyLimit();
                 fd_power_bench.floor = requested < cap ? requested : cap;
                 if (!cap) fdBenchStop(FD_BENCH_SAFETY_CAP);
@@ -1115,6 +1156,7 @@ static uint8_t fdBenchBegin(void)
         __set_PRIMASK(mask);
         return 0u;
     }
+#ifndef TARGET_FD_NO_DIAGNOSTICS
     fd_power_bench.trials++;
     fd_power_work = (FdPowerSummary){
         .id = fd_power_bench.trials, .first_observed_cycles = UINT32_MAX,
@@ -1124,10 +1166,25 @@ static uint8_t fdBenchBegin(void)
     fd_power_accepted_start = adc_zcd_diag.accepted;
     fd_power_timeouts_start = adc_zcd_diag.resets[ADC_ZCD_RESET_TIMEOUT];
     fd_power_bench.active_id = fd_power_work.id;
+#else
+    fd_power_bench.active_id = ++fd_power_bench.trials;
+    if (!fd_power_bench.active_id) fd_power_bench.active_id = ++fd_power_bench.trials;
+#endif
     fd_power_bench.floor = min_startup_duty;
     fd_power_starting = 1u;
+    fdLightBegin(DWT->CYCCNT);
+#ifdef TARGET_FD_REPOSITION
+    fd_reposition_diag[0] = 0x46525031u;
+    fd_reposition_diag[1] = fd_power_bench.active_id;
+    for (unsigned i=2;i<8;i++) fd_reposition_diag[i]=UINT32_MAX;
+#endif
 #ifdef TARGET_STARTUP_SEQUENCE
     fdRevBeginPolicy(&fd_rev, DWT->CYCCNT);
+#ifdef TARGET_FD_ALIGN_SETTLE
+    fdAlignBegin(&fd_align_observe, fd_power_bench.active_id);
+#endif
+    fdSectorBegin(fd_power_bench.active_id, fd_power_policy.started);
+    fdEdgeBegin(fd_power_bench.active_id, fd_power_policy.started);
     fd_rev_acquiring = 1u;
     fdTraceTrial(fd_power_work.id);
 #endif
@@ -1153,6 +1210,9 @@ static void fdRevStartDrive(void)
     zero_crosses = 0u;
     /* Always the same physical vector. Direction applies to the next step. */
     step = forward ? 0 : 2;
+#ifdef TARGET_FD_DOUBLE_ALIGN
+    step = fdDoubleAlignSeed(forward);
+#endif
 #ifdef TARGET_STARTUP_FEEDBACK
     commutation_interval = 10000u; /* native startup seed; never a real edge */
 #else
@@ -1162,6 +1222,9 @@ static void fdRevStartDrive(void)
     commutate();
 }
 
+#ifdef TARGET_FD_ASYNC_COMM
+static void fdAsyncScheduleDeadline(uint32_t accepted_at, uint32_t deadline);
+#endif
 static void fdRevTick(void)
 {
     uint32_t mask = __get_PRIMASK();
@@ -1173,8 +1236,26 @@ static void fdRevTick(void)
         return;
     }
     uint32_t now = DWT->CYCCNT;
+#ifdef TARGET_FD_SECTOR_DIAG
+    uint8_t was_align = fd_rev.stage == FD_REV_ALIGN;
+#endif
     uint8_t action = fdRevAdvancePolicy(&fd_rev, now);
+    if (action != FD_REV_NONE) fdEdgeClose(now);
+#ifdef TARGET_FD_ALIGN_SETTLE
+    if (fd_rev.stage != FD_REV_ALIGN) fd_align_observe.frozen = 1u;
+#endif
+#ifdef TARGET_FD_SECTOR_DIAG
+    if (action != FD_REV_NONE)
+        fdSectorClose(now, was_align ? 1u : action == FD_REV_RETRY ? 3u :
+            action == FD_REV_HANDOFF ? 4u : action == FD_REV_PLANNED ? 6u :
+            action == FD_REV_RELEASE ? 7u : action == FD_REV_REALIGN ? 8u : 2u);
+    if (action == FD_REV_HANDOFF) fdSectorFinish(now, 0u);
+#endif
     if (action == FD_REV_HANDOFF) {
+#ifdef TARGET_FD_REPOSITION
+        fd_reposition_diag[5] = now-fd_power_policy.started;
+#endif
+        fdLightHandoff(now);
         fd_rev_acquiring = 0u;
         commutation_interval = fd_rev.measured / 80u; /* TIM2: 0.5 us/tick */
         thiszctime = commutation_interval;
@@ -1193,9 +1274,50 @@ static void fdRevTick(void)
         SET_INTERVAL_TIMER_COUNT((now - fd_rev.edge_at) / 80u);
         fdTraceEvent(FD_EVENT_REV_HANDOFF, fd_rev.confidence);
         commutate();
-    } else if (action == FD_REV_STEP || action == FD_REV_RETRY) {
+    }
+#ifdef TARGET_FD_REPOSITION
+    else if (action == FD_REV_RELEASE) {
+        fd_reposition_diag[2] = now-fd_power_policy.started;
+        /* Stage already blocks PWM/JEOS. Publish high-Z and cancel all
+         * scheduled commutations before the release dwell starts. */
+        allOff();
+        duty_cycle_setpoint = duty_cycle = adjusted_duty_cycle = last_duty_cycle = 0u;
+        SET_DUTY_CYCLE_ALL(0u);
+        zero_crosses = 0u;
+        adcZcdResetAcquisition(ADC_ZCD_RESET_COUNT);
+        fd_rev.sector_at = DWT->CYCCNT; /* dwell starts AFTER bridge release */
+    }
+#endif
+    else if (action == FD_REV_STEP || action == FD_REV_RETRY || action == FD_REV_LAUNCH || action == FD_REV_PLANNED || action == FD_REV_REALIGN) {
+#ifdef TARGET_FD_REPOSITION
+        if (action == FD_REV_REALIGN) {
+            fd_reposition_diag[3] = now-fd_power_policy.started;
+            /* Entire bridge has been high-Z >=20ms. Rotate both positioning
+             * vectors by two sectors; never change the requested direction. */
+            step = 6u; /* forward1 / reverse5 */
+            commutation_interval = 10000u;
+            zero_crosses = 0u;
+            adcZcdResetAcquisition(ADC_ZCD_RESET_COUNT);
+        }
+#endif
+#ifdef TARGET_FD_LAUNCH_ADVANCE
+        if (action == FD_REV_LAUNCH) {
+            /* Non-adjacent vectors can change PWM directly to LOW (reverse
+             * direction C phase). Break all legs before GPIO mode changes;
+             * timer complementary deadtime alone cannot guard static GPIO.
+             * One-time5us gap, longer than configured2.3us timer deadtime. */
+            allOff();
+            uint32_t off_at = DWT->CYCCNT;
+            while ((uint32_t)(DWT->CYCCNT - off_at) < 5u * FD_REV_US) {}
+            step = fdDoubleAlignLaunchSeed();
+#ifdef TARGET_FD_REPOSITION
+            if (fd_rev.reposition_used) step = fdRetryLaunchSeed(forward);
+#endif
+        }
+#endif
 #ifdef TARGET_STARTUP_FEEDBACK
         if (action == FD_REV_RETRY) {
+            fdLightRetry();
             fdTraceEvent(FD_EVENT_TIMEOUT, bemf_timeout_happened);
             bemf_timeout_happened++;
             zero_crosses = 0u;
@@ -1225,7 +1347,20 @@ static void fdRevObserveEdge(void)
     __disable_irq();
     if (!fd_power_bench.inhibit && fd_rev_acquiring) {
         uint8_t timing = eepromBuffer.auto_advance ? auto_advance_level : temp_advance;
+#ifdef TARGET_FD_STARTUP_LEVEL
+        uint8_t crossing = adcZcdEventIsCrossing();
+        (void)fdRevStartupEvent(&fd_rev, DWT->CYCCNT, timing, crossing);
+#else
         (void)fdRevEdgePolicy(&fd_rev, DWT->CYCCNT, timing);
+#endif
+#ifdef TARGET_FD_REPOSITION
+        if (fd_rev.reposition_used && fd_rev.observed_once && fd_reposition_diag[4] == UINT32_MAX)
+            fd_reposition_diag[4] = DWT->CYCCNT-fd_power_policy.started;
+#endif
+#ifdef TARGET_FD_STARTUP_LEVEL
+        if (crossing)
+#endif
+        fdLightEdge(DWT->CYCCNT, fd_rev.confidence);
         fdTraceEvent(FD_EVENT_REV_EDGE, (fd_rev.stage << 8) | fd_rev.confidence);
 #ifdef TARGET_STARTUP_SEQUENCE_V2
         fdTraceEvent(FD_EVENT_REV_DECISION, (fd_rev.phase_percent << 8) | fd_rev.decision);
@@ -1233,7 +1368,12 @@ static void fdRevObserveEdge(void)
 #ifdef TARGET_STARTUP_FEEDBACK
         /* Service immediately; the policy decides whether a post-ZC delay
          * is pending (S4F edges 2..5 and the existing sixth-edge handoff). */
-        fdRevTick();
+#ifdef TARGET_FD_ASYNC_COMM
+        if (fd_rev.stage == FD_REV_PENDING && fd_rev.delay != 0u)
+            fdAsyncScheduleDeadline(fd_rev.edge_at, fd_rev.edge_at + fd_rev.delay);
+        else
+#endif
+            fdRevTick();
 #endif
     }
     __set_PRIMASK(mask);
@@ -1245,7 +1385,11 @@ static void fdBenchWritePwm(uint16_t ticks)
     uint32_t mask = __get_PRIMASK();
     __disable_irq();
     fdBenchService();
-    if (fd_power_bench.inhibit || stuck_rotor_inhibit || drive_safety_limit_inhibit) {
+    if (fd_power_bench.inhibit || stuck_rotor_inhibit || drive_safety_limit_inhibit
+#ifdef TARGET_FD_REPOSITION
+        || (fd_rev_acquiring && fd_rev.stage == FD_REV_RELAX)
+#endif
+    ) {
         duty_cycle_setpoint = duty_cycle = adjusted_duty_cycle = last_duty_cycle = 0u;
         SET_DUTY_CYCLE_ALL(0u);
     } else if (heli_coast_active) {
@@ -1577,6 +1721,255 @@ void getBemfState()
     }
 }
 
+#ifdef TARGET_FD_ASYNC_COMM
+#include "fd6288_async.h"
+volatile FdAsyncDiagnostics fd_async_diag = { .abi = 1u };
+
+void fdAsyncCancel(void)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    DISABLE_COM_TIMER_INT();
+    COM_TIMER->SR = 0u;
+    NVIC_ClearPendingIRQ(COM_TIMER_IRQ);
+    FD_DIAG(if (fd_async_diag.pending) fd_async_diag.cancelled++);
+    fd_async_diag.pending = 0u;
+    fd_async_diag.epoch++;
+    __set_PRIMASK(mask);
+}
+
+static uint8_t fdAsyncAllowed(void)
+{
+    return armed && running && !stepper_sine && !prop_brake_active &&
+        !stuck_rotor_inhibit && !drive_safety_limit_inhibit &&
+        !fd_power_bench.inhibit &&
+#ifdef TARGET_STARTUP_SEQUENCE
+        (!fd_rev_acquiring || (fd_rev.stage == FD_REV_PENDING && !heli_coast_active)) &&
+#else
+        !fd_rev_acquiring &&
+#endif
+        (heli_coast_active || (input > 47u && adjusted_input != 0u));
+}
+
+static void fdAsyncTimer(void)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    DISABLE_COM_TIMER_INT();
+    fdBenchService();
+    if (!fd_async_diag.pending) {
+        __set_PRIMASK(mask);
+        return;
+    }
+    if (!fdAsyncAllowed() ||
+#ifdef TARGET_STARTUP_SEQUENCE
+        ((fd_async_diag.pending == 2u) != (fd_rev_acquiring != 0u)) ||
+#endif
+        fd_async_diag.request_epoch != fd_async_diag.epoch ||
+        fd_async_diag.request_coast != heli_coast_active ||
+        fd_async_diag.request_forward != (uint32_t)forward) {
+        FD_DIAG(fd_async_diag.stale++);
+        fdAsyncCancel();
+        __set_PRIMASK(mask);
+        return;
+    }
+    uint32_t now = DWT->CYCCNT;
+    if ((int32_t)(now - fd_async_diag.deadline) < 0) {
+        uint32_t ticks = fdAsyncRemaining(now, fd_async_diag.deadline);
+        SET_AND_ENABLE_COM_INT(ticks - 1u);
+        __set_PRIMASK(mask);
+        return;
+    }
+    if (fdAsyncTooLate(now, fd_async_diag.deadline)) {
+        FD_DIAG(fd_async_diag.late_stop++);
+        fdAsyncCancel();
+        fdBenchStop(FD_BENCH_COMM_LATE);
+        __set_PRIMASK(mask);
+        return;
+    }
+#ifndef TARGET_FD_NO_DIAGNOSTICS
+    uint32_t late = now - fd_async_diag.deadline;
+    if (late > fd_async_diag.late_max_cycles) fd_async_diag.late_max_cycles = late;
+    fd_async_diag.executed_at = now;
+#endif
+    fd_async_diag.pending = 0u;
+    FD_DIAG(fd_async_diag.executed++);
+#ifdef TARGET_STARTUP_SEQUENCE
+    if (fd_rev_acquiring) {
+        fdRevTick(); /* policy performs the handoff exactly once */
+        __set_PRIMASK(mask);
+        return;
+    }
+#endif
+    commutate();
+    if (!fd_power_bench.inhibit) {
+        bemfcounter = 0u;
+        bad_count = 0u;
+        zero_crosses++;
+        old_routine = 1u; /* ADC path, never enable the hardware COMP ISR. */
+    }
+    __set_PRIMASK(mask);
+}
+
+static void fdAsyncScheduleDeadline(uint32_t accepted_at, uint32_t deadline)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    if (!fdAsyncAllowed() || fd_async_diag.pending || (uint32_t)(deadline - accepted_at) > 65535u * 80u) {
+        FD_DIAG(fd_async_diag.stale++);
+        fdAsyncCancel();
+        fdBenchStop(FD_BENCH_COMM_INVALID);
+        __set_PRIMASK(mask);
+        return;
+    }
+    FD_DIAG(fd_async_diag.accepted_at = accepted_at);
+    fd_async_diag.deadline = deadline;
+    fd_async_diag.request_epoch = fd_async_diag.epoch;
+    fd_async_diag.request_coast = heli_coast_active;
+    fd_async_diag.request_forward = forward;
+#ifdef TARGET_STARTUP_SEQUENCE
+    fd_async_diag.pending = fd_rev_acquiring ? 2u : 1u;
+#else
+    fd_async_diag.pending = 1u;
+#endif
+    FD_DIAG(fd_async_diag.scheduled++);
+    uint32_t ticks = fdAsyncRemaining(DWT->CYCCNT, fd_async_diag.deadline);
+    SET_AND_ENABLE_COM_INT(ticks - 1u);
+    __set_PRIMASK(mask);
+}
+static void fdAsyncSchedule(uint32_t accepted_at, uint32_t delay_ticks)
+{
+    if (delay_ticks > 65535u) {
+        fdAsyncCancel();
+        fdBenchStop(FD_BENCH_COMM_INVALID);
+        return;
+    }
+    fdAsyncScheduleDeadline(accepted_at, accepted_at + delay_ticks * 80u);
+}
+
+#endif
+
+#ifdef TARGET_FD_ADC_JEOS
+#ifdef TARGET_FD_ALIGN_SAMPLE_PAIR
+volatile uint8_t fd_align_sample_late;
+static uint8_t fd_pair_started, fd_pair_discard;
+static uint32_t fd_pair_trial;
+static void fdAlignmentPairReset(void)
+{
+    if(!fd_pair_started && !fd_align_sample_late) return;
+    fd_align_sample_late=0;
+    TIM1->CCR4=zcd_ccr4_from_duty(TIM1->CCR1);
+    fd_pair_started=0;
+}
+static void fdAlignmentPairSample(const uint16_t v[3], uint32_t at, uint32_t cnt, uint32_t duty, uint32_t trigger)
+{
+    if(fd_pair_trial!=fd_edge_observe.trial) {
+        fd_pair_trial=fd_edge_observe.trial;fdAlignmentPairReset();
+    }
+    uint32_t age=at-fd_rev.sector_at;
+    if(fd_rev.align_left!=1u || age<10000u*160u || age>=55000u*160u || duty!=1200u || fd_edge_observe.first_samples>=512u) {
+        fdAlignmentPairReset();return;
+    }
+    if(!fd_pair_started) {fd_pair_started=1;fd_pair_discard=1;fd_align_sample_late=0;TIM1->CCR4=600u;return;}
+    /* A preload write can miss the current UEV. Discard the next complete
+     * group before tagging one; no trigger can overwrite the queued group. */
+    if(fd_pair_discard) {fd_pair_discard=0;return;}
+    uint16_t expected=fd_align_sample_late?900u:600u;
+    if(trigger!=expected) {fdAlignmentPairReset();return;}
+    uint32_t index=fd_edge_observe.first_samples++;
+    fdEdgeStore(2u+index,(FdEdgeSample){.at=at,.a=v[0],.b=v[1],.c=v[2],
+        .margin=(int16_t)((int32_t)v[1]-((int32_t)v[0]+v[2])/2),
+        .cnt=cnt,.duty=duty,.trigger=trigger,.reason=254,.step=step,
+        .flags=(uint8_t)(4u|(fd_align_sample_late?8u:0u)),.reserved=(uint16_t)(index/2u)});
+    if(fd_edge_observe.first_samples==512u) {fdAlignmentPairReset();return;}
+    fd_align_sample_late^=1u;fd_pair_discard=1;
+    TIM1->CCR4=fd_align_sample_late?900u:600u;
+}
+#endif
+#ifdef TARGET_FD_ALIGN_SETTLE
+static void fdObserveAlignmentAdc(void)
+{
+    if (!LL_ADC_IsActiveFlag_JEOS(ADC1)) return;
+    LL_ADC_ClearFlag_JEOS(ADC1);
+    uint16_t v[3] = {LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_1),
+        LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_2),
+        LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_3)};
+    uint32_t cnt=TIM1->CNT, trigger=TIM1->CCR4, duty=TIM1->CCR1;
+#ifdef TARGET_FD_ALIGN_SAMPLE_PAIR
+    uint32_t pair_at=DWT->CYCCNT;
+    fdAlignmentPairSample(v,pair_at,cnt,duty,trigger);
+    fdEdgeCost(DWT->CYCCNT-pair_at);
+#endif
+    /* Conservative ON-window/readout screen; no claim of analog settling.
+     * This observer never calls getBemfState or modifies its qualification. */
+    uint8_t usable=!LL_ADC_IsActiveFlag_JEOS(ADC1) && trigger>=ZCD_SAMPLE_FLOOR &&
+        trigger+244u<=duty && cnt>=trigger+244u && cnt<duty;
+    fdAlignSample(&fd_align_observe,fd_rev.align_left,
+        DWT->CYCCNT-fd_rev.sector_at,v,usable);
+#ifdef TARGET_FD_EDGE_OBSERVE
+    unsigned slot=fdEdgeAlignSlot(fd_rev.align_left,DWT->CYCCNT-fd_rev.sector_at);
+    if(slot<2u){
+        uint32_t at=DWT->CYCCNT;
+        fdEdgeStore(slot,(FdEdgeSample){.at=at,.a=v[0],.b=v[1],.c=v[2],
+            .cnt=cnt,.duty=duty,.trigger=trigger,.reason=255,.step=step,
+            .flags=(usable?1u:0u)|4u});
+        fdEdgeCost(DWT->CYCCNT-at);
+    }
+#endif
+}
+#endif
+void fdAdcJeosService(void)
+{
+#ifdef TARGET_FD_ADC_COHERENT
+    if (!LL_ADC_IsActiveFlag_JEOS(ADC1)) return;
+#endif
+    /* Same priority as TIM6/TIM16: no nested ownership of the rev-up state.
+     * This timestamp is software IRQ arrival, NOT hardware sample time. */
+#ifndef TARGET_FD_NO_DIAGNOSTICS
+    uint32_t started = DWT->CYCCNT;
+    fd_async_diag.irq_count++;
+    fd_async_diag.irq_last_at = started;
+#endif
+#ifdef TARGET_FD_ALIGN_SETTLE
+    if (fd_rev_acquiring && fd_rev.stage == FD_REV_ALIGN && armed && running &&
+        !fd_power_bench.inhibit && !stuck_rotor_inhibit && !drive_safety_limit_inhibit) {
+        fdObserveAlignmentAdc();
+    } else
+#endif
+    if (!stepper_sine && old_routine && running && armed &&
+#ifdef TARGET_FD_DOUBLE_ALIGN
+        !(fd_rev_acquiring && fd_rev.stage == FD_REV_ALIGN) &&
+#endif
+#ifdef TARGET_FD_REPOSITION
+        !(fd_rev_acquiring && fd_rev.stage == FD_REV_RELAX) &&
+#endif
+        !fd_power_bench.inhibit && !stuck_rotor_inhibit &&
+        !drive_safety_limit_inhibit) {
+        getBemfState(); /* sole JEOS consumer in this build, includes coast */
+        if (!zcfound && (rising ? bemfcounter > min_bemf_counts_up :
+                                      bemfcounter > min_bemf_counts_down)) {
+            zcfound = 1u;
+            heliCoastRecordZeroCross();
+            zcfoundroutine();
+        }
+    } else {
+        LL_ADC_ClearFlag_JEOS(ADC1);
+    }
+#ifdef TARGET_FD_ALIGN_SAMPLE_PAIR
+    if(!fd_rev_acquiring || fd_rev.stage!=FD_REV_ALIGN || !running || !armed || fd_power_bench.inhibit)
+        fdAlignmentPairReset();
+#endif
+#ifdef TARGET_FD_ADC_COHERENT
+    /* Queue stayed empty throughout all readers and any commutation. */
+    adcZcdRearmInjected();
+#endif
+#ifndef TARGET_FD_NO_DIAGNOSTICS
+    uint32_t spent = DWT->CYCCNT - started;
+    if (spent > fd_async_diag.irq_max_cycles) fd_async_diag.irq_max_cycles = spent;
+#endif
+}
+#endif
+
 void commutate()
 {
 #ifdef TARGET_ADC_ZCD_GUARD
@@ -1584,6 +1977,12 @@ void commutate()
      * A polling IRQ must not see a new rising/step with the old ADC phase. */
     uint32_t primask = __get_PRIMASK();
     __disable_irq();
+#ifdef TARGET_FD_ALIGN_SAMPLE_PAIR
+    fdAlignmentPairReset();
+#endif
+#ifdef TARGET_FD_ASYNC_COMM
+    fdAsyncCancel();
+#endif
 #endif
 #ifdef TARGET_STARTUP_POWER_BENCH
     fdBenchService();
@@ -1638,6 +2037,13 @@ void commutate()
     __enable_irq();
 #endif
     changeCompInput();
+#ifdef TARGET_FD_SECTOR_DIAG
+    if (fd_rev_acquiring)
+        fdSectorStep(DWT->CYCCNT, step, fd_rev.stage, rising, forward);
+#endif
+#ifdef TARGET_FD_EDGE_OBSERVE
+    if (fd_rev_acquiring) fdEdgeStep(DWT->CYCCNT,fd_rev.stage);
+#endif
 #ifndef NO_POLLING_START
 	if (average_interval > polling_mode_changeover + 500) {
       old_routine = 1;
@@ -1660,6 +2066,10 @@ void commutate()
 
 void PeriodElapsedCallback()
 {
+#ifdef TARGET_FD_ASYNC_COMM
+    fdAsyncTimer();
+    return;
+#endif
     DISABLE_COM_TIMER_INT(); // disable interrupt
 #ifdef TARGET_STARTUP_SEQUENCE
     if (fd_rev_acquiring) return;
@@ -2271,7 +2681,11 @@ void tenKhzRoutine()
     fdBenchService();
 #endif
 #ifdef TARGET_STARTUP_SEQUENCE
-    fdRevTick();
+#ifdef TARGET_FD_ASYNC_COMM
+    /* A pending feedback delay belongs exclusively to TIM16. */
+    if (fd_rev.stage != FD_REV_PENDING)
+#endif
+        fdRevTick();
 #endif
     fdTraceControlTick();
     duty_cycle = duty_cycle_setpoint;
@@ -2360,6 +2774,7 @@ void tenKhzRoutine()
 
     if (!stepper_sine) {
 #ifndef CUSTOM_RAMP
+#ifndef TARGET_FD_ADC_JEOS
         if (old_routine && running) {
 	//				send_LED_RGB(255, 0, 0);
             maskPhaseInterrupts();
@@ -2384,6 +2799,7 @@ void tenKhzRoutine()
                 }
             }
         }
+#endif
 #endif
         if (one_khz_loop_counter > PID_LOOP_DIVIDER) { // 1khz PID loop
             PROCESS_ADC_FLAG = 1; // set flag to do new adc read at lower priority
@@ -2491,6 +2907,14 @@ void tenKhzRoutine()
         uint16_t effective_duty_limit = driveEffectiveDutyLimit();
         if (duty_cycle > effective_duty_limit) {
             duty_cycle = effective_duty_limit;
+        }
+#endif
+#ifdef TARGET_FD_DOUBLE_ALIGN
+        /* The positioning envelope is a ceiling as well as a request: an
+         * old duty/ramp value or stall boost must not defeat its soft start. */
+        if (fd_rev_acquiring && fd_rev.stage == FD_REV_ALIGN) {
+            uint16_t align_cap = fdDoubleAlignDuty(&fd_rev, DWT->CYCCNT);
+            if (duty_cycle > align_cap) duty_cycle = align_cap;
         }
 #endif
 #ifdef HELI_COAST_ON_ZERO
@@ -2643,6 +3067,9 @@ void zcfoundroutine()
         return;
     }
 #endif
+#ifdef TARGET_FD_ASYNC_COMM
+    uint32_t accepted_at = DWT->CYCCNT;
+#endif
     thiszctime = INTERVAL_TIMER_COUNT;
     SET_INTERVAL_TIMER_COUNT(0);
 #if defined(TARGET_ADC_ZCD_GUARD) && FD6288_STARTUP_TIMING_FIX
@@ -2665,6 +3092,10 @@ void zcfoundroutine()
     }
     waitTime = commutation_interval / 2 - advance;
     fdTraceEvent(FD_EVENT_ZC, (zero_crosses < 5u) ? 1u : 0u);
+#ifdef TARGET_FD_ASYNC_COMM
+    fdAsyncSchedule(accepted_at, zero_crosses < 5u ? 0u : waitTime);
+    return;
+#endif
     while ((INTERVAL_TIMER_COUNT) < (waitTime)) {
 #ifdef TARGET_STARTUP_POWER_BENCH
         if (fdBenchDeadlineExpired()) {
@@ -3094,7 +3525,7 @@ if(zero_crosses < 5){
             last_average_interval = average_interval;
         }
 
-#if !defined(MCU_G031) && !defined(NEED_INPUT_READY)
+#if !defined(MCU_G031) && !defined(NEED_INPUT_READY) && !defined(TARGET_FD_ASYNC_COMM)
         if (dshot_telemetry && (commutation_interval > DSHOT_PRIORITY_THRESHOLD)) {
              NVIC_SetPriority(IC_DMA_IRQ_NAME, 0);
              NVIC_SetPriority(COM_TIMER_IRQ, 1);

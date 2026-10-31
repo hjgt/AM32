@@ -1,0 +1,87 @@
+[
+  {
+    "at": "2026-10-20T15:29:54.596Z",
+    "stage": "preflight_stopped",
+    "value": {
+      "variant": 22,
+      "abi": 1,
+      "input": 0,
+      "newinput": 0,
+      "adjusted_input": 0,
+      "running": 0,
+      "heli_coast_active": 0,
+      "duty_cycle": 0,
+      "ccr": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "at": "2026-10-20T15:29:54.606Z",
+    "stage": "scope",
+    "value": {
+      "hex": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-startup-S4H-SPLIT-20261020/AM32_CUSTOM_FD6288_G431_S4H_SPLIT_ACQ300_MANUAL_STOP.hex",
+      "data_bytes": 36504,
+      "main_only": true,
+      "BL_F800_excluded": true
+    }
+  },
+  {
+    "at": "2026-10-20T15:29:54.640Z",
+    "stage": "reset init",
+    "value": ""
+  },
+  {
+    "at": "2026-10-20T15:29:55.736Z",
+    "stage": "flash write_image erase {/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-startup-S4H-SPLIT-20261020/AM32_CUSTOM_FD6288_G431_S4H_SPLIT_ACQ300_MANUAL_STOP.hex}",
+    "value": "auto erase enabled\nwrote 36544 bytes from file /Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-startup-S4H-SPLIT-20261020/AM32_CUSTOM_FD6288_G431_S4H_SPLIT_ACQ300_MANUAL_STOP.hex in 1.095880s (32.565 KiB/s)\n"
+  },
+  {
+    "at": "2026-10-20T15:29:56.097Z",
+    "stage": "verify_image {/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-startup-S4H-SPLIT-20261020/AM32_CUSTOM_FD6288_G431_S4H_SPLIT_ACQ300_MANUAL_STOP.hex}",
+    "value": "verified 36504 bytes in 0.359448s (99.176 KiB/s)\n"
+  },
+  {
+    "at": "2026-10-20T15:29:56.101Z",
+    "stage": "reset run",
+    "value": ""
+  },
+  {
+    "at": "2026-10-20T15:29:59.622Z",
+    "stage": "postflash_stopped",
+    "value": {
+      "variant": 23,
+      "abi": 2,
+      "input": 0,
+      "newinput": 0,
+      "adjusted_input": 0,
+      "running": 0,
+      "heli_coast_active": 0,
+      "duty_cycle": 0,
+      "ccr": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "at": "2026-10-20T15:29:59.629Z",
+    "stage": "runtime",
+    "value": {
+      "armed": 1,
+      "battery_voltage": 830,
+      "actual_current": 2,
+      "trials": 0,
+      "logger_timing": [
+        16000,
+        960000,
+        64000
+      ]
+    }
+  }
+]

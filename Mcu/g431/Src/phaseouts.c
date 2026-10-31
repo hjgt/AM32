@@ -8,6 +8,9 @@
 
 #include "targets.h"
 #include "fd6288_startup_power.h"
+#ifdef TARGET_FD_ASYNC_COMM
+#include "fd6288_async.h"
+#endif
 
 extern char prop_brake_active;
 
@@ -289,9 +292,17 @@ void phaseALOW()
 
 void allOff()
 {
+#ifdef TARGET_FD_ASYNC_COMM
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    fdAsyncCancel();
+#endif
     phaseAFLOAT();
     phaseBFLOAT();
     phaseCFLOAT();
+#ifdef TARGET_FD_ASYNC_COMM
+    __set_PRIMASK(mask);
+#endif
 }
 
 void comStep(int newStep)

@@ -1,0 +1,1643 @@
+{
+  "capturedAt": "2026-10-29T10:55:49.958Z",
+  "elf": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-S4V2-LATEGATE-20261029/S4V2_LATEGATE.elf",
+  "identity": "Known flashed session and selected code bytes, not full flash",
+  "header": {
+    "magic": 1179861809,
+    "abi": 1,
+    "trial": 18,
+    "started": 50376906,
+    "active": 4294967295,
+    "sectors": 39,
+    "frozen": 1,
+    "finish_reason": 8
+  },
+  "records": [
+    {
+      "sector": 1,
+      "start_us": 85.25625,
+      "end_us": 30043.03125,
+      "first_accept_us": null,
+      "last_accept_us": null,
+      "reasons": {
+        "invalid": 0,
+        "blank": 0,
+        "pre": 0,
+        "hysteresis": 0,
+        "early": 0,
+        "unarmed": 0,
+        "confirmation": 0,
+        "accepted": 0,
+        "reported": 0,
+        "coast": 0
+      },
+      "samples": 0,
+      "usable": 0,
+      "minimum": null,
+      "maximum": null,
+      "first": null,
+      "last": null,
+      "pre_seen": 0,
+      "max_confirmations": 0,
+      "step": 5,
+      "stage": 1,
+      "rising": 1,
+      "forward": 1,
+      "exit_kind": 1
+    },
+    {
+      "sector": 2,
+      "start_us": 30049.35,
+      "end_us": 90069.2875,
+      "first_accept_us": null,
+      "last_accept_us": null,
+      "reasons": {
+        "invalid": 0,
+        "blank": 0,
+        "pre": 0,
+        "hysteresis": 0,
+        "early": 0,
+        "unarmed": 0,
+        "confirmation": 0,
+        "accepted": 0,
+        "reported": 0,
+        "coast": 0
+      },
+      "samples": 0,
+      "usable": 0,
+      "minimum": null,
+      "maximum": null,
+      "first": null,
+      "last": null,
+      "pre_seen": 0,
+      "max_confirmations": 0,
+      "step": 6,
+      "stage": 1,
+      "rising": 0,
+      "forward": 1,
+      "exit_kind": 1
+    },
+    {
+      "sector": 3,
+      "start_us": 90083.425,
+      "end_us": 92098.5875,
+      "first_accept_us": 92092.525,
+      "last_accept_us": 92092.525,
+      "reasons": {
+        "invalid": 0,
+        "blank": 1,
+        "pre": 32,
+        "hysteresis": 14,
+        "early": 0,
+        "unarmed": 0,
+        "confirmation": 1,
+        "accepted": 1,
+        "reported": 0,
+        "coast": 0
+      },
+      "samples": 49,
+      "usable": 48,
+      "minimum": -22,
+      "maximum": 12,
+      "first": -14,
+      "last": 12,
+      "pre_seen": 1,
+      "max_confirmations": 2,
+      "step": 2,
+      "stage": 2,
+      "rising": 0,
+      "forward": 1,
+      "exit_kind": 2
+    },
+    {
+      "sector": 4,
+      "start_us": 92104.9,
+      "end_us": 114600.4625,
+      "first_accept_us": null,
+      "last_accept_us": null,
+      "reasons": {
+        "invalid": 0,
+        "blank": 1,
+        "pre": 0,
+        "hysteresis": 0,
+        "early": 0,
+        "unarmed": 539,
+        "confirmation": 0,
+        "accepted": 0,
+        "reported": 0,
+        "coast": 0
+      },
+      "samples": 540,
+      "usable": 539,
+      "minimum": 124,
+      "maximum": 197,
+      "first": 124,
+      "last": 195,
+      "pre_seen": 0,
+      "max_confirmations": 0,
+      "step": 3,
+      "stage": 2,
+      "rising": 1,
+      "forward": 1,
+      "exit_kind": 3
+    },
+    {
+      "sector": 5,
+      "start_us": 114608.225,
+      "end_us": 137143.10625,
+      "first_accept_us": null,
+      "last_accept_us": null,
+      "reasons": {
+        "invalid": 0,
+        "blank": 1,
+        "pre": 40,
+        "hysteresis": 6,
+        "early": 0,
+        "unarmed": 494,
+        "confirmation": 0,
+        "accepted": 0,
+        "reported": 0,
+        "coast": 0
+      },
+      "samples": 541,
+      "usable": 540,
+      "minimum": -100,
+      "maximum": 206,
+      "first": 60,
+      "last": -100,
+      "pre_seen": 1,
+      "max_confirmations": 0,
+      "step": 4,
+      "stage": 2,
+      "rising": 0,
+      "forward": 1,
+      "exit_kind": 3
+    },
+    {
+      "sector": 6,
+      "start_us": 137151,
+      "end_us": 153156.4625,
+      "first_accept_us": null,
+      "last_accept_us": null,
+      "reasons": {
+        "invalid": 0,
+        "blank": 1,
+        "pre": 197,
+        "hysteresis": 5,
+        "early": 0,
+        "unarmed": 181,
+        "confirmation": 0,
+        "accepted": 0,
+        "reported": 0,
+        "coast": 0
+      },
+      "samples": 384,
+      "usable": 383,
+      "minimum": -195,
+      "maximum": 220,
+      "first": 181,
+      "last": -177,
+      "pre_seen": 1,
+      "max_confirmations": 0,
+      "step": 5,
+      "stage": 2,
+      "rising": 1,
+      "forward": 1,
+      "exit_kind": 3
+    },
+    {
+      "sector": 7,
+      "start_us": 153164.3375,
+      "end_us": 167181.48125,
+      "first_accept_us": null,
+      "last_accept_us": null,
+      "reasons": {
+        "invalid": 0,
+        "blank": 1,
+        "pre": 311,
+        "hysteresis": 3,
+        "early": 0,
+        "unarmed": 22,
+        "confirmation": 0,
+        "accepted": 0,
+        "reported": 0,
+        "coast": 0
+      },
+      "samples": 337,
+      "usable": 336,
+      "minimum": -200,
+      "maximum": 505,
+      "first": 505,
+      "last": -166,
+      "pre_seen": 1,
+      "max_confirmations": 0,
+      "step": 6,
+      "stage": 2,
+      "rising": 0,
+      "forward": 1,
+      "exit_kind": 3
+    },
+    {
+      "sector": 8,
+      "start_us": 167189.31875,
+      "end_us": 179217.90625,
+      "first_accept_us": null,
+      "last_accept_us": null,
+      "reasons": {
+        "invalid": 0,
+        "blank": 1,
+        "pre": 276,
+        "hysteresis": 4,
+        "early": 0,
+        "unarmed": 8,
+        "confirmation": 0,
+        "accepted": 0,
+        "reported": 0,
+        "coast": 0
+      },
+      "samples": 289,
+      "usable": 288,
+      "minimum": -232,
+      "maximum": 26,
+      "first": 26,
+      "last": -228,
+      "pre_seen": 1,
+      "max_confirmations": 0,
+      "step": 1,
+      "stage": 2,
+      "rising": 1,
+      "forward": 1,
+      "exit_kind": 3
+    },
+    {
+      "sector": 9,
+      "start_us": 179225.725,
+      "end_us": 189264.84375,
+      "first_accept_us": null,
+      "last_accept_us": null,
+      "reasons": {
+        "invalid": 0,
+        "blank": 1,
+        "pre": 2,
+        "hysteresis": 40,
+        "early": 0,
+        "unarmed": 198,
+        "confirmation": 0,
+        "accepted": 0,
+        "reported": 0,
+        "coast": 0
+      },
+      "samples": 241,
+      "usable": 240,
+      "minimum": -15,
+      "maximum": 496,
+      "first": 496,
+      "last": -15,
+      "pre_seen": 1,
+      "max_confirmations": 0,
+      "step": 2,
+      "stage": 2,
+      "rising": 0,
+      "forward": 1,
+      "exit_kind": 3
+    },
+    {
+      "sector": 10,
+      "start_us": 189272.65,
+      "end_us": 198294.4125,
+      "first_accept_us": null,
+      "last_accept_us": null,
+      "reasons": {
+        "invalid": 0,
+        "blank": 1,
+        "pre": 0,
+        "hysteresis": 0,
+        "early": 0,
+        "unarmed": 216,
+        "confirmation": 0,
+        "accepted": 0,
+        "reported": 0,
+        "coast": 0
+      },
+      "samples": 217,
+      "usable": 216,
+      "minimum": 153,
+      "maximum": 204,
+      "first": 153,
+      "last": 183,
+      "pre_seen": 0,
+      "max_confirmations": 0,
+      "step": 3,
+      "stage": 2,
+      "rising": 1,
+      "forward": 1,
+      "exit_kind": 3
+    },
+    {
+      "sector": 11,
+      "start_us": 198302.21875,
+      "end_us": 206298.925,
+      "first_accept_us": null,
+      "last_accept_us": null,
+      "reasons": {
+        "invalid": 0,
+        "blank": 1,
+        "pre": 0,
+        "hysteresis": 0,
+        "early": 0,
+        "unarmed": 191,
+        "confirmation": 0,
+        "accepted": 0,
+        "reported": 0,
+        "coast": 0
+      },
+      "samples": 192,
+      "usable": 191,
+      "minimum": 52,
+      "maximum": 203,
+      "first": 66,
+      "last": 201,
+      "pre_seen": 0,
+      "max_confirmations": 0,
+      "step": 4,
+      "stage": 2,
+      "rising": 0,
+      "forward": 1,
+      "exit_kind": 3
+    },
+    {
+      "sector": 12,
+      "start_us": 206306.6875,
+      "end_us": 228840.96875,
+      "first_accept_us": null,
+      "last_accept_us": null,
+      "reasons": {
+        "invalid": 0,
+        "blank": 1,
+        "pre": 177,
+        "hysteresis": 8,
+        "early": 0,
+        "unarmed": 355,
+        "confirmation": 0,
+        "accepted": 0,
+        "reported": 0,
+        "coast": 0
+      },
+      "samples": 541,
+      "usable": 540,
+      "minimum": -194,
+      "maximum": 217,
+      "first": -1,
+      "last": -171,
+      "pre_seen": 1,
+      "max_confirmations": 0,
+      "step": 5,
+      "stage": 2,
+      "rising": 1,
+      "forward": 1,
+      "exit_kind": 3
+    },
+    {
+      "sector": 13,
+      "start_us": 228848.8,
+      "end_us": 251382.90625,
+      "first_accept_us": null,
+      "last_accept_us": null,
+      "reasons": {
+        "invalid": 0,
+        "blank": 1,
+        "pre": 524,
+        "hysteresis": 3,
+        "early": 0,
+        "unarmed": 13,
+        "confirmation": 0,
+        "accepted": 0,
+        "reported": 0,
+        "coast": 0
+      },
+      "samples": 541,
+      "usable": 540,
+      "minimum": -195,
+      "maximum": 498,
+      "first": 498,
+      "last": -42,
+      "pre_seen": 1,
+      "max_confirmations": 0,
+      "step": 6,
+      "stage": 2,
+      "rising": 0,
+      "forward": 1,
+      "exit_kind": 3
+    },
+    {
+      "sector": 14,
+      "start_us": 251390.7,
+      "end_us": 273924.4625,
+      "first_accept_us": null,
+      "last_accept_us": null,
+      "reasons": {
+        "invalid": 0,
+        "blank": 1,
+        "pre": 540,
+        "hysteresis": 0,
+        "early": 0,
+        "unarmed": 0,
+        "confirmation": 0,
+        "accepted": 0,
+        "reported": 0,
+        "coast": 0
+      },
+      "samples": 541,
+      "usable": 540,
+      "minimum": -238,
+      "maximum": -198,
+      "first": -222,
+      "last": -198,
+      "pre_seen": 1,
+      "max_confirmations": 0,
+      "step": 1,
+      "stage": 2,
+      "rising": 1,
+      "forward": 1,
+      "exit_kind": 3
+    },
+    {
+      "sector": 15,
+      "start_us": 273932.26875,
+      "end_us": 296467.0875,
+      "first_accept_us": null,
+      "last_accept_us": null,
+      "reasons": {
+        "invalid": 0,
+        "blank": 1,
+        "pre": 0,
+        "hysteresis": 0,
+        "early": 0,
+        "unarmed": 540,
+        "confirmation": 0,
+        "accepted": 0,
+        "reported": 0,
+        "coast": 0
+      },
+      "samples": 541,
+      "usable": 540,
+      "minimum": 178,
+      "maximum": 495,
+      "first": 495,
+      "last": 193,
+      "pre_seen": 0,
+      "max_confirmations": 0,
+      "step": 2,
+      "stage": 2,
+      "rising": 0,
+      "forward": 1,
+      "exit_kind": 3
+    },
+    {
+      "sector": 16,
+      "start_us": 296474.88125,
+      "end_us": 319008.48125,
+      "first_accept_us": null,
+      "last_accept_us": null,
+      "reasons": {
+        "invalid": 0,
+        "blank": 1,
+        "pre": 19,
+        "hysteresis": 6,
+        "early": 0,
+        "unarmed": 515,
+        "confirmation": 0,
+        "accepted": 0,
+        "reported": 0,
+        "coast": 0
+      },
+      "samples": 541,
+      "usable": 540,
+      "minimum": -52,
+      "maximum": 205,
+      "first": 31,
+      "last": -52,
+      "pre_seen": 1,
+      "max_confirmations": 0,
+      "step": 3,
+      "stage": 2,
+      "rising": 1,
+      "forward": 1,
+      "exit_kind": 3
+    },
+    {
+      "sector": 17,
+      "start_us": 319016.275,
+      "end_us": 341551.16875,
+      "first_accept_us": null,
+      "last_accept_us": null,
+      "reasons": {
+        "invalid": 0,
+        "blank": 1,
+        "pre": 315,
+        "hysteresis": 9,
+        "early": 0,
+        "unarmed": 216,
+        "confirmation": 0,
+        "accepted": 0,
+        "reported": 0,
+        "coast": 0
+      },
+      "samples": 541,
+      "usable": 540,
+      "minimum": -221,
+      "maximum": 499,
+      "first": 499,
+      "last": -134,
+      "pre_seen": 1,
+      "max_confirmations": 0,
+      "step": 4,
+      "stage": 2,
+      "rising": 0,
+      "forward": 1,
+      "exit_kind": 3
+    },
+    {
+      "sector": 18,
+      "start_us": 341558.9375,
+      "end_us": 364092.475,
+      "first_accept_us": null,
+      "last_accept_us": null,
+      "reasons": {
+        "invalid": 0,
+        "blank": 1,
+        "pre": 540,
+        "hysteresis": 0,
+        "early": 0,
+        "unarmed": 0,
+        "confirmation": 0,
+        "accepted": 0,
+        "reported": 0,
+        "coast": 0
+      },
+      "samples": 541,
+      "usable": 540,
+      "minimum": -201,
+      "maximum": -69,
+      "first": -69,
+      "last": -173,
+      "pre_seen": 1,
+      "max_confirmations": 0,
+      "step": 5,
+      "stage": 2,
+      "rising": 1,
+      "forward": 1,
+      "exit_kind": 3
+    },
+    {
+      "sector": 19,
+      "start_us": 364100.3375,
+      "end_us": 386635.09375,
+      "first_accept_us": null,
+      "last_accept_us": null,
+      "reasons": {
+        "invalid": 0,
+        "blank": 1,
+        "pre": 0,
+        "hysteresis": 125,
+        "early": 0,
+        "unarmed": 415,
+        "confirmation": 0,
+        "accepted": 0,
+        "reported": 0,
+        "coast": 0
+      },
+      "samples": 541,
+      "usable": 540,
+      "minimum": -2,
+      "maximum": 499,
+      "first": 499,
+      "last": -2,
+      "pre_seen": 0,
+      "max_confirmations": 0,
+      "step": 6,
+      "stage": 2,
+      "rising": 0,
+      "forward": 1,
+      "exit_kind": 3
+    },
+    {
+      "sector": 20,
+      "start_us": 386642.91875,
+      "end_us": 409177.11875,
+      "first_accept_us": null,
+      "last_accept_us": null,
+      "reasons": {
+        "invalid": 0,
+        "blank": 1,
+        "pre": 0,
+        "hysteresis": 0,
+        "early": 0,
+        "unarmed": 540,
+        "confirmation": 0,
+        "accepted": 0,
+        "reported": 0,
+        "coast": 0
+      },
+      "samples": 541,
+      "usable": 540,
+      "minimum": 83,
+      "maximum": 197,
+      "first": 141,
+      "last": 83,
+      "pre_seen": 0,
+      "max_confirmations": 0,
+      "step": 1,
+      "stage": 2,
+      "rising": 1,
+      "forward": 1,
+      "exit_kind": 7
+    },
+    {
+      "sector": 21,
+      "start_us": 429229.38125,
+      "end_us": 459259.3625,
+      "first_accept_us": null,
+      "last_accept_us": null,
+      "reasons": {
+        "invalid": 0,
+        "blank": 0,
+        "pre": 0,
+        "hysteresis": 0,
+        "early": 0,
+        "unarmed": 0,
+        "confirmation": 0,
+        "accepted": 0,
+        "reported": 0,
+        "coast": 0
+      },
+      "samples": 0,
+      "usable": 0,
+      "minimum": null,
+      "maximum": null,
+      "first": null,
+      "last": null,
+      "pre_seen": 0,
+      "max_confirmations": 0,
+      "step": 1,
+      "stage": 1,
+      "rising": 1,
+      "forward": 1,
+      "exit_kind": 1
+    },
+    {
+      "sector": 22,
+      "start_us": 459265.625,
+      "end_us": 519285.5,
+      "first_accept_us": null,
+      "last_accept_us": null,
+      "reasons": {
+        "invalid": 0,
+        "blank": 0,
+        "pre": 0,
+        "hysteresis": 0,
+        "early": 0,
+        "unarmed": 0,
+        "confirmation": 0,
+        "accepted": 0,
+        "reported": 0,
+        "coast": 0
+      },
+      "samples": 0,
+      "usable": 0,
+      "minimum": null,
+      "maximum": null,
+      "first": null,
+      "last": null,
+      "pre_seen": 0,
+      "max_confirmations": 0,
+      "step": 2,
+      "stage": 1,
+      "rising": 0,
+      "forward": 1,
+      "exit_kind": 1
+    },
+    {
+      "sector": 23,
+      "start_us": 519299.6875,
+      "end_us": 549324.49375,
+      "first_accept_us": null,
+      "last_accept_us": null,
+      "reasons": {
+        "invalid": 0,
+        "blank": 1,
+        "pre": 397,
+        "hysteresis": 15,
+        "early": 0,
+        "unarmed": 307,
+        "confirmation": 0,
+        "accepted": 0,
+        "reported": 0,
+        "coast": 0
+      },
+      "samples": 720,
+      "usable": 719,
+      "minimum": -206,
+      "maximum": 203,
+      "first": 179,
+      "last": -204,
+      "pre_seen": 1,
+      "max_confirmations": 0,
+      "step": 3,
+      "stage": 2,
+      "rising": 1,
+      "forward": 1,
+      "exit_kind": 3
+    },
+    {
+      "sector": 24,
+      "start_us": 549332.31875,
+      "end_us": 571867.05625,
+      "first_accept_us": null,
+      "last_accept_us": null,
+      "reasons": {
+        "invalid": 0,
+        "blank": 1,
+        "pre": 217,
+        "hysteresis": 21,
+        "early": 0,
+        "unarmed": 302,
+        "confirmation": 0,
+        "accepted": 0,
+        "reported": 0,
+        "coast": 0
+      },
+      "samples": 541,
+      "usable": 540,
+      "minimum": -127,
+      "maximum": 501,
+      "first": 501,
+      "last": -127,
+      "pre_seen": 1,
+      "max_confirmations": 0,
+      "step": 4,
+      "stage": 2,
+      "rising": 0,
+      "forward": 1,
+      "exit_kind": 3
+    }
+  ],
+  "omitted_sectors": 15,
+  "caveats": [
+    "Latest trial only; extrema are directed margins of valid post-blank consumed samples, not a waveform or measured rotor direction.",
+    "Positioning sectors have no ADC samples by design. Max/min do not describe temporal crossing order.",
+    "Exit kinds:1 positioning dwell,2 feedback step,3 timeout retry,4 handoff,5 stopped,6 planned acquisition boundary,7 bridge release,8 re-alignment boundary. S4R alignment bins describe the first alignment only; release has no energized sector record."
+  ],
+  "bench": {
+    "trials": 18,
+    "completed": 18,
+    "records": [
+      {
+        "id": 1,
+        "started": 2698090928,
+        "first_edge": 20419872,
+        "handoff": 33777541,
+        "edges": 7,
+        "retries": 2,
+        "max_streak": 6,
+        "reason": 7,
+        "stage": 4,
+        "input_at_stop": 0,
+        "interval_at_stop": 301,
+        "current_at_stop": 59,
+        "first_edge_us": 127624.2,
+        "handoff_us": 211109.63125,
+        "reason_name": "operator_zero"
+      },
+      {
+        "id": 2,
+        "started": 3271402102,
+        "first_edge": 19424827,
+        "handoff": 25929962,
+        "edges": 6,
+        "retries": 1,
+        "max_streak": 6,
+        "reason": 7,
+        "stage": 4,
+        "input_at_stop": 0,
+        "interval_at_stop": 47,
+        "current_at_stop": 86,
+        "first_edge_us": 121405.16875,
+        "handoff_us": 162062.2625,
+        "reason_name": "operator_zero"
+      },
+      {
+        "id": 3,
+        "started": 3828741582,
+        "first_edge": 27875443,
+        "handoff": 35579918,
+        "edges": 6,
+        "retries": 4,
+        "max_streak": 6,
+        "reason": 7,
+        "stage": 4,
+        "input_at_stop": 0,
+        "interval_at_stop": 947,
+        "current_at_stop": 80,
+        "first_edge_us": 174221.51875,
+        "handoff_us": 222374.4875,
+        "reason_name": "operator_zero"
+      },
+      {
+        "id": 4,
+        "started": 104008535,
+        "first_edge": 32717000,
+        "handoff": 38675459,
+        "edges": 6,
+        "retries": 7,
+        "max_streak": 6,
+        "reason": 7,
+        "stage": 4,
+        "input_at_stop": 0,
+        "interval_at_stop": 130,
+        "current_at_stop": 47,
+        "first_edge_us": 204481.25,
+        "handoff_us": 241721.61875,
+        "reason_name": "operator_zero"
+      },
+      {
+        "id": 5,
+        "started": 938374611,
+        "first_edge": 16629068,
+        "handoff": 22781867,
+        "edges": 6,
+        "retries": 0,
+        "max_streak": 6,
+        "reason": 7,
+        "stage": 4,
+        "input_at_stop": 0,
+        "interval_at_stop": 723,
+        "current_at_stop": 63,
+        "first_edge_us": 103931.675,
+        "handoff_us": 142386.66875,
+        "reason_name": "operator_zero"
+      },
+      {
+        "id": 6,
+        "started": 1545291555,
+        "first_edge": 16011654,
+        "handoff": 22160985,
+        "edges": 6,
+        "retries": 0,
+        "max_streak": 6,
+        "reason": 7,
+        "stage": 4,
+        "input_at_stop": 0,
+        "interval_at_stop": 1624,
+        "current_at_stop": 87,
+        "first_edge_us": 100072.8375,
+        "handoff_us": 138506.15625,
+        "reason_name": "operator_zero"
+      },
+      {
+        "id": 7,
+        "started": 2078726687,
+        "first_edge": 27721909,
+        "handoff": 35747871,
+        "edges": 6,
+        "retries": 4,
+        "max_streak": 6,
+        "reason": 7,
+        "stage": 4,
+        "input_at_stop": 0,
+        "interval_at_stop": 755,
+        "current_at_stop": 78,
+        "first_edge_us": 173261.93125,
+        "handoff_us": 223424.19375,
+        "reason_name": "operator_zero"
+      },
+      {
+        "id": 8,
+        "started": 2650311603,
+        "first_edge": 14901243,
+        "handoff": 21523561,
+        "edges": 6,
+        "retries": 0,
+        "max_streak": 6,
+        "reason": 7,
+        "stage": 4,
+        "input_at_stop": 0,
+        "interval_at_stop": 421,
+        "current_at_stop": 77,
+        "first_edge_us": 93132.76875,
+        "handoff_us": 134522.25625,
+        "reason_name": "operator_zero"
+      },
+      {
+        "id": 9,
+        "started": 3234855221,
+        "first_edge": 32870516,
+        "handoff": 39236931,
+        "edges": 6,
+        "retries": 7,
+        "max_streak": 6,
+        "reason": 7,
+        "stage": 4,
+        "input_at_stop": 0,
+        "interval_at_stop": 1538,
+        "current_at_stop": 93,
+        "first_edge_us": 205440.725,
+        "handoff_us": 245230.81875,
+        "reason_name": "operator_zero"
+      },
+      {
+        "id": 10,
+        "started": 3771522150,
+        "first_edge": 37443552,
+        "handoff": 55091662,
+        "edges": 8,
+        "retries": 10,
+        "max_streak": 6,
+        "reason": 7,
+        "stage": 4,
+        "input_at_stop": 0,
+        "interval_at_stop": 605,
+        "current_at_stop": 67,
+        "first_edge_us": 234022.2,
+        "handoff_us": 344322.8875,
+        "reason_name": "operator_zero"
+      },
+      {
+        "id": 11,
+        "started": 94747283,
+        "first_edge": 32682346,
+        "handoff": 38715554,
+        "edges": 6,
+        "retries": 7,
+        "max_streak": 6,
+        "reason": 7,
+        "stage": 4,
+        "input_at_stop": 0,
+        "interval_at_stop": 1008,
+        "current_at_stop": 64,
+        "first_edge_us": 204264.6625,
+        "handoff_us": 241972.2125,
+        "reason_name": "operator_zero"
+      },
+      {
+        "id": 12,
+        "started": 693685579,
+        "first_edge": 43203137,
+        "handoff": 54861905,
+        "edges": 7,
+        "retries": 11,
+        "max_streak": 6,
+        "reason": 7,
+        "stage": 4,
+        "input_at_stop": 0,
+        "interval_at_stop": 650,
+        "current_at_stop": 64,
+        "first_edge_us": 270019.60625,
+        "handoff_us": 342886.90625,
+        "reason_name": "operator_zero"
+      },
+      {
+        "id": 13,
+        "started": 1310298608,
+        "first_edge": 32782781,
+        "handoff": 39020649,
+        "edges": 6,
+        "retries": 7,
+        "max_streak": 6,
+        "reason": 7,
+        "stage": 4,
+        "input_at_stop": 0,
+        "interval_at_stop": 900,
+        "current_at_stop": 76,
+        "first_edge_us": 204892.38125,
+        "handoff_us": 243879.05625,
+        "reason_name": "operator_zero"
+      },
+      {
+        "id": 14,
+        "started": 1865891599,
+        "first_edge": 17775743,
+        "handoff": 24027636,
+        "edges": 6,
+        "retries": 0,
+        "max_streak": 6,
+        "reason": 7,
+        "stage": 4,
+        "input_at_stop": 0,
+        "interval_at_stop": 1544,
+        "current_at_stop": 83,
+        "first_edge_us": 111098.39375,
+        "handoff_us": 150172.725,
+        "reason_name": "operator_zero"
+      },
+      {
+        "id": 15,
+        "started": 2442342710,
+        "first_edge": 27792595,
+        "handoff": 35561566,
+        "edges": 6,
+        "retries": 4,
+        "max_streak": 6,
+        "reason": 7,
+        "stage": 4,
+        "input_at_stop": 0,
+        "interval_at_stop": 559,
+        "current_at_stop": 56,
+        "first_edge_us": 173703.71875,
+        "handoff_us": 222259.7875,
+        "reason_name": "operator_zero"
+      },
+      {
+        "id": 16,
+        "started": 3074967872,
+        "first_edge": 33963591,
+        "handoff": 39130808,
+        "edges": 6,
+        "retries": 8,
+        "max_streak": 6,
+        "reason": 7,
+        "stage": 4,
+        "input_at_stop": 0,
+        "interval_at_stop": 554,
+        "current_at_stop": 68,
+        "first_edge_us": 212272.44375,
+        "handoff_us": 244567.55,
+        "reason_name": "operator_zero"
+      },
+      {
+        "id": 17,
+        "started": 3664433155,
+        "first_edge": 40318654,
+        "handoff": 56688047,
+        "edges": 7,
+        "retries": 11,
+        "max_streak": 6,
+        "reason": 7,
+        "stage": 4,
+        "input_at_stop": 0,
+        "interval_at_stop": 9,
+        "current_at_stop": 71,
+        "first_edge_us": 251991.5875,
+        "handoff_us": 354300.29375,
+        "reason_name": "operator_zero"
+      },
+      {
+        "id": 18,
+        "started": 50376963,
+        "first_edge": 14735427,
+        "handoff": 4294967295,
+        "edges": 2,
+        "retries": 31,
+        "max_streak": 1,
+        "reason": 8,
+        "stage": 2,
+        "input_at_stop": 447,
+        "interval_at_stop": 29412,
+        "current_at_stop": 104,
+        "first_edge_us": 92096.41875,
+        "handoff_us": null,
+        "reason_name": "no_lock"
+      }
+    ]
+  },
+  "alignment": {
+    "trial": 18,
+    "bins": [
+      {
+        "vector": 1,
+        "start_ms": 0,
+        "total": 117,
+        "valid": 20,
+        "phases": [
+          {
+            "minimum": 968,
+            "maximum": 988,
+            "first": 968,
+            "last": 983,
+            "mean": 980.6
+          },
+          {
+            "minimum": 1537,
+            "maximum": 1552,
+            "first": 1543,
+            "last": 1541,
+            "mean": 1544.9
+          },
+          {
+            "minimum": 9,
+            "maximum": 11,
+            "first": 9,
+            "last": 10,
+            "mean": 10.05
+          }
+        ]
+      },
+      {
+        "vector": 1,
+        "start_ms": 5,
+        "total": 120,
+        "valid": 95,
+        "phases": [
+          {
+            "minimum": 624,
+            "maximum": 983,
+            "first": 979,
+            "last": 742,
+            "mean": 737.6842105263158
+          },
+          {
+            "minimum": 1495,
+            "maximum": 1549,
+            "first": 1535,
+            "last": 1497,
+            "mean": 1519.4315789473685
+          },
+          {
+            "minimum": 10,
+            "maximum": 12,
+            "first": 10,
+            "last": 12,
+            "mean": 10.863157894736842
+          }
+        ]
+      },
+      {
+        "vector": 1,
+        "start_ms": 10,
+        "total": 120,
+        "valid": 102,
+        "phases": [
+          {
+            "minimum": 716,
+            "maximum": 763,
+            "first": 742,
+            "last": 756,
+            "mean": 737.0490196078431
+          },
+          {
+            "minimum": 1482,
+            "maximum": 1510,
+            "first": 1495,
+            "last": 1486,
+            "mean": 1490.4019607843138
+          },
+          {
+            "minimum": 11,
+            "maximum": 13,
+            "first": 12,
+            "last": 12,
+            "mean": 11.676470588235293
+          }
+        ]
+      },
+      {
+        "vector": 1,
+        "start_ms": 15,
+        "total": 120,
+        "valid": 103,
+        "phases": [
+          {
+            "minimum": 756,
+            "maximum": 824,
+            "first": 756,
+            "last": 818,
+            "mean": 786.9611650485436
+          },
+          {
+            "minimum": 1480,
+            "maximum": 1499,
+            "first": 1483,
+            "last": 1486,
+            "mean": 1488.7475728155339
+          },
+          {
+            "minimum": 11,
+            "maximum": 12,
+            "first": 11,
+            "last": 11,
+            "mean": 11.524271844660195
+          }
+        ]
+      },
+      {
+        "vector": 1,
+        "start_ms": 20,
+        "total": 120,
+        "valid": 104,
+        "phases": [
+          {
+            "minimum": 817,
+            "maximum": 907,
+            "first": 817,
+            "last": 901,
+            "mean": 857.5769230769231
+          },
+          {
+            "minimum": 1481,
+            "maximum": 1500,
+            "first": 1482,
+            "last": 1484,
+            "mean": 1488.5096153846155
+          },
+          {
+            "minimum": 10,
+            "maximum": 13,
+            "first": 11,
+            "last": 11,
+            "mean": 11.548076923076923
+          }
+        ]
+      },
+      {
+        "vector": 1,
+        "start_ms": 25,
+        "total": 120,
+        "valid": 102,
+        "phases": [
+          {
+            "minimum": 901,
+            "maximum": 1034,
+            "first": 901,
+            "last": 1029,
+            "mean": 972.0098039215686
+          },
+          {
+            "minimum": 1480,
+            "maximum": 1499,
+            "first": 1484,
+            "last": 1486,
+            "mean": 1488.6078431372548
+          },
+          {
+            "minimum": 11,
+            "maximum": 12,
+            "first": 11,
+            "last": 12,
+            "mean": 11.57843137254902
+          }
+        ]
+      },
+      {
+        "vector": 2,
+        "start_ms": 30,
+        "total": 120,
+        "valid": 105,
+        "phases": [
+          {
+            "minimum": 1496,
+            "maximum": 1525,
+            "first": 1513,
+            "last": 1498,
+            "mean": 1506.0190476190476
+          },
+          {
+            "minimum": 614,
+            "maximum": 774,
+            "first": 771,
+            "last": 614,
+            "mean": 683.1714285714286
+          },
+          {
+            "minimum": 7,
+            "maximum": 9,
+            "first": 7,
+            "last": 8,
+            "mean": 8.257142857142858
+          }
+        ]
+      },
+      {
+        "vector": 2,
+        "start_ms": 35,
+        "total": 120,
+        "valid": 104,
+        "phases": [
+          {
+            "minimum": 1495,
+            "maximum": 1516,
+            "first": 1512,
+            "last": 1500,
+            "mean": 1504.423076923077
+          },
+          {
+            "minimum": 452,
+            "maximum": 619,
+            "first": 619,
+            "last": 452,
+            "mean": 523.8942307692307
+          },
+          {
+            "minimum": 6,
+            "maximum": 9,
+            "first": 9,
+            "last": 7,
+            "mean": 7.5
+          }
+        ]
+      },
+      {
+        "vector": 2,
+        "start_ms": 40,
+        "total": 120,
+        "valid": 103,
+        "phases": [
+          {
+            "minimum": 1492,
+            "maximum": 1513,
+            "first": 1508,
+            "last": 1492,
+            "mean": 1501.0291262135922
+          },
+          {
+            "minimum": 447,
+            "maximum": 627,
+            "first": 454,
+            "last": 627,
+            "mean": 497.378640776699
+          },
+          {
+            "minimum": 6,
+            "maximum": 10,
+            "first": 7,
+            "last": 9,
+            "mean": 7.398058252427185
+          }
+        ]
+      },
+      {
+        "vector": 2,
+        "start_ms": 45,
+        "total": 120,
+        "valid": 105,
+        "phases": [
+          {
+            "minimum": 1485,
+            "maximum": 1509,
+            "first": 1505,
+            "last": 1490,
+            "mean": 1495.904761904762
+          },
+          {
+            "minimum": 635,
+            "maximum": 1002,
+            "first": 635,
+            "last": 997,
+            "mean": 858.8380952380952
+          },
+          {
+            "minimum": 8,
+            "maximum": 11,
+            "first": 8,
+            "last": 10,
+            "mean": 9.761904761904763
+          }
+        ]
+      },
+      {
+        "vector": 2,
+        "start_ms": 50,
+        "total": 120,
+        "valid": 105,
+        "phases": [
+          {
+            "minimum": 1481,
+            "maximum": 1502,
+            "first": 1500,
+            "last": 1482,
+            "mean": 1490.2380952380952
+          },
+          {
+            "minimum": 972,
+            "maximum": 1048,
+            "first": 1005,
+            "last": 972,
+            "mean": 1020.5428571428571
+          },
+          {
+            "minimum": 10,
+            "maximum": 11,
+            "first": 10,
+            "last": 10,
+            "mean": 10.695238095238095
+          }
+        ]
+      },
+      {
+        "vector": 2,
+        "start_ms": 55,
+        "total": 120,
+        "valid": 104,
+        "phases": [
+          {
+            "minimum": 1478,
+            "maximum": 1499,
+            "first": 1498,
+            "last": 1484,
+            "mean": 1487.5673076923076
+          },
+          {
+            "minimum": 845,
+            "maximum": 983,
+            "first": 983,
+            "last": 845,
+            "mean": 901.7211538461538
+          },
+          {
+            "minimum": 9,
+            "maximum": 11,
+            "first": 11,
+            "last": 11,
+            "mean": 10.125
+          }
+        ]
+      },
+      {
+        "vector": 2,
+        "start_ms": 60,
+        "total": 120,
+        "valid": 104,
+        "phases": [
+          {
+            "minimum": 1478,
+            "maximum": 1498,
+            "first": 1497,
+            "last": 1485,
+            "mean": 1487.375
+          },
+          {
+            "minimum": 755,
+            "maximum": 852,
+            "first": 852,
+            "last": 755,
+            "mean": 800.4615384615385
+          },
+          {
+            "minimum": 9,
+            "maximum": 11,
+            "first": 9,
+            "last": 9,
+            "mean": 9.788461538461538
+          }
+        ]
+      },
+      {
+        "vector": 2,
+        "start_ms": 65,
+        "total": 120,
+        "valid": 105,
+        "phases": [
+          {
+            "minimum": 1479,
+            "maximum": 1499,
+            "first": 1494,
+            "last": 1482,
+            "mean": 1488.3904761904762
+          },
+          {
+            "minimum": 702,
+            "maximum": 761,
+            "first": 761,
+            "last": 702,
+            "mean": 727.2666666666667
+          },
+          {
+            "minimum": 8,
+            "maximum": 10,
+            "first": 9,
+            "last": 10,
+            "mean": 9.352380952380953
+          }
+        ]
+      },
+      {
+        "vector": 2,
+        "start_ms": 70,
+        "total": 120,
+        "valid": 104,
+        "phases": [
+          {
+            "minimum": 1480,
+            "maximum": 1501,
+            "first": 1497,
+            "last": 1487,
+            "mean": 1489.3653846153845
+          },
+          {
+            "minimum": 687,
+            "maximum": 710,
+            "first": 710,
+            "last": 687,
+            "mean": 696.375
+          },
+          {
+            "minimum": 8,
+            "maximum": 10,
+            "first": 9,
+            "last": 9,
+            "mean": 9.086538461538462
+          }
+        ]
+      },
+      {
+        "vector": 2,
+        "start_ms": 75,
+        "total": 120,
+        "valid": 105,
+        "phases": [
+          {
+            "minimum": 1484,
+            "maximum": 1502,
+            "first": 1500,
+            "last": 1484,
+            "mean": 1491.4571428571428
+          },
+          {
+            "minimum": 680,
+            "maximum": 695,
+            "first": 694,
+            "last": 680,
+            "mean": 686.1047619047619
+          },
+          {
+            "minimum": 8,
+            "maximum": 10,
+            "first": 9,
+            "last": 9,
+            "mean": 9.00952380952381
+          }
+        ]
+      },
+      {
+        "vector": 2,
+        "start_ms": 80,
+        "total": 120,
+        "valid": 106,
+        "phases": [
+          {
+            "minimum": 1485,
+            "maximum": 1503,
+            "first": 1501,
+            "last": 1488,
+            "mean": 1492.566037735849
+          },
+          {
+            "minimum": 680,
+            "maximum": 690,
+            "first": 689,
+            "last": 684,
+            "mean": 684.3490566037735
+          },
+          {
+            "minimum": 8,
+            "maximum": 10,
+            "first": 9,
+            "last": 9,
+            "mean": 8.962264150943396
+          }
+        ]
+      },
+      {
+        "vector": 2,
+        "start_ms": 85,
+        "total": 120,
+        "valid": 104,
+        "phases": [
+          {
+            "minimum": 1487,
+            "maximum": 1504,
+            "first": 1502,
+            "last": 1491,
+            "mean": 1493.9134615384614
+          },
+          {
+            "minimum": 683,
+            "maximum": 701,
+            "first": 691,
+            "last": 696,
+            "mean": 690.5961538461538
+          },
+          {
+            "minimum": 8,
+            "maximum": 10,
+            "first": 9,
+            "last": 8,
+            "mean": 8.73076923076923
+          }
+        ]
+      }
+    ],
+    "caveat": "Consumed sequential ADC samples in conservative ON-window; not mechanical rotor position or proof of rest."
+  },
+  "reposition": {
+    "trial": 18,
+    "reason": 8,
+    "release_us": 409177.11875,
+    "realign_us": 429219.49375,
+    "retry_first_edge_us": 692618.86875,
+    "handoff_us": null,
+    "finish_us": 820001.76875
+  },
+  "edge_observer": null,
+  "settings_hex": "0103110214a001000a64006400ffffffff000000010000121896160e00000501af4b7e3200500000050a01ff00050100fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffdfdfdfdfdfdfdfdffffffffffffffff",
+  "async_hex": "010000000000000000000000000000000000000014b804e500000000000000000000000000000000000000000000000000000000b5ef02008fc7010000000000000000000000000001000000"
+}

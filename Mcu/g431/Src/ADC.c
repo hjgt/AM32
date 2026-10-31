@@ -18,7 +18,11 @@
  uint16_t ADCDataDMA[3];
  #endif
 #ifdef USE_ADC2_VOLTAGE_SENSE
+#ifdef TARGET_FD_PIN_SCAN
+ uint16_t ADC2SensorDataDMA[4];
+#else
  uint16_t ADC2SensorDataDMA[2];
+#endif
 #endif
  #endif
  
@@ -35,7 +39,41 @@
 #define ADC_INTERNAL_TEMP_SAMPLING_TIME LL_ADC_SAMPLINGTIME_47CYCLES_5
 #endif
 
- void ADC_DMA_Callback()
+#ifdef TARGET_FD_PIN_SCAN
+#include "fd6288_pin_scan.h"
+extern uint8_t running;
+extern char step;
+volatile FdPinScan fd_pin_scan={.magic=0x46504931u,.abi=1u};
+_Static_assert(sizeof(FdPinScanRecord)==24,"pin record ABI");
+_Static_assert(sizeof(FdPinScan)==12328,"pin scan ABI");
+static void fdPinScanService(void)
+{
+ /* Consume completed regular groups only. Never clear/read ADC1 JEOS here.
+  * These groups and GPIO are asynchronous, NOT a simultaneous ZC waveform. */
+ if(!LL_DMA_IsActiveFlag_TC2(DMA1)||!LL_DMA_IsActiveFlag_TC4(DMA1)||
+    LL_ADC_REG_IsConversionOngoing(ADC1)||LL_ADC_REG_IsConversionOngoing(ADC2)){
+  fd_pin_scan.skipped++;return;
+ }
+ LL_DMA_ClearFlag_TC2(DMA1);LL_DMA_ClearFlag_TC4(DMA1);
+ FdPinScanRecord r={.cycles=DWT->CYCCNT,
+  .value={ADCDataDMA[1],ADC2SensorDataDMA[2],ADC2SensorDataDMA[3],
+          ADCDataDMA[2],ADC2SensorDataDMA[0],ADC2SensorDataDMA[1]},
+  .gpio_a=(uint16_t)(GPIOA->IDR&0x8098u),
+  .gpio_b=(uint16_t)(GPIOB->IDR&0x0099u),
+  .gpio_f=(uint16_t)(GPIOF->IDR&2u),.step=(uint8_t)step,.running=running};
+ fdPinScanPush(&fd_pin_scan,&r);
+}
+#endif
+
+ #ifdef TARGET_FD_ADC_COHERENT
+static uint32_t adc_zcd_context;
+void adcZcdRearmInjected(void)
+{
+    ADC1->JSQR = adc_zcd_context;
+}
+#endif
+
+void ADC_DMA_Callback()
 { // read dma buffer and set extern variables
  #ifdef USE_ADC_1_2
      ADC_raw_temp = ADC1DataDMA[0];
@@ -46,6 +84,9 @@
  #else
 
      ADC_raw_temp = ADCDataDMA[0];
+#ifdef TARGET_FD_PIN_SCAN
+     fdPinScanService();
+#endif
 #ifdef USE_ADC2_VOLTAGE_SENSE
      ADC_raw_volts = ADC2SensorDataDMA[0];
 #ifdef USE_ADC2_CURRENT_SENSE
@@ -108,11 +149,16 @@
 
     /* Set DMA transfer size */
 #ifdef USE_ADC2_VOLTAGE_SENSE
+#ifdef TARGET_FD_PIN_SCAN
+    LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_2, 3);
+    LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_4, 4);
+#else
     LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_2, 1);
 #ifdef USE_ADC2_CURRENT_SENSE
     LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_4, 2);
 #else
     LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_4, 1);
+#endif
 #endif
  #elif defined(USE_ADC_INPUT)
     LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_2, 4);
@@ -271,7 +317,19 @@ void activateADC(void)
    * OC4REF falling edge. Results are read from JDR1/2/3 in getCompOutputLevel()
    * without any further software start. See ADC_Init for the edge rationale.
    */
+#ifdef TARGET_FD_ADC_JEOS
+  LL_ADC_ClearFlag_JEOS(ADC1);
+  NVIC_SetPriority(ADC1_2_IRQn, 0);
+  NVIC_ClearPendingIRQ(ADC1_2_IRQn);
+  NVIC_EnableIRQ(ADC1_2_IRQn);
+  LL_ADC_EnableIT_JEOS(ADC1);
+#endif
   LL_ADC_INJ_StartConversion(ADC1);
+#ifdef TARGET_FD_PIN_SYNC
+  /* Independent ADC2, same carrier event; no ADC2 IRQ or regular DMA changes. */
+  LL_ADC_ClearFlag_JEOS(ADC2);
+  LL_ADC_INJ_StartConversion(ADC2);
+#endif
 #endif
 #endif
 }
@@ -463,6 +521,26 @@ void ADC_Init(void)
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 #endif
+#ifdef TARGET_FD_PIN_SCAN
+  /* Same high-impedance candidates sampled in the September discovery.
+   * Configure only at boot; no SWD/JTAG pin changes or output/pull drivers. */
+  GPIO_InitStruct.Pin=LL_GPIO_PIN_3|LL_GPIO_PIN_4|LL_GPIO_PIN_7;
+  GPIO_InitStruct.Mode=LL_GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull=LL_GPIO_PULL_NO;
+  LL_GPIO_Init(GPIOA,&GPIO_InitStruct);
+  LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_GPIOB);
+  GPIO_InitStruct.Pin=LL_GPIO_PIN_0;
+  LL_GPIO_Init(GPIOB,&GPIO_InitStruct);
+  fd_pin_scan.moder_a=GPIOA->MODER;
+  fd_pin_scan.moder_b=GPIOB->MODER;
+  fd_pin_scan.moder_f=GPIOF->MODER;
+#endif
+#ifdef TARGET_FD_PIN_SYNC
+  GPIO_InitStruct.Pin=LL_GPIO_PIN_3|LL_GPIO_PIN_7;
+  GPIO_InitStruct.Mode=LL_GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull=LL_GPIO_PULL_NO;
+  LL_GPIO_Init(GPIOA,&GPIO_InitStruct);
+#endif
   /* ADC1 DMA Init */
 
   /* ADC1 Init */
@@ -512,6 +590,9 @@ void ADC_Init(void)
   ADC_REG_InitStruct.TriggerSource = LL_ADC_REG_TRIG_SOFTWARE;
 #ifdef USE_ADC2_VOLTAGE_SENSE
   ADC_REG_InitStruct.SequencerLength = LL_ADC_REG_SEQ_SCAN_DISABLE;
+#ifdef TARGET_FD_PIN_SCAN
+  ADC_REG_InitStruct.SequencerLength = LL_ADC_REG_SEQ_SCAN_ENABLE_3RANKS;
+#endif
 #else
   ADC_REG_InitStruct.SequencerLength = LL_ADC_REG_SEQ_SCAN_ENABLE_2RANKS;
 #endif
@@ -551,6 +632,15 @@ void ADC_Init(void)
   LL_ADC_SetChannelSingleDiff(ADC1, LL_ADC_CHANNEL_TEMPSENSOR_ADC1, LL_ADC_SINGLE_ENDED);
   LL_ADC_SetCommonPathInternalCh(__LL_ADC_COMMON_INSTANCE(ADC1), LL_ADC_PATH_INTERNAL_TEMPSENSOR);
 
+#ifdef TARGET_FD_PIN_SCAN
+  LL_ADC_REG_SetSequencerRanks(ADC1,LL_ADC_REG_RANK_2,LL_ADC_CHANNEL_4);
+  LL_ADC_REG_SetSequencerRanks(ADC1,LL_ADC_REG_RANK_3,LL_ADC_CHANNEL_15);
+  LL_ADC_SetChannelSamplingTime(ADC1,LL_ADC_CHANNEL_4,LL_ADC_SAMPLINGTIME_47CYCLES_5);
+  LL_ADC_SetChannelSamplingTime(ADC1,LL_ADC_CHANNEL_15,LL_ADC_SAMPLINGTIME_47CYCLES_5);
+  LL_ADC_SetChannelSingleDiff(ADC1,LL_ADC_CHANNEL_4,LL_ADC_SINGLE_ENDED);
+  LL_ADC_SetChannelSingleDiff(ADC1,LL_ADC_CHANNEL_15,LL_ADC_SINGLE_ENDED);
+#endif
+
 #ifndef USE_ADC2_VOLTAGE_SENSE
   /** Configure Regular Channel */
   LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_2, VOLTAGE_ADC_CHANNEL);
@@ -573,12 +663,24 @@ void ADC_Init(void)
 #ifdef USE_ADC2_CURRENT_SENSE
   ADC_REG_InitStruct.SequencerLength = LL_ADC_REG_SEQ_SCAN_ENABLE_2RANKS;
 #endif
+#ifdef TARGET_FD_PIN_SCAN
+  ADC_REG_InitStruct.SequencerLength = LL_ADC_REG_SEQ_SCAN_ENABLE_4RANKS;
+#endif
   ADC_REG_InitStruct.DMATransfer = LL_ADC_REG_DMA_TRANSFER_LIMITED;
   LL_ADC_REG_Init(ADC2, &ADC_REG_InitStruct);
   LL_ADC_SetGainCompensation(ADC2, 0);
   LL_ADC_SetOverSamplingScope(ADC2, LL_ADC_OVS_DISABLE);
   LL_ADC_DisableDeepPowerDown(ADC2);
   LL_ADC_EnableInternalRegulator(ADC2);
+
+#ifdef TARGET_FD_PIN_SCAN
+  LL_ADC_REG_SetSequencerRanks(ADC2,LL_ADC_REG_RANK_3,LL_ADC_CHANNEL_17);
+  LL_ADC_REG_SetSequencerRanks(ADC2,LL_ADC_REG_RANK_4,LL_ADC_CHANNEL_4);
+  LL_ADC_SetChannelSamplingTime(ADC2,LL_ADC_CHANNEL_17,LL_ADC_SAMPLINGTIME_47CYCLES_5);
+  LL_ADC_SetChannelSamplingTime(ADC2,LL_ADC_CHANNEL_4,LL_ADC_SAMPLINGTIME_47CYCLES_5);
+  LL_ADC_SetChannelSingleDiff(ADC2,LL_ADC_CHANNEL_17,LL_ADC_SINGLE_ENDED);
+  LL_ADC_SetChannelSingleDiff(ADC2,LL_ADC_CHANNEL_4,LL_ADC_SINGLE_ENDED);
+#endif
 
   LL_ADC_REG_SetSequencerRanks(ADC2, LL_ADC_REG_RANK_1,
       VOLTAGE_ADC_CHANNEL);
@@ -611,8 +713,9 @@ void ADC_Init(void)
    * getCompOutputSample() reads JDR1/2/3, computes the software neutral
    * (Va+Vb+Vc)/3, and picks the floating phase per the current commutation
    * step. The injected group is armed once (LL_ADC_INJ_StartConversion) in
-   * activateADC() after the ADC is enabled; thereafter every TIM1 CH4 event
-   * launches a fresh 3-rank conversion with no CPU intervention.
+   * activateADC() after the ADC is enabled. In coherent JEOS builds one
+   * queued context is consumed per conversion; the IRQ refills it only after
+   * all readers finish, so delayed servicing cannot mix JDR generations.
    */
   /*
    * Trigger EDGE must be FALLING, not rising. TIM1 is edge-aligned
@@ -627,9 +730,27 @@ void ADC_Init(void)
    * BEMF and the loop never closed. Using FALLING moves the sample to the
    * ON midpoint. See porting notes section 12.13.
    */
+#ifdef TARGET_FD_ADC_COHERENT
+  LL_ADC_INJ_SetQueueMode(ADC1, LL_ADC_INJ_QUEUE_DISABLE);
+#endif
   LL_ADC_INJ_SetTriggerSource(ADC1, LL_ADC_INJ_TRIG_EXT_TIM1_CH4);
   LL_ADC_INJ_SetTriggerEdge(ADC1, LL_ADC_INJ_TRIG_EXT_FALLING);
   LL_ADC_INJ_SetSequencerLength(ADC1, LL_ADC_INJ_SEQ_SCAN_ENABLE_3RANKS);
+#ifdef TARGET_FD_PIN_SYNC
+  /* Keep original A/B/C order/apertures; PA3 comes last. This delays JEOS
+   * by 19 ADC clocks (0.475us), without changing the bridge ON floor.
+   * Record validity, not drive power, accounts for the longer fourth rank. */
+  LL_ADC_INJ_SetSequencerLength(ADC1,LL_ADC_INJ_SEQ_SCAN_ENABLE_4RANKS);
+  LL_ADC_INJ_SetSequencerRanks(ADC1,LL_ADC_INJ_RANK_4,LL_ADC_CHANNEL_4);
+  LL_ADC_SetChannelSamplingTime(ADC1,LL_ADC_CHANNEL_4,LL_ADC_SAMPLINGTIME_6CYCLES_5);
+  LL_ADC_SetChannelSingleDiff(ADC1,LL_ADC_CHANNEL_4,LL_ADC_SINGLE_ENDED);
+  LL_ADC_INJ_SetTriggerSource(ADC2,LL_ADC_INJ_TRIG_EXT_TIM1_CH4);
+  LL_ADC_INJ_SetTriggerEdge(ADC2,LL_ADC_INJ_TRIG_EXT_FALLING);
+  LL_ADC_INJ_SetSequencerLength(ADC2,LL_ADC_INJ_SEQ_SCAN_DISABLE);
+  LL_ADC_INJ_SetSequencerRanks(ADC2,LL_ADC_INJ_RANK_1,LL_ADC_CHANNEL_4);
+  LL_ADC_SetChannelSamplingTime(ADC2,LL_ADC_CHANNEL_4,LL_ADC_SAMPLINGTIME_6CYCLES_5);
+  LL_ADC_SetChannelSingleDiff(ADC2,LL_ADC_CHANNEL_4,LL_ADC_SINGLE_ENDED);
+#endif
 
   LL_ADC_INJ_SetSequencerRanks(ADC1, LL_ADC_INJ_RANK_1, BEMF_A_ADC_CHANNEL);
   LL_ADC_SetChannelSamplingTime(ADC1, BEMF_A_ADC_CHANNEL, LL_ADC_SAMPLINGTIME_6CYCLES_5);
@@ -642,6 +763,12 @@ void ADC_Init(void)
   LL_ADC_INJ_SetSequencerRanks(ADC1, LL_ADC_INJ_RANK_3, BEMF_C_ADC_CHANNEL);
   LL_ADC_SetChannelSamplingTime(ADC1, BEMF_C_ADC_CHANNEL, LL_ADC_SAMPLINGTIME_6CYCLES_5);
   LL_ADC_SetChannelSingleDiff(ADC1, BEMF_C_ADC_CHANNEL, LL_ADC_SINGLE_ENDED);
+#ifdef TARGET_FD_ADC_COHERENT
+  adc_zcd_context = ADC1->JSQR;
+  /* Changing JQDIS flushes JSQR. Submit exactly one complete context. */
+  LL_ADC_INJ_SetQueueMode(ADC1, LL_ADC_INJ_QUEUE_2CONTEXTS_END_EMPTY);
+  adcZcdRearmInjected();
+#endif
 #endif /* USE_ADC_ZCD */
 
 }

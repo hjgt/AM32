@@ -1,0 +1,74 @@
+{
+  "at": "2026-09-20T14:53:44.679Z",
+  "before": {
+    "state": "running",
+    "vtor": 134221824,
+    "gpioa_idr": 49152,
+    "gpiof_idr": 0,
+    "ccr": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "after": {
+    "state": "running",
+    "vtor": 134221824,
+    "gpioa_idr": 49152,
+    "gpiof_idr": 0,
+    "ccr": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "matches": [
+    {
+      "dir": "obj-loaded-zcd-candidate",
+      "bytes": 28588,
+      "different": 0
+    },
+    {
+      "dir": "obj-startup-trace-A",
+      "bytes": 30848,
+      "different": 27996
+    },
+    {
+      "dir": "obj-startup-timing-B",
+      "bytes": 30960,
+      "different": 28060
+    }
+  ],
+  "runtime": {
+    "input": 0,
+    "newinput": 0,
+    "adjusted_input": 0,
+    "running": 0,
+    "heli_coast_active": 0,
+    "duty_cycle": 0,
+    "stuck_rotor_inhibit": 0,
+    "stuck_rotor_trip_count": 0,
+    "bemf_timeout_happened": 0,
+    "bemf_timeout": 100,
+    "minimum_duty_cycle": 210,
+    "min_startup_duty": 360,
+    "startup_max_duty_cycle": 610,
+    "forward": 1,
+    "battery_voltage": 774,
+    "actual_current": 5
+  },
+  "settings": {
+    "first64": "0103110214a001000a64006400ffffffff000000010000221896160e00000501af4b7e3200500000050a01ff00050101ffffffffffffffffffffffffffffffff",
+    "max_ramp": 160,
+    "min_duty_raw": 1,
+    "stuck_rotor_protection": 0,
+    "pwm_frequency": 24,
+    "auto_advance": 1
+  },
+  "flash_sha256": "65b582318e42f338fbe736b63d246003383b160f499f09bb47f33efbd2b047d7",
+  "settings_sha256": "852293fdb1c158518b9b9b4575dad3fbf74b2e7205fee5f73b44fb461b725e08",
+  "directory": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/hardware-backups/startup-preflight-u4PvuS",
+  "note": "Read only. No halt/reset/flash/parameter writes."
+}

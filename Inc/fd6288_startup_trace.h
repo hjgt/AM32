@@ -94,3 +94,17 @@ void fdTraceTrialFinish(uint8_t reason, uint8_t stage);
 #else
 #define fdTraceTrialFinish(reason, stage) ((void)0)
 #endif
+
+/* Keep DWT initialization, remove ALL waveform/event writes and buffers.
+ * Existing small safety/startup summaries are independent of this recorder. */
+#ifdef TARGET_FD_QUIET_LOG
+#define fdTraceControlTick() ((void)0)
+#define fdTraceBegin() ((void)0)
+#define fdTraceEvent(kind, aux) ((void)0)
+#define fdTraceSample(a, b, c, m, r, p, n) ((void)0)
+#define fdTraceNoFresh() ((void)0)
+#define fdTraceFreeze(reason) ((void)0)
+#define fdTraceTrial(id) ((void)0)
+#define fdTracePinFailure() ((void)0)
+#define fdTraceTrialFinish(reason, stage) ((void)0)
+#endif

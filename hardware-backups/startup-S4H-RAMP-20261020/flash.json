@@ -1,0 +1,80 @@
+[
+  {
+    "at": "2026-10-20T10:49:11.333Z",
+    "stage": "preflight_stopped",
+    "value": {
+      "variant": 21,
+      "input": 0,
+      "newinput": 0,
+      "adjusted_input": 0,
+      "running": 0,
+      "heli_coast_active": 0,
+      "duty_cycle": 0,
+      "ccr": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "at": "2026-10-20T10:49:11.341Z",
+    "stage": "scope",
+    "value": {
+      "hex": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-startup-S4H-RAMP-20261020/AM32_CUSTOM_FD6288_G431_S4H_RAMP_ACQ300_MANUAL_STOP.hex",
+      "data_bytes": 36152,
+      "main_only": true,
+      "BL_F800_excluded": true
+    }
+  },
+  {
+    "at": "2026-10-20T10:49:11.375Z",
+    "stage": "reset init",
+    "value": ""
+  },
+  {
+    "at": "2026-10-20T10:49:12.486Z",
+    "stage": "flash write_image erase {/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-startup-S4H-RAMP-20261020/AM32_CUSTOM_FD6288_G431_S4H_RAMP_ACQ300_MANUAL_STOP.hex}",
+    "value": "auto erase enabled\nwrote 36192 bytes from file /Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-startup-S4H-RAMP-20261020/AM32_CUSTOM_FD6288_G431_S4H_RAMP_ACQ300_MANUAL_STOP.hex in 1.110212s (31.835 KiB/s)\n"
+  },
+  {
+    "at": "2026-10-20T10:49:12.851Z",
+    "stage": "verify_image {/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-startup-S4H-RAMP-20261020/AM32_CUSTOM_FD6288_G431_S4H_RAMP_ACQ300_MANUAL_STOP.hex}",
+    "value": "verified 36152 bytes in 0.363806s (97.043 KiB/s)\n"
+  },
+  {
+    "at": "2026-10-20T10:49:12.856Z",
+    "stage": "reset run",
+    "value": ""
+  },
+  {
+    "at": "2026-10-20T10:49:16.374Z",
+    "stage": "postflash_stopped",
+    "value": {
+      "variant": 22,
+      "input": 0,
+      "newinput": 0,
+      "adjusted_input": 0,
+      "running": 0,
+      "heli_coast_active": 0,
+      "duty_cycle": 0,
+      "ccr": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "at": "2026-10-20T10:49:16.378Z",
+    "stage": "runtime",
+    "value": {
+      "armed": 1,
+      "battery_voltage": 839,
+      "actual_current": 4,
+      "trials": 0
+    }
+  }
+]

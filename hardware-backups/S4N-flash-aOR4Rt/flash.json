@@ -1,0 +1,77 @@
+[
+  {
+    "at": "2026-10-24T15:40:59.845Z",
+    "stage": "preflight_stopped",
+    "value": {
+      "ccr": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "at": "2026-10-24T15:40:59.853Z",
+    "stage": "scope",
+    "value": {
+      "hex": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-S4N-ALIGN-HOLD-20261024/AM32_CUSTOM_FD6288_G431_S4N_ALIGN_HOLD.hex",
+      "hash": "c2726ca29adc77874915ff1c71e80f5fcaf76c4f8a5516c5db65b8be36fe3cae",
+      "main_only": true
+    }
+  },
+  {
+    "at": "2026-10-24T15:40:59.888Z",
+    "stage": "reset_init",
+    "value": ""
+  },
+  {
+    "at": "2026-10-24T15:41:00.995Z",
+    "stage": "write",
+    "value": "auto erase enabled\nwrote 35992 bytes from file /Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-S4N-ALIGN-HOLD-20261024/AM32_CUSTOM_FD6288_G431_S4N_ALIGN_HOLD.hex in 1.104682s (31.818 KiB/s)\n"
+  },
+  {
+    "at": "2026-10-24T15:41:01.355Z",
+    "stage": "verify",
+    "value": "verified 35952 bytes in 0.358807s (97.850 KiB/s)\n"
+  },
+  {
+    "at": "2026-10-24T15:41:01.360Z",
+    "stage": "reset_run",
+    "value": ""
+  },
+  {
+    "at": "2026-10-24T15:41:06.367Z",
+    "stage": "postflash_stopped",
+    "value": {
+      "ccr": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "at": "2026-10-24T15:41:06.376Z",
+    "stage": "runtime",
+    "value": {
+      "input": 0,
+      "adjusted_input": 0,
+      "running": 0,
+      "duty_cycle": 0,
+      "armed": 1,
+      "SystemCoreClock": 160000000
+    }
+  },
+  {
+    "at": "2026-10-24T15:41:06.379Z",
+    "stage": "light_header",
+    "value": [
+      1179404081,
+      1,
+      0,
+      0
+    ]
+  }
+]

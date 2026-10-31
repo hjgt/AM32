@@ -47,7 +47,8 @@ const adapter = main.slice(main.indexOf('/* FD_POWER_BENCH_ADAPTER_BEGIN'),
 assert(adapter.length > 1000);
 const functions = signatures.map((s, i) => functionBody(main, s) + (i === 2 ?
   `\n#ifdef TARGET_STARTUP_POWER_BENCH\n${adapter}\n#endif\n` : '')).join('\n');
-const harness = read('tests/fd6288_host_tests.c');
+const harness = read('Inc/fd6288_diagnostic_switch.h').replace('#pragma once', '') +
+  '\n#include "' + path.join(root,'Inc/fd6288_sector_diag.h') + '"\n' + read('tests/fd6288_host_tests.c');
 const marker = '/* FIRMWARE_FUNCTIONS */';
 if (!harness.includes(marker)) throw new Error('Missing harness marker');
 const traceHeader = stripIncludes(read('Inc/fd6288_startup_trace.h')).replace('#pragma once', '');
@@ -96,6 +97,7 @@ const compile = spawnSync(process.env.CC || 'cc', [
     `-DFD6288_STARTUP_POWER_EXTRA=${variant === 2 ? 0 : 40}`,
     `-DFD6288_TRACE_VARIANT=${variant}`] : []),
   '-std=c11', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
+  '-I' + path.join(root, 'Inc'),
   '-Wno-unused-function', '-fsanitize=address,undefined',
   '-x', 'c', '-', '-o', binary,
 ], { input: source, encoding: 'utf8' });

@@ -1,0 +1,85 @@
+[
+  {
+    "at": "2026-10-21T16:36:41.156Z",
+    "stage": "preflight_stopped",
+    "value": {
+      "variant": 26,
+      "abi": 2,
+      "input": 0,
+      "newinput": 0,
+      "adjusted_input": 0,
+      "running": 0,
+      "heli_coast_active": 0,
+      "duty_cycle": 0,
+      "ccr": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "at": "2026-10-21T16:36:41.164Z",
+    "stage": "scope",
+    "value": {
+      "hex": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-startup-S4K-DENSE-20261022/AM32_CUSTOM_FD6288_G431_S4K_DENSE_ACQ300_MANUAL_STOP.hex",
+      "data_bytes": 36456,
+      "main_only": true,
+      "BL_F800_excluded": true
+    }
+  },
+  {
+    "at": "2026-10-21T16:36:41.198Z",
+    "stage": "reset init",
+    "value": ""
+  },
+  {
+    "at": "2026-10-21T16:36:42.304Z",
+    "stage": "write",
+    "value": "auto erase enabled\nwrote 36496 bytes from file /Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-startup-S4K-DENSE-20261022/AM32_CUSTOM_FD6288_G431_S4K_DENSE_ACQ300_MANUAL_STOP.hex in 1.105034s (32.253 KiB/s)\n"
+  },
+  {
+    "at": "2026-10-21T16:36:42.669Z",
+    "stage": "verify",
+    "value": "verified 36456 bytes in 0.363257s (98.007 KiB/s)\n"
+  },
+  {
+    "at": "2026-10-21T16:36:42.674Z",
+    "stage": "reset run",
+    "value": ""
+  },
+  {
+    "at": "2026-10-21T16:36:44.890Z",
+    "stage": "postflash_stopped",
+    "value": {
+      "variant": 27,
+      "abi": 3,
+      "input": 0,
+      "newinput": 0,
+      "adjusted_input": 0,
+      "running": 0,
+      "heli_coast_active": 0,
+      "duty_cycle": 0,
+      "ccr": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "at": "2026-10-21T16:36:44.896Z",
+    "stage": "runtime",
+    "value": {
+      "armed": 1,
+      "battery_voltage": 766,
+      "advance_level": 23,
+      "auto_advance": 0,
+      "pwm": 24,
+      "async_abi": 1,
+      "pending": 0
+    }
+  }
+]

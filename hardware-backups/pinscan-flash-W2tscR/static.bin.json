@@ -1,0 +1,9266 @@
+{
+  "trial": 0,
+  "count": 512,
+  "frozen": 1,
+  "skipped": 1,
+  "gpio_boot_moder": [
+    2863333375,
+    4294961855,
+    3932222
+  ],
+  "summary": {
+    "PA3": {
+      "min": 303,
+      "mean": 309.763671875,
+      "max": 641
+    },
+    "PA4": {
+      "min": 34,
+      "mean": 40.107421875,
+      "max": 508
+    },
+    "PA7": {
+      "min": 14,
+      "mean": 20.7421875,
+      "max": 360
+    },
+    "PB0": {
+      "min": 3669,
+      "mean": 3680.14453125,
+      "max": 3695
+    },
+    "PA5_voltage": {
+      "min": 1576,
+      "mean": 1582.203125,
+      "max": 1592
+    },
+    "PA6_current": {
+      "min": 6,
+      "mean": 13.015625,
+      "max": 22
+    }
+  },
+  "records": [
+    {
+      "cycles": 1191304022,
+      "values": {
+        "PA3": 641,
+        "PA4": 508,
+        "PA7": 360,
+        "PB0": 3693,
+        "PA5_voltage": 1587,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1191475230,
+      "values": {
+        "PA3": 452,
+        "PA4": 182,
+        "PA7": 150,
+        "PB0": 3681,
+        "PA5_voltage": 1579,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1191646915,
+      "values": {
+        "PA3": 369,
+        "PA4": 74,
+        "PA7": 56,
+        "PB0": 3694,
+        "PA5_voltage": 1587,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1191818032,
+      "values": {
+        "PA3": 338,
+        "PA4": 52,
+        "PA7": 31,
+        "PB0": 3670,
+        "PA5_voltage": 1578,
+        "PA6_current": 10
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1191989367,
+      "values": {
+        "PA3": 317,
+        "PA4": 38,
+        "PA7": 19,
+        "PB0": 3690,
+        "PA5_voltage": 1583,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1192160995,
+      "values": {
+        "PA3": 318,
+        "PA4": 43,
+        "PA7": 23,
+        "PB0": 3672,
+        "PA5_voltage": 1585,
+        "PA6_current": 15
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1192332030,
+      "values": {
+        "PA3": 310,
+        "PA4": 38,
+        "PA7": 20,
+        "PB0": 3681,
+        "PA5_voltage": 1579,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1192503390,
+      "values": {
+        "PA3": 310,
+        "PA4": 34,
+        "PA7": 16,
+        "PB0": 3692,
+        "PA5_voltage": 1588,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1192675072,
+      "values": {
+        "PA3": 311,
+        "PA4": 42,
+        "PA7": 22,
+        "PB0": 3675,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1192846177,
+      "values": {
+        "PA3": 307,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3694,
+        "PA5_voltage": 1586,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1193017837,
+      "values": {
+        "PA3": 313,
+        "PA4": 44,
+        "PA7": 23,
+        "PB0": 3670,
+        "PA5_voltage": 1580,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1193189042,
+      "values": {
+        "PA3": 306,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3689,
+        "PA5_voltage": 1583,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1193360431,
+      "values": {
+        "PA3": 311,
+        "PA4": 43,
+        "PA7": 23,
+        "PB0": 3671,
+        "PA5_voltage": 1583,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1193531777,
+      "values": {
+        "PA3": 305,
+        "PA4": 38,
+        "PA7": 20,
+        "PB0": 3681,
+        "PA5_voltage": 1579,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1193703097,
+      "values": {
+        "PA3": 311,
+        "PA4": 38,
+        "PA7": 21,
+        "PB0": 3682,
+        "PA5_voltage": 1591,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1193874607,
+      "values": {
+        "PA3": 308,
+        "PA4": 41,
+        "PA7": 21,
+        "PB0": 3675,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1194045687,
+      "values": {
+        "PA3": 308,
+        "PA4": 35,
+        "PA7": 14,
+        "PB0": 3692,
+        "PA5_voltage": 1588,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1194217354,
+      "values": {
+        "PA3": 311,
+        "PA4": 42,
+        "PA7": 24,
+        "PB0": 3671,
+        "PA5_voltage": 1577,
+        "PA6_current": 11
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1194388617,
+      "values": {
+        "PA3": 306,
+        "PA4": 36,
+        "PA7": 17,
+        "PB0": 3691,
+        "PA5_voltage": 1584,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1194560047,
+      "values": {
+        "PA3": 313,
+        "PA4": 43,
+        "PA7": 24,
+        "PB0": 3670,
+        "PA5_voltage": 1579,
+        "PA6_current": 19
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1194731257,
+      "values": {
+        "PA3": 305,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3690,
+        "PA5_voltage": 1583,
+        "PA6_current": 16
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1194902627,
+      "values": {
+        "PA3": 311,
+        "PA4": 41,
+        "PA7": 21,
+        "PB0": 3674,
+        "PA5_voltage": 1587,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1195074057,
+      "values": {
+        "PA3": 307,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3675,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1195245417,
+      "values": {
+        "PA3": 305,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3693,
+        "PA5_voltage": 1585,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1195416510,
+      "values": {
+        "PA3": 311,
+        "PA4": 42,
+        "PA7": 24,
+        "PB0": 3670,
+        "PA5_voltage": 1579,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1195588189,
+      "values": {
+        "PA3": 306,
+        "PA4": 37,
+        "PA7": 19,
+        "PB0": 3680,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1195759323,
+      "values": {
+        "PA3": 310,
+        "PA4": 35,
+        "PA7": 17,
+        "PB0": 3686,
+        "PA5_voltage": 1590,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1195930721,
+      "values": {
+        "PA3": 309,
+        "PA4": 41,
+        "PA7": 21,
+        "PB0": 3674,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1196102072,
+      "values": {
+        "PA3": 306,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3693,
+        "PA5_voltage": 1585,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1196273457,
+      "values": {
+        "PA3": 311,
+        "PA4": 42,
+        "PA7": 24,
+        "PB0": 3671,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1196444752,
+      "values": {
+        "PA3": 306,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3684,
+        "PA5_voltage": 1580,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1196616030,
+      "values": {
+        "PA3": 310,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3690,
+        "PA5_voltage": 1589,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1196787447,
+      "values": {
+        "PA3": 312,
+        "PA4": 42,
+        "PA7": 24,
+        "PB0": 3670,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1196958750,
+      "values": {
+        "PA3": 306,
+        "PA4": 38,
+        "PA7": 20,
+        "PB0": 3682,
+        "PA5_voltage": 1579,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1197130377,
+      "values": {
+        "PA3": 306,
+        "PA4": 36,
+        "PA7": 15,
+        "PB0": 3695,
+        "PA5_voltage": 1587,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1197301667,
+      "values": {
+        "PA3": 313,
+        "PA4": 43,
+        "PA7": 24,
+        "PB0": 3672,
+        "PA5_voltage": 1585,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1197473027,
+      "values": {
+        "PA3": 308,
+        "PA4": 39,
+        "PA7": 21,
+        "PB0": 3675,
+        "PA5_voltage": 1576,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1197644387,
+      "values": {
+        "PA3": 306,
+        "PA4": 34,
+        "PA7": 16,
+        "PB0": 3693,
+        "PA5_voltage": 1586,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1197815869,
+      "values": {
+        "PA3": 313,
+        "PA4": 42,
+        "PA7": 24,
+        "PB0": 3670,
+        "PA5_voltage": 1582,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1197986977,
+      "values": {
+        "PA3": 306,
+        "PA4": 38,
+        "PA7": 19,
+        "PB0": 3683,
+        "PA5_voltage": 1580,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1198158602,
+      "values": {
+        "PA3": 306,
+        "PA4": 34,
+        "PA7": 16,
+        "PB0": 3694,
+        "PA5_voltage": 1586,
+        "PA6_current": 8
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1198329788,
+      "values": {
+        "PA3": 314,
+        "PA4": 42,
+        "PA7": 24,
+        "PB0": 3671,
+        "PA5_voltage": 1584,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1198501132,
+      "values": {
+        "PA3": 308,
+        "PA4": 39,
+        "PA7": 21,
+        "PB0": 3675,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1198672467,
+      "values": {
+        "PA3": 306,
+        "PA4": 36,
+        "PA7": 15,
+        "PB0": 3691,
+        "PA5_voltage": 1584,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1198843897,
+      "values": {
+        "PA3": 312,
+        "PA4": 43,
+        "PA7": 23,
+        "PB0": 3669,
+        "PA5_voltage": 1580,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1199015282,
+      "values": {
+        "PA3": 305,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3684,
+        "PA5_voltage": 1580,
+        "PA6_current": 11
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1199186642,
+      "values": {
+        "PA3": 307,
+        "PA4": 35,
+        "PA7": 15,
+        "PB0": 3692,
+        "PA5_voltage": 1588,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1199357810,
+      "values": {
+        "PA3": 316,
+        "PA4": 47,
+        "PA7": 27,
+        "PB0": 3669,
+        "PA5_voltage": 1580,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1199529417,
+      "values": {
+        "PA3": 308,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3678,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1199700777,
+      "values": {
+        "PA3": 306,
+        "PA4": 35,
+        "PA7": 15,
+        "PB0": 3694,
+        "PA5_voltage": 1586,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1199872072,
+      "values": {
+        "PA3": 313,
+        "PA4": 41,
+        "PA7": 22,
+        "PB0": 3674,
+        "PA5_voltage": 1589,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1200043427,
+      "values": {
+        "PA3": 308,
+        "PA4": 39,
+        "PA7": 21,
+        "PB0": 3672,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1200214722,
+      "values": {
+        "PA3": 305,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3684,
+        "PA5_voltage": 1580,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1200386147,
+      "values": {
+        "PA3": 309,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3688,
+        "PA5_voltage": 1588,
+        "PA6_current": 18
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1200557577,
+      "values": {
+        "PA3": 310,
+        "PA4": 43,
+        "PA7": 23,
+        "PB0": 3669,
+        "PA5_voltage": 1579,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1200729043,
+      "values": {
+        "PA3": 306,
+        "PA4": 37,
+        "PA7": 20,
+        "PB0": 3676,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1200900349,
+      "values": {
+        "PA3": 304,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3689,
+        "PA5_voltage": 1583,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1201071442,
+      "values": {
+        "PA3": 311,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3684,
+        "PA5_voltage": 1591,
+        "PA6_current": 15
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1201242755,
+      "values": {
+        "PA3": 308,
+        "PA4": 42,
+        "PA7": 23,
+        "PB0": 3671,
+        "PA5_voltage": 1577,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1201414242,
+      "values": {
+        "PA3": 304,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3685,
+        "PA5_voltage": 1581,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1201585667,
+      "values": {
+        "PA3": 312,
+        "PA4": 41,
+        "PA7": 20,
+        "PB0": 3680,
+        "PA5_voltage": 1591,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1201756830,
+      "values": {
+        "PA3": 309,
+        "PA4": 40,
+        "PA7": 21,
+        "PB0": 3671,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1201928512,
+      "values": {
+        "PA3": 305,
+        "PA4": 39,
+        "PA7": 19,
+        "PB0": 3678,
+        "PA5_voltage": 1578,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1202099682,
+      "values": {
+        "PA3": 304,
+        "PA4": 35,
+        "PA7": 14,
+        "PB0": 3695,
+        "PA5_voltage": 1587,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1202270910,
+      "values": {
+        "PA3": 313,
+        "PA4": 41,
+        "PA7": 22,
+        "PB0": 3676,
+        "PA5_voltage": 1591,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1202442537,
+      "values": {
+        "PA3": 309,
+        "PA4": 40,
+        "PA7": 21,
+        "PB0": 3673,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1202613952,
+      "values": {
+        "PA3": 305,
+        "PA4": 36,
+        "PA7": 17,
+        "PB0": 3687,
+        "PA5_voltage": 1582,
+        "PA6_current": 11
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1202785057,
+      "values": {
+        "PA3": 313,
+        "PA4": 39,
+        "PA7": 21,
+        "PB0": 3682,
+        "PA5_voltage": 1592,
+        "PA6_current": 11
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1202956350,
+      "values": {
+        "PA3": 309,
+        "PA4": 41,
+        "PA7": 22,
+        "PB0": 3671,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1203127793,
+      "values": {
+        "PA3": 306,
+        "PA4": 38,
+        "PA7": 19,
+        "PB0": 3684,
+        "PA5_voltage": 1579,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1203299090,
+      "values": {
+        "PA3": 311,
+        "PA4": 36,
+        "PA7": 18,
+        "PB0": 3688,
+        "PA5_voltage": 1590,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1203470622,
+      "values": {
+        "PA3": 311,
+        "PA4": 42,
+        "PA7": 24,
+        "PB0": 3671,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1203641962,
+      "values": {
+        "PA3": 306,
+        "PA4": 38,
+        "PA7": 19,
+        "PB0": 3683,
+        "PA5_voltage": 1580,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1203813418,
+      "values": {
+        "PA3": 311,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3684,
+        "PA5_voltage": 1591,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1203984847,
+      "values": {
+        "PA3": 309,
+        "PA4": 42,
+        "PA7": 23,
+        "PB0": 3674,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1204155870,
+      "values": {
+        "PA3": 305,
+        "PA4": 37,
+        "PA7": 17,
+        "PB0": 3686,
+        "PA5_voltage": 1582,
+        "PA6_current": 11
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1204327282,
+      "values": {
+        "PA3": 312,
+        "PA4": 40,
+        "PA7": 21,
+        "PB0": 3677,
+        "PA5_voltage": 1590,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1204498954,
+      "values": {
+        "PA3": 307,
+        "PA4": 40,
+        "PA7": 20,
+        "PB0": 3675,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1204669950,
+      "values": {
+        "PA3": 305,
+        "PA4": 38,
+        "PA7": 18,
+        "PB0": 3688,
+        "PA5_voltage": 1582,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1204841522,
+      "values": {
+        "PA3": 312,
+        "PA4": 37,
+        "PA7": 19,
+        "PB0": 3686,
+        "PA5_voltage": 1590,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1205012882,
+      "values": {
+        "PA3": 309,
+        "PA4": 40,
+        "PA7": 21,
+        "PB0": 3673,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1205184227,
+      "values": {
+        "PA3": 306,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3684,
+        "PA5_voltage": 1581,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1205355657,
+      "values": {
+        "PA3": 310,
+        "PA4": 36,
+        "PA7": 18,
+        "PB0": 3687,
+        "PA5_voltage": 1590,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1205526791,
+      "values": {
+        "PA3": 310,
+        "PA4": 42,
+        "PA7": 23,
+        "PB0": 3670,
+        "PA5_voltage": 1579,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1205698120,
+      "values": {
+        "PA3": 306,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3677,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1205869480,
+      "values": {
+        "PA3": 306,
+        "PA4": 35,
+        "PA7": 15,
+        "PB0": 3694,
+        "PA5_voltage": 1587,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1206041152,
+      "values": {
+        "PA3": 312,
+        "PA4": 43,
+        "PA7": 23,
+        "PB0": 3670,
+        "PA5_voltage": 1579,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1206212257,
+      "values": {
+        "PA3": 306,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3683,
+        "PA5_voltage": 1580,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1206383752,
+      "values": {
+        "PA3": 308,
+        "PA4": 35,
+        "PA7": 14,
+        "PB0": 3692,
+        "PA5_voltage": 1588,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1206555112,
+      "values": {
+        "PA3": 312,
+        "PA4": 43,
+        "PA7": 23,
+        "PB0": 3670,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1206726467,
+      "values": {
+        "PA3": 306,
+        "PA4": 38,
+        "PA7": 18,
+        "PB0": 3684,
+        "PA5_voltage": 1580,
+        "PA6_current": 15
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1206897897,
+      "values": {
+        "PA3": 312,
+        "PA4": 39,
+        "PA7": 21,
+        "PB0": 3681,
+        "PA5_voltage": 1591,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1207069312,
+      "values": {
+        "PA3": 308,
+        "PA4": 41,
+        "PA7": 20,
+        "PB0": 3674,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1207240350,
+      "values": {
+        "PA3": 306,
+        "PA4": 35,
+        "PA7": 15,
+        "PB0": 3693,
+        "PA5_voltage": 1586,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1207412032,
+      "values": {
+        "PA3": 313,
+        "PA4": 40,
+        "PA7": 22,
+        "PB0": 3672,
+        "PA5_voltage": 1585,
+        "PA6_current": 16
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1207583337,
+      "values": {
+        "PA3": 308,
+        "PA4": 40,
+        "PA7": 19,
+        "PB0": 3673,
+        "PA5_voltage": 1576,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1207754497,
+      "values": {
+        "PA3": 306,
+        "PA4": 39,
+        "PA7": 19,
+        "PB0": 3684,
+        "PA5_voltage": 1580,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1207926795,
+      "values": {
+        "PA3": 309,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3691,
+        "PA5_voltage": 1589,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1208097302,
+      "values": {
+        "PA3": 311,
+        "PA4": 42,
+        "PA7": 22,
+        "PB0": 3675,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1208268777,
+      "values": {
+        "PA3": 307,
+        "PA4": 38,
+        "PA7": 19,
+        "PB0": 3684,
+        "PA5_voltage": 1581,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1208440137,
+      "values": {
+        "PA3": 312,
+        "PA4": 38,
+        "PA7": 21,
+        "PB0": 3684,
+        "PA5_voltage": 1591,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1208611332,
+      "values": {
+        "PA3": 309,
+        "PA4": 41,
+        "PA7": 21,
+        "PB0": 3672,
+        "PA5_voltage": 1578,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1208782732,
+      "values": {
+        "PA3": 307,
+        "PA4": 38,
+        "PA7": 20,
+        "PB0": 3680,
+        "PA5_voltage": 1579,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1208954123,
+      "values": {
+        "PA3": 306,
+        "PA4": 35,
+        "PA7": 15,
+        "PB0": 3694,
+        "PA5_voltage": 1586,
+        "PA6_current": 11
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1209125634,
+      "values": {
+        "PA3": 313,
+        "PA4": 42,
+        "PA7": 25,
+        "PB0": 3670,
+        "PA5_voltage": 1583,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1209296882,
+      "values": {
+        "PA3": 308,
+        "PA4": 41,
+        "PA7": 21,
+        "PB0": 3672,
+        "PA5_voltage": 1577,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1209468242,
+      "values": {
+        "PA3": 306,
+        "PA4": 39,
+        "PA7": 19,
+        "PB0": 3683,
+        "PA5_voltage": 1579,
+        "PA6_current": 18
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1209639442,
+      "values": {
+        "PA3": 308,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3690,
+        "PA5_voltage": 1589,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1209810750,
+      "values": {
+        "PA3": 312,
+        "PA4": 43,
+        "PA7": 24,
+        "PB0": 3669,
+        "PA5_voltage": 1580,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1209982377,
+      "values": {
+        "PA3": 307,
+        "PA4": 40,
+        "PA7": 20,
+        "PB0": 3674,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1210153612,
+      "values": {
+        "PA3": 305,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3690,
+        "PA5_voltage": 1584,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1210325175,
+      "values": {
+        "PA3": 313,
+        "PA4": 39,
+        "PA7": 21,
+        "PB0": 3680,
+        "PA5_voltage": 1591,
+        "PA6_current": 17
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1210496342,
+      "values": {
+        "PA3": 308,
+        "PA4": 39,
+        "PA7": 22,
+        "PB0": 3674,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1210667763,
+      "values": {
+        "PA3": 307,
+        "PA4": 39,
+        "PA7": 19,
+        "PB0": 3683,
+        "PA5_voltage": 1580,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1210839097,
+      "values": {
+        "PA3": 306,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3693,
+        "PA5_voltage": 1585,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1211010589,
+      "values": {
+        "PA3": 314,
+        "PA4": 42,
+        "PA7": 24,
+        "PB0": 3671,
+        "PA5_voltage": 1584,
+        "PA6_current": 19
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1211181949,
+      "values": {
+        "PA3": 309,
+        "PA4": 40,
+        "PA7": 21,
+        "PB0": 3671,
+        "PA5_voltage": 1576,
+        "PA6_current": 15
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1211353257,
+      "values": {
+        "PA3": 304,
+        "PA4": 36,
+        "PA7": 17,
+        "PB0": 3687,
+        "PA5_voltage": 1582,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1211524547,
+      "values": {
+        "PA3": 311,
+        "PA4": 35,
+        "PA7": 17,
+        "PB0": 3689,
+        "PA5_voltage": 1590,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1211695907,
+      "values": {
+        "PA3": 311,
+        "PA4": 44,
+        "PA7": 24,
+        "PB0": 3670,
+        "PA5_voltage": 1578,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1211867389,
+      "values": {
+        "PA3": 307,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3678,
+        "PA5_voltage": 1579,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1212038460,
+      "values": {
+        "PA3": 306,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3694,
+        "PA5_voltage": 1585,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1212209987,
+      "values": {
+        "PA3": 315,
+        "PA4": 40,
+        "PA7": 20,
+        "PB0": 3681,
+        "PA5_voltage": 1592,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1212381417,
+      "values": {
+        "PA3": 310,
+        "PA4": 42,
+        "PA7": 23,
+        "PB0": 3670,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1212552832,
+      "values": {
+        "PA3": 307,
+        "PA4": 38,
+        "PA7": 20,
+        "PB0": 3679,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1212724202,
+      "values": {
+        "PA3": 306,
+        "PA4": 34,
+        "PA7": 15,
+        "PB0": 3694,
+        "PA5_voltage": 1587,
+        "PA6_current": 11
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1212895580,
+      "values": {
+        "PA3": 313,
+        "PA4": 43,
+        "PA7": 24,
+        "PB0": 3669,
+        "PA5_voltage": 1579,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1213066808,
+      "values": {
+        "PA3": 308,
+        "PA4": 38,
+        "PA7": 21,
+        "PB0": 3677,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1213238137,
+      "values": {
+        "PA3": 305,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3687,
+        "PA5_voltage": 1582,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1213409492,
+      "values": {
+        "PA3": 311,
+        "PA4": 35,
+        "PA7": 17,
+        "PB0": 3688,
+        "PA5_voltage": 1589,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1213581006,
+      "values": {
+        "PA3": 311,
+        "PA4": 43,
+        "PA7": 22,
+        "PB0": 3671,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1213752355,
+      "values": {
+        "PA3": 306,
+        "PA4": 37,
+        "PA7": 17,
+        "PB0": 3685,
+        "PA5_voltage": 1580,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1213923702,
+      "values": {
+        "PA3": 312,
+        "PA4": 36,
+        "PA7": 18,
+        "PB0": 3686,
+        "PA5_voltage": 1590,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1214094937,
+      "values": {
+        "PA3": 310,
+        "PA4": 42,
+        "PA7": 24,
+        "PB0": 3670,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1214266440,
+      "values": {
+        "PA3": 307,
+        "PA4": 38,
+        "PA7": 20,
+        "PB0": 3679,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1214437834,
+      "values": {
+        "PA3": 306,
+        "PA4": 35,
+        "PA7": 14,
+        "PB0": 3695,
+        "PA5_voltage": 1587,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1214609164,
+      "values": {
+        "PA3": 312,
+        "PA4": 42,
+        "PA7": 24,
+        "PB0": 3669,
+        "PA5_voltage": 1580,
+        "PA6_current": 16
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1214780242,
+      "values": {
+        "PA3": 307,
+        "PA4": 38,
+        "PA7": 21,
+        "PB0": 3677,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1214951880,
+      "values": {
+        "PA3": 306,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3690,
+        "PA5_voltage": 1583,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1215123278,
+      "values": {
+        "PA3": 313,
+        "PA4": 41,
+        "PA7": 23,
+        "PB0": 3671,
+        "PA5_voltage": 1584,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1215294573,
+      "values": {
+        "PA3": 307,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3677,
+        "PA5_voltage": 1577,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1215465778,
+      "values": {
+        "PA3": 311,
+        "PA4": 39,
+        "PA7": 19,
+        "PB0": 3693,
+        "PA5_voltage": 1585,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1215637277,
+      "values": {
+        "PA3": 314,
+        "PA4": 43,
+        "PA7": 23,
+        "PB0": 3673,
+        "PA5_voltage": 1586,
+        "PA6_current": 18
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1215808669,
+      "values": {
+        "PA3": 308,
+        "PA4": 40,
+        "PA7": 20,
+        "PB0": 3674,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1215979897,
+      "values": {
+        "PA3": 305,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3687,
+        "PA5_voltage": 1582,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1216151152,
+      "values": {
+        "PA3": 307,
+        "PA4": 35,
+        "PA7": 14,
+        "PB0": 3694,
+        "PA5_voltage": 1587,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1216322430,
+      "values": {
+        "PA3": 314,
+        "PA4": 40,
+        "PA7": 21,
+        "PB0": 3673,
+        "PA5_voltage": 1587,
+        "PA6_current": 9
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1216494112,
+      "values": {
+        "PA3": 308,
+        "PA4": 39,
+        "PA7": 21,
+        "PB0": 3671,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1216665150,
+      "values": {
+        "PA3": 306,
+        "PA4": 37,
+        "PA7": 17,
+        "PB0": 3684,
+        "PA5_voltage": 1580,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1216836777,
+      "values": {
+        "PA3": 307,
+        "PA4": 36,
+        "PA7": 15,
+        "PB0": 3693,
+        "PA5_voltage": 1587,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1217007937,
+      "values": {
+        "PA3": 312,
+        "PA4": 42,
+        "PA7": 23,
+        "PB0": 3670,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1217179362,
+      "values": {
+        "PA3": 308,
+        "PA4": 38,
+        "PA7": 20,
+        "PB0": 3679,
+        "PA5_voltage": 1578,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1217350857,
+      "values": {
+        "PA3": 306,
+        "PA4": 35,
+        "PA7": 17,
+        "PB0": 3691,
+        "PA5_voltage": 1583,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1217522147,
+      "values": {
+        "PA3": 313,
+        "PA4": 40,
+        "PA7": 20,
+        "PB0": 3679,
+        "PA5_voltage": 1591,
+        "PA6_current": 11
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1217693648,
+      "values": {
+        "PA3": 310,
+        "PA4": 40,
+        "PA7": 21,
+        "PB0": 3671,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1217864960,
+      "values": {
+        "PA3": 307,
+        "PA4": 38,
+        "PA7": 19,
+        "PB0": 3683,
+        "PA5_voltage": 1579,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1218036082,
+      "values": {
+        "PA3": 307,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3693,
+        "PA5_voltage": 1586,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1218207592,
+      "values": {
+        "PA3": 314,
+        "PA4": 42,
+        "PA7": 23,
+        "PB0": 3672,
+        "PA5_voltage": 1587,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1218378807,
+      "values": {
+        "PA3": 308,
+        "PA4": 39,
+        "PA7": 21,
+        "PB0": 3674,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1218550140,
+      "values": {
+        "PA3": 306,
+        "PA4": 36,
+        "PA7": 17,
+        "PB0": 3687,
+        "PA5_voltage": 1581,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1218721795,
+      "values": {
+        "PA3": 313,
+        "PA4": 41,
+        "PA7": 21,
+        "PB0": 3678,
+        "PA5_voltage": 1590,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1218892897,
+      "values": {
+        "PA3": 308,
+        "PA4": 40,
+        "PA7": 19,
+        "PB0": 3676,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1219064257,
+      "values": {
+        "PA3": 306,
+        "PA4": 35,
+        "PA7": 15,
+        "PB0": 3693,
+        "PA5_voltage": 1586,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1219235722,
+      "values": {
+        "PA3": 313,
+        "PA4": 42,
+        "PA7": 24,
+        "PB0": 3675,
+        "PA5_voltage": 1589,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1219407122,
+      "values": {
+        "PA3": 308,
+        "PA4": 40,
+        "PA7": 20,
+        "PB0": 3675,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1219578270,
+      "values": {
+        "PA3": 305,
+        "PA4": 37,
+        "PA7": 17,
+        "PB0": 3688,
+        "PA5_voltage": 1582,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1219749772,
+      "values": {
+        "PA3": 308,
+        "PA4": 34,
+        "PA7": 16,
+        "PB0": 3692,
+        "PA5_voltage": 1588,
+        "PA6_current": 16
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1219921132,
+      "values": {
+        "PA3": 313,
+        "PA4": 42,
+        "PA7": 24,
+        "PB0": 3669,
+        "PA5_voltage": 1580,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1220092550,
+      "values": {
+        "PA3": 309,
+        "PA4": 38,
+        "PA7": 20,
+        "PB0": 3677,
+        "PA5_voltage": 1578,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1220265560,
+      "values": {
+        "PA3": 306,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3693,
+        "PA5_voltage": 1586,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1220436071,
+      "values": {
+        "PA3": 313,
+        "PA4": 43,
+        "PA7": 24,
+        "PB0": 3670,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1220606771,
+      "values": {
+        "PA3": 309,
+        "PA4": 40,
+        "PA7": 21,
+        "PB0": 3671,
+        "PA5_voltage": 1576,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1220778157,
+      "values": {
+        "PA3": 307,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3678,
+        "PA5_voltage": 1578,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1220949282,
+      "values": {
+        "PA3": 306,
+        "PA4": 35,
+        "PA7": 14,
+        "PB0": 3695,
+        "PA5_voltage": 1587,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1221120642,
+      "values": {
+        "PA3": 313,
+        "PA4": 42,
+        "PA7": 23,
+        "PB0": 3674,
+        "PA5_voltage": 1588,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1221292137,
+      "values": {
+        "PA3": 308,
+        "PA4": 40,
+        "PA7": 21,
+        "PB0": 3671,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1221463297,
+      "values": {
+        "PA3": 305,
+        "PA4": 35,
+        "PA7": 17,
+        "PB0": 3685,
+        "PA5_voltage": 1581,
+        "PA6_current": 9
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1221634787,
+      "values": {
+        "PA3": 309,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3691,
+        "PA5_voltage": 1588,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1221806082,
+      "values": {
+        "PA3": 313,
+        "PA4": 43,
+        "PA7": 24,
+        "PB0": 3671,
+        "PA5_voltage": 1580,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1221977577,
+      "values": {
+        "PA3": 308,
+        "PA4": 40,
+        "PA7": 20,
+        "PB0": 3673,
+        "PA5_voltage": 1576,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1222148937,
+      "values": {
+        "PA3": 306,
+        "PA4": 37,
+        "PA7": 17,
+        "PB0": 3689,
+        "PA5_voltage": 1583,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1222320097,
+      "values": {
+        "PA3": 312,
+        "PA4": 39,
+        "PA7": 22,
+        "PB0": 3677,
+        "PA5_voltage": 1590,
+        "PA6_current": 17
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1222492385,
+      "values": {
+        "PA3": 310,
+        "PA4": 41,
+        "PA7": 22,
+        "PB0": 3671,
+        "PA5_voltage": 1578,
+        "PA6_current": 15
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1222662807,
+      "values": {
+        "PA3": 305,
+        "PA4": 37,
+        "PA7": 17,
+        "PB0": 3686,
+        "PA5_voltage": 1582,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1222834223,
+      "values": {
+        "PA3": 306,
+        "PA4": 37,
+        "PA7": 16,
+        "PB0": 3692,
+        "PA5_voltage": 1584,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1223005552,
+      "values": {
+        "PA3": 313,
+        "PA4": 42,
+        "PA7": 23,
+        "PB0": 3675,
+        "PA5_voltage": 1590,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1223176936,
+      "values": {
+        "PA3": 308,
+        "PA4": 39,
+        "PA7": 21,
+        "PB0": 3673,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1223348257,
+      "values": {
+        "PA3": 306,
+        "PA4": 38,
+        "PA7": 20,
+        "PB0": 3681,
+        "PA5_voltage": 1579,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1223519617,
+      "values": {
+        "PA3": 311,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3688,
+        "PA5_voltage": 1589,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1223691246,
+      "values": {
+        "PA3": 311,
+        "PA4": 44,
+        "PA7": 24,
+        "PB0": 3670,
+        "PA5_voltage": 1579,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1223862270,
+      "values": {
+        "PA3": 306,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3676,
+        "PA5_voltage": 1578,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1224033630,
+      "values": {
+        "PA3": 305,
+        "PA4": 38,
+        "PA7": 18,
+        "PB0": 3687,
+        "PA5_voltage": 1582,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1224205177,
+      "values": {
+        "PA3": 312,
+        "PA4": 37,
+        "PA7": 19,
+        "PB0": 3685,
+        "PA5_voltage": 1590,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1224376617,
+      "values": {
+        "PA3": 310,
+        "PA4": 42,
+        "PA7": 23,
+        "PB0": 3671,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1224547897,
+      "values": {
+        "PA3": 306,
+        "PA4": 40,
+        "PA7": 20,
+        "PB0": 3679,
+        "PA5_voltage": 1578,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1224719400,
+      "values": {
+        "PA3": 305,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3692,
+        "PA5_voltage": 1584,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1224890562,
+      "values": {
+        "PA3": 314,
+        "PA4": 43,
+        "PA7": 23,
+        "PB0": 3673,
+        "PA5_voltage": 1586,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1225062120,
+      "values": {
+        "PA3": 308,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3675,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1225233282,
+      "values": {
+        "PA3": 306,
+        "PA4": 38,
+        "PA7": 20,
+        "PB0": 3680,
+        "PA5_voltage": 1579,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1225404683,
+      "values": {
+        "PA3": 306,
+        "PA4": 35,
+        "PA7": 15,
+        "PB0": 3695,
+        "PA5_voltage": 1587,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1225576057,
+      "values": {
+        "PA3": 313,
+        "PA4": 43,
+        "PA7": 23,
+        "PB0": 3670,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1225747555,
+      "values": {
+        "PA3": 307,
+        "PA4": 40,
+        "PA7": 20,
+        "PB0": 3677,
+        "PA5_voltage": 1577,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1225918590,
+      "values": {
+        "PA3": 305,
+        "PA4": 36,
+        "PA7": 17,
+        "PB0": 3689,
+        "PA5_voltage": 1583,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1226090017,
+      "values": {
+        "PA3": 310,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3690,
+        "PA5_voltage": 1589,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1226261632,
+      "values": {
+        "PA3": 312,
+        "PA4": 43,
+        "PA7": 24,
+        "PB0": 3669,
+        "PA5_voltage": 1580,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1226432857,
+      "values": {
+        "PA3": 307,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3679,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1226604349,
+      "values": {
+        "PA3": 305,
+        "PA4": 36,
+        "PA7": 17,
+        "PB0": 3689,
+        "PA5_voltage": 1583,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1226775447,
+      "values": {
+        "PA3": 312,
+        "PA4": 40,
+        "PA7": 22,
+        "PB0": 3672,
+        "PA5_voltage": 1586,
+        "PA6_current": 16
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1226946882,
+      "values": {
+        "PA3": 309,
+        "PA4": 40,
+        "PA7": 22,
+        "PB0": 3670,
+        "PA5_voltage": 1579,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1227118167,
+      "values": {
+        "PA3": 305,
+        "PA4": 38,
+        "PA7": 20,
+        "PB0": 3680,
+        "PA5_voltage": 1579,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1227289747,
+      "values": {
+        "PA3": 306,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3691,
+        "PA5_voltage": 1584,
+        "PA6_current": 11
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1227461093,
+      "values": {
+        "PA3": 314,
+        "PA4": 41,
+        "PA7": 22,
+        "PB0": 3676,
+        "PA5_voltage": 1588,
+        "PA6_current": 20
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1227632565,
+      "values": {
+        "PA3": 308,
+        "PA4": 38,
+        "PA7": 21,
+        "PB0": 3674,
+        "PA5_voltage": 1577,
+        "PA6_current": 17
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1227803602,
+      "values": {
+        "PA3": 306,
+        "PA4": 38,
+        "PA7": 19,
+        "PB0": 3686,
+        "PA5_voltage": 1581,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1227975092,
+      "values": {
+        "PA3": 306,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3693,
+        "PA5_voltage": 1585,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1228146595,
+      "values": {
+        "PA3": 314,
+        "PA4": 41,
+        "PA7": 22,
+        "PB0": 3673,
+        "PA5_voltage": 1587,
+        "PA6_current": 9
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1228317697,
+      "values": {
+        "PA3": 308,
+        "PA4": 38,
+        "PA7": 22,
+        "PB0": 3674,
+        "PA5_voltage": 1577,
+        "PA6_current": 11
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1228489057,
+      "values": {
+        "PA3": 305,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3683,
+        "PA5_voltage": 1580,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1228660537,
+      "values": {
+        "PA3": 308,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3693,
+        "PA5_voltage": 1587,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1228831977,
+      "values": {
+        "PA3": 312,
+        "PA4": 44,
+        "PA7": 24,
+        "PB0": 3669,
+        "PA5_voltage": 1580,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1229003100,
+      "values": {
+        "PA3": 308,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3678,
+        "PA5_voltage": 1577,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1229174627,
+      "values": {
+        "PA3": 306,
+        "PA4": 37,
+        "PA7": 17,
+        "PB0": 3690,
+        "PA5_voltage": 1583,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1229345857,
+      "values": {
+        "PA3": 311,
+        "PA4": 40,
+        "PA7": 21,
+        "PB0": 3678,
+        "PA5_voltage": 1591,
+        "PA6_current": 11
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1229517320,
+      "values": {
+        "PA3": 309,
+        "PA4": 40,
+        "PA7": 22,
+        "PB0": 3670,
+        "PA5_voltage": 1576,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1229688851,
+      "values": {
+        "PA3": 306,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3680,
+        "PA5_voltage": 1578,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1229860123,
+      "values": {
+        "PA3": 311,
+        "PA4": 36,
+        "PA7": 17,
+        "PB0": 3687,
+        "PA5_voltage": 1590,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1230031413,
+      "values": {
+        "PA3": 310,
+        "PA4": 42,
+        "PA7": 23,
+        "PB0": 3670,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1230202827,
+      "values": {
+        "PA3": 307,
+        "PA4": 39,
+        "PA7": 19,
+        "PB0": 3678,
+        "PA5_voltage": 1578,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1230373981,
+      "values": {
+        "PA3": 306,
+        "PA4": 35,
+        "PA7": 15,
+        "PB0": 3692,
+        "PA5_voltage": 1584,
+        "PA6_current": 11
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1230545522,
+      "values": {
+        "PA3": 313,
+        "PA4": 42,
+        "PA7": 24,
+        "PB0": 3672,
+        "PA5_voltage": 1585,
+        "PA6_current": 11
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1230717007,
+      "values": {
+        "PA3": 308,
+        "PA4": 38,
+        "PA7": 21,
+        "PB0": 3679,
+        "PA5_voltage": 1578,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1230888297,
+      "values": {
+        "PA3": 306,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3693,
+        "PA5_voltage": 1585,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1231059714,
+      "values": {
+        "PA3": 314,
+        "PA4": 43,
+        "PA7": 24,
+        "PB0": 3671,
+        "PA5_voltage": 1584,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1231230937,
+      "values": {
+        "PA3": 309,
+        "PA4": 40,
+        "PA7": 21,
+        "PB0": 3673,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1231402177,
+      "values": {
+        "PA3": 304,
+        "PA4": 35,
+        "PA7": 15,
+        "PB0": 3692,
+        "PA5_voltage": 1583,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1231573640,
+      "values": {
+        "PA3": 317,
+        "PA4": 45,
+        "PA7": 26,
+        "PB0": 3672,
+        "PA5_voltage": 1584,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1231744962,
+      "values": {
+        "PA3": 309,
+        "PA4": 40,
+        "PA7": 20,
+        "PB0": 3674,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1231916457,
+      "values": {
+        "PA3": 306,
+        "PA4": 36,
+        "PA7": 17,
+        "PB0": 3684,
+        "PA5_voltage": 1580,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1232087869,
+      "values": {
+        "PA3": 310,
+        "PA4": 35,
+        "PA7": 15,
+        "PB0": 3691,
+        "PA5_voltage": 1589,
+        "PA6_current": 15
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1232259058,
+      "values": {
+        "PA3": 310,
+        "PA4": 42,
+        "PA7": 25,
+        "PB0": 3670,
+        "PA5_voltage": 1581,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1232431682,
+      "values": {
+        "PA3": 306,
+        "PA4": 38,
+        "PA7": 21,
+        "PB0": 3675,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1232601837,
+      "values": {
+        "PA3": 304,
+        "PA4": 34,
+        "PA7": 15,
+        "PB0": 3695,
+        "PA5_voltage": 1587,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1232773309,
+      "values": {
+        "PA3": 314,
+        "PA4": 40,
+        "PA7": 21,
+        "PB0": 3678,
+        "PA5_voltage": 1591,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1232944675,
+      "values": {
+        "PA3": 309,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3677,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1233115897,
+      "values": {
+        "PA3": 308,
+        "PA4": 35,
+        "PA7": 15,
+        "PB0": 3691,
+        "PA5_voltage": 1588,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1233287257,
+      "values": {
+        "PA3": 311,
+        "PA4": 43,
+        "PA7": 24,
+        "PB0": 3669,
+        "PA5_voltage": 1579,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1233458562,
+      "values": {
+        "PA3": 306,
+        "PA4": 39,
+        "PA7": 21,
+        "PB0": 3676,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1233630057,
+      "values": {
+        "PA3": 305,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3689,
+        "PA5_voltage": 1582,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1233801347,
+      "values": {
+        "PA3": 313,
+        "PA4": 40,
+        "PA7": 19,
+        "PB0": 3679,
+        "PA5_voltage": 1591,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1233972510,
+      "values": {
+        "PA3": 309,
+        "PA4": 41,
+        "PA7": 21,
+        "PB0": 3671,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1234144192,
+      "values": {
+        "PA3": 306,
+        "PA4": 40,
+        "PA7": 18,
+        "PB0": 3679,
+        "PA5_voltage": 1578,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1234315497,
+      "values": {
+        "PA3": 307,
+        "PA4": 35,
+        "PA7": 14,
+        "PB0": 3693,
+        "PA5_voltage": 1587,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1234486657,
+      "values": {
+        "PA3": 312,
+        "PA4": 44,
+        "PA7": 24,
+        "PB0": 3669,
+        "PA5_voltage": 1579,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1234658325,
+      "values": {
+        "PA3": 308,
+        "PA4": 40,
+        "PA7": 20,
+        "PB0": 3672,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1234829632,
+      "values": {
+        "PA3": 306,
+        "PA4": 38,
+        "PA7": 19,
+        "PB0": 3680,
+        "PA5_voltage": 1579,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1235000822,
+      "values": {
+        "PA3": 306,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3695,
+        "PA5_voltage": 1586,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1235172073,
+      "values": {
+        "PA3": 313,
+        "PA4": 43,
+        "PA7": 23,
+        "PB0": 3671,
+        "PA5_voltage": 1584,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1235343577,
+      "values": {
+        "PA3": 308,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3672,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1235514962,
+      "values": {
+        "PA3": 305,
+        "PA4": 36,
+        "PA7": 17,
+        "PB0": 3689,
+        "PA5_voltage": 1583,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1235686322,
+      "values": {
+        "PA3": 311,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3688,
+        "PA5_voltage": 1590,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1235857612,
+      "values": {
+        "PA3": 311,
+        "PA4": 43,
+        "PA7": 23,
+        "PB0": 3670,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1236028947,
+      "values": {
+        "PA3": 307,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3676,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1236200514,
+      "values": {
+        "PA3": 306,
+        "PA4": 34,
+        "PA7": 15,
+        "PB0": 3694,
+        "PA5_voltage": 1587,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1236371762,
+      "values": {
+        "PA3": 313,
+        "PA4": 43,
+        "PA7": 23,
+        "PB0": 3674,
+        "PA5_voltage": 1587,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1236543177,
+      "values": {
+        "PA3": 308,
+        "PA4": 42,
+        "PA7": 22,
+        "PB0": 3672,
+        "PA5_voltage": 1576,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1236714592,
+      "values": {
+        "PA3": 305,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3684,
+        "PA5_voltage": 1580,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1236885687,
+      "values": {
+        "PA3": 307,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3693,
+        "PA5_voltage": 1586,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1237057096,
+      "values": {
+        "PA3": 313,
+        "PA4": 42,
+        "PA7": 23,
+        "PB0": 3675,
+        "PA5_voltage": 1588,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1237228699,
+      "values": {
+        "PA3": 308,
+        "PA4": 39,
+        "PA7": 22,
+        "PB0": 3673,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1237399746,
+      "values": {
+        "PA3": 305,
+        "PA4": 36,
+        "PA7": 17,
+        "PB0": 3689,
+        "PA5_voltage": 1583,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1237571287,
+      "values": {
+        "PA3": 312,
+        "PA4": 36,
+        "PA7": 18,
+        "PB0": 3687,
+        "PA5_voltage": 1590,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1237742780,
+      "values": {
+        "PA3": 311,
+        "PA4": 43,
+        "PA7": 24,
+        "PB0": 3669,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1237914057,
+      "values": {
+        "PA3": 307,
+        "PA4": 38,
+        "PA7": 20,
+        "PB0": 3677,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1238085217,
+      "values": {
+        "PA3": 305,
+        "PA4": 35,
+        "PA7": 15,
+        "PB0": 3694,
+        "PA5_voltage": 1586,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1238256829,
+      "values": {
+        "PA3": 313,
+        "PA4": 41,
+        "PA7": 21,
+        "PB0": 3676,
+        "PA5_voltage": 1591,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1238428137,
+      "values": {
+        "PA3": 309,
+        "PA4": 40,
+        "PA7": 22,
+        "PB0": 3672,
+        "PA5_voltage": 1577,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1238599297,
+      "values": {
+        "PA3": 306,
+        "PA4": 39,
+        "PA7": 19,
+        "PB0": 3683,
+        "PA5_voltage": 1580,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1238770620,
+      "values": {
+        "PA3": 307,
+        "PA4": 35,
+        "PA7": 15,
+        "PB0": 3693,
+        "PA5_voltage": 1587,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1238941950,
+      "values": {
+        "PA3": 313,
+        "PA4": 43,
+        "PA7": 23,
+        "PB0": 3670,
+        "PA5_voltage": 1581,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1239113310,
+      "values": {
+        "PA3": 308,
+        "PA4": 38,
+        "PA7": 20,
+        "PB0": 3677,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1239284992,
+      "values": {
+        "PA3": 306,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3691,
+        "PA5_voltage": 1583,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1239456237,
+      "values": {
+        "PA3": 314,
+        "PA4": 42,
+        "PA7": 23,
+        "PB0": 3675,
+        "PA5_voltage": 1588,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1239627563,
+      "values": {
+        "PA3": 308,
+        "PA4": 40,
+        "PA7": 21,
+        "PB0": 3669,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1239798811,
+      "values": {
+        "PA3": 308,
+        "PA4": 38,
+        "PA7": 21,
+        "PB0": 3673,
+        "PA5_voltage": 1577,
+        "PA6_current": 16
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1239970357,
+      "values": {
+        "PA3": 306,
+        "PA4": 36,
+        "PA7": 18,
+        "PB0": 3686,
+        "PA5_voltage": 1581,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1240141532,
+      "values": {
+        "PA3": 312,
+        "PA4": 41,
+        "PA7": 22,
+        "PB0": 3674,
+        "PA5_voltage": 1588,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1240313017,
+      "values": {
+        "PA3": 308,
+        "PA4": 40,
+        "PA7": 20,
+        "PB0": 3674,
+        "PA5_voltage": 1576,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1240484524,
+      "values": {
+        "PA3": 305,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3686,
+        "PA5_voltage": 1581,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1240655570,
+      "values": {
+        "PA3": 311,
+        "PA4": 35,
+        "PA7": 18,
+        "PB0": 3689,
+        "PA5_voltage": 1590,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1240827052,
+      "values": {
+        "PA3": 312,
+        "PA4": 41,
+        "PA7": 22,
+        "PB0": 3670,
+        "PA5_voltage": 1581,
+        "PA6_current": 8
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1240998327,
+      "values": {
+        "PA3": 307,
+        "PA4": 39,
+        "PA7": 21,
+        "PB0": 3674,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1241169997,
+      "values": {
+        "PA3": 305,
+        "PA4": 36,
+        "PA7": 17,
+        "PB0": 3688,
+        "PA5_voltage": 1582,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1241341092,
+      "values": {
+        "PA3": 312,
+        "PA4": 41,
+        "PA7": 22,
+        "PB0": 3671,
+        "PA5_voltage": 1583,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1241512407,
+      "values": {
+        "PA3": 308,
+        "PA4": 39,
+        "PA7": 21,
+        "PB0": 3673,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1241683977,
+      "values": {
+        "PA3": 306,
+        "PA4": 36,
+        "PA7": 17,
+        "PB0": 3687,
+        "PA5_voltage": 1582,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1241855347,
+      "values": {
+        "PA3": 311,
+        "PA4": 36,
+        "PA7": 18,
+        "PB0": 3688,
+        "PA5_voltage": 1589,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1242026780,
+      "values": {
+        "PA3": 311,
+        "PA4": 43,
+        "PA7": 23,
+        "PB0": 3669,
+        "PA5_voltage": 1581,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1242197888,
+      "values": {
+        "PA3": 306,
+        "PA4": 40,
+        "PA7": 20,
+        "PB0": 3676,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1242369462,
+      "values": {
+        "PA3": 305,
+        "PA4": 36,
+        "PA7": 17,
+        "PB0": 3686,
+        "PA5_voltage": 1581,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1242540742,
+      "values": {
+        "PA3": 311,
+        "PA4": 34,
+        "PA7": 16,
+        "PB0": 3690,
+        "PA5_voltage": 1589,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1242711870,
+      "values": {
+        "PA3": 312,
+        "PA4": 42,
+        "PA7": 24,
+        "PB0": 3674,
+        "PA5_voltage": 1587,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1242883452,
+      "values": {
+        "PA3": 308,
+        "PA4": 40,
+        "PA7": 21,
+        "PB0": 3673,
+        "PA5_voltage": 1576,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1243054787,
+      "values": {
+        "PA3": 305,
+        "PA4": 38,
+        "PA7": 20,
+        "PB0": 3681,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1243226269,
+      "values": {
+        "PA3": 305,
+        "PA4": 34,
+        "PA7": 16,
+        "PB0": 3694,
+        "PA5_voltage": 1586,
+        "PA6_current": 16
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1243397480,
+      "values": {
+        "PA3": 313,
+        "PA4": 42,
+        "PA7": 24,
+        "PB0": 3672,
+        "PA5_voltage": 1584,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1243568937,
+      "values": {
+        "PA3": 309,
+        "PA4": 39,
+        "PA7": 21,
+        "PB0": 3673,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1243740162,
+      "values": {
+        "PA3": 306,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3685,
+        "PA5_voltage": 1582,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1243911390,
+      "values": {
+        "PA3": 312,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3688,
+        "PA5_voltage": 1588,
+        "PA6_current": 19
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1244083072,
+      "values": {
+        "PA3": 311,
+        "PA4": 44,
+        "PA7": 24,
+        "PB0": 3669,
+        "PA5_voltage": 1579,
+        "PA6_current": 15
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1244254429,
+      "values": {
+        "PA3": 306,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3685,
+        "PA5_voltage": 1580,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1244425803,
+      "values": {
+        "PA3": 310,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3690,
+        "PA5_voltage": 1589,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1244597133,
+      "values": {
+        "PA3": 311,
+        "PA4": 43,
+        "PA7": 24,
+        "PB0": 3670,
+        "PA5_voltage": 1579,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1244768297,
+      "values": {
+        "PA3": 307,
+        "PA4": 38,
+        "PA7": 20,
+        "PB0": 3675,
+        "PA5_voltage": 1577,
+        "PA6_current": 11
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1244939682,
+      "values": {
+        "PA3": 305,
+        "PA4": 37,
+        "PA7": 17,
+        "PB0": 3689,
+        "PA5_voltage": 1583,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1245111235,
+      "values": {
+        "PA3": 311,
+        "PA4": 41,
+        "PA7": 22,
+        "PB0": 3677,
+        "PA5_voltage": 1590,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1245282457,
+      "values": {
+        "PA3": 307,
+        "PA4": 40,
+        "PA7": 21,
+        "PB0": 3674,
+        "PA5_voltage": 1576,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1245453802,
+      "values": {
+        "PA3": 305,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3684,
+        "PA5_voltage": 1580,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1245625132,
+      "values": {
+        "PA3": 309,
+        "PA4": 35,
+        "PA7": 17,
+        "PB0": 3691,
+        "PA5_voltage": 1589,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1245796617,
+      "values": {
+        "PA3": 311,
+        "PA4": 43,
+        "PA7": 24,
+        "PB0": 3669,
+        "PA5_voltage": 1579,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1245967852,
+      "values": {
+        "PA3": 306,
+        "PA4": 38,
+        "PA7": 20,
+        "PB0": 3682,
+        "PA5_voltage": 1579,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1246139245,
+      "values": {
+        "PA3": 310,
+        "PA4": 35,
+        "PA7": 17,
+        "PB0": 3689,
+        "PA5_voltage": 1589,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1246310767,
+      "values": {
+        "PA3": 311,
+        "PA4": 44,
+        "PA7": 24,
+        "PB0": 3670,
+        "PA5_voltage": 1577,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1246481842,
+      "values": {
+        "PA3": 306,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3688,
+        "PA5_voltage": 1582,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1246653325,
+      "values": {
+        "PA3": 308,
+        "PA4": 37,
+        "PA7": 16,
+        "PB0": 3694,
+        "PA5_voltage": 1587,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1246824623,
+      "values": {
+        "PA3": 313,
+        "PA4": 43,
+        "PA7": 24,
+        "PB0": 3670,
+        "PA5_voltage": 1579,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1246996873,
+      "values": {
+        "PA3": 307,
+        "PA4": 38,
+        "PA7": 19,
+        "PB0": 3682,
+        "PA5_voltage": 1580,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1247167230,
+      "values": {
+        "PA3": 311,
+        "PA4": 36,
+        "PA7": 18,
+        "PB0": 3687,
+        "PA5_voltage": 1590,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1247338938,
+      "values": {
+        "PA3": 311,
+        "PA4": 42,
+        "PA7": 24,
+        "PB0": 3670,
+        "PA5_voltage": 1579,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1247510152,
+      "values": {
+        "PA3": 311,
+        "PA4": 43,
+        "PA7": 23,
+        "PB0": 3677,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1247681629,
+      "values": {
+        "PA3": 308,
+        "PA4": 38,
+        "PA7": 18,
+        "PB0": 3690,
+        "PA5_voltage": 1583,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1247852992,
+      "values": {
+        "PA3": 313,
+        "PA4": 38,
+        "PA7": 21,
+        "PB0": 3683,
+        "PA5_voltage": 1591,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1248024355,
+      "values": {
+        "PA3": 310,
+        "PA4": 41,
+        "PA7": 21,
+        "PB0": 3671,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1248195457,
+      "values": {
+        "PA3": 307,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3677,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1248367069,
+      "values": {
+        "PA3": 304,
+        "PA4": 36,
+        "PA7": 17,
+        "PB0": 3690,
+        "PA5_voltage": 1583,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1248538177,
+      "values": {
+        "PA3": 311,
+        "PA4": 42,
+        "PA7": 24,
+        "PB0": 3671,
+        "PA5_voltage": 1584,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1248709792,
+      "values": {
+        "PA3": 307,
+        "PA4": 39,
+        "PA7": 22,
+        "PB0": 3672,
+        "PA5_voltage": 1578,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1248881097,
+      "values": {
+        "PA3": 304,
+        "PA4": 36,
+        "PA7": 17,
+        "PB0": 3687,
+        "PA5_voltage": 1582,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1249052322,
+      "values": {
+        "PA3": 310,
+        "PA4": 42,
+        "PA7": 23,
+        "PB0": 3676,
+        "PA5_voltage": 1589,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1249223712,
+      "values": {
+        "PA3": 308,
+        "PA4": 38,
+        "PA7": 21,
+        "PB0": 3673,
+        "PA5_voltage": 1577,
+        "PA6_current": 17
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1249395157,
+      "values": {
+        "PA3": 305,
+        "PA4": 37,
+        "PA7": 19,
+        "PB0": 3682,
+        "PA5_voltage": 1580,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1249566537,
+      "values": {
+        "PA3": 305,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3694,
+        "PA5_voltage": 1587,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1249737732,
+      "values": {
+        "PA3": 313,
+        "PA4": 42,
+        "PA7": 24,
+        "PB0": 3670,
+        "PA5_voltage": 1582,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1249909117,
+      "values": {
+        "PA3": 310,
+        "PA4": 39,
+        "PA7": 21,
+        "PB0": 3672,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1250080686,
+      "values": {
+        "PA3": 306,
+        "PA4": 36,
+        "PA7": 17,
+        "PB0": 3686,
+        "PA5_voltage": 1581,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1250251977,
+      "values": {
+        "PA3": 310,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3689,
+        "PA5_voltage": 1589,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1250423272,
+      "values": {
+        "PA3": 311,
+        "PA4": 43,
+        "PA7": 24,
+        "PB0": 3669,
+        "PA5_voltage": 1581,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1250594755,
+      "values": {
+        "PA3": 308,
+        "PA4": 40,
+        "PA7": 20,
+        "PB0": 3673,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1250765842,
+      "values": {
+        "PA3": 303,
+        "PA4": 36,
+        "PA7": 18,
+        "PB0": 3688,
+        "PA5_voltage": 1583,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1250937323,
+      "values": {
+        "PA3": 312,
+        "PA4": 40,
+        "PA7": 20,
+        "PB0": 3683,
+        "PA5_voltage": 1592,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1251108697,
+      "values": {
+        "PA3": 309,
+        "PA4": 41,
+        "PA7": 21,
+        "PB0": 3671,
+        "PA5_voltage": 1576,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1251279927,
+      "values": {
+        "PA3": 306,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3685,
+        "PA5_voltage": 1580,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1251451567,
+      "values": {
+        "PA3": 310,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3692,
+        "PA5_voltage": 1588,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1251623342,
+      "values": {
+        "PA3": 314,
+        "PA4": 43,
+        "PA7": 23,
+        "PB0": 3674,
+        "PA5_voltage": 1587,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1251794319,
+      "values": {
+        "PA3": 308,
+        "PA4": 40,
+        "PA7": 21,
+        "PB0": 3672,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1251965710,
+      "values": {
+        "PA3": 304,
+        "PA4": 36,
+        "PA7": 17,
+        "PB0": 3687,
+        "PA5_voltage": 1581,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1252137035,
+      "values": {
+        "PA3": 312,
+        "PA4": 40,
+        "PA7": 20,
+        "PB0": 3681,
+        "PA5_voltage": 1591,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1252308232,
+      "values": {
+        "PA3": 309,
+        "PA4": 42,
+        "PA7": 23,
+        "PB0": 3671,
+        "PA5_voltage": 1578,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1252479522,
+      "values": {
+        "PA3": 304,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3684,
+        "PA5_voltage": 1580,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1252651017,
+      "values": {
+        "PA3": 306,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3694,
+        "PA5_voltage": 1586,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1252822307,
+      "values": {
+        "PA3": 313,
+        "PA4": 43,
+        "PA7": 23,
+        "PB0": 3672,
+        "PA5_voltage": 1585,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1252993537,
+      "values": {
+        "PA3": 309,
+        "PA4": 40,
+        "PA7": 20,
+        "PB0": 3672,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1253165000,
+      "values": {
+        "PA3": 305,
+        "PA4": 39,
+        "PA7": 19,
+        "PB0": 3682,
+        "PA5_voltage": 1579,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1253336247,
+      "values": {
+        "PA3": 308,
+        "PA4": 34,
+        "PA7": 16,
+        "PB0": 3691,
+        "PA5_voltage": 1589,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1253507607,
+      "values": {
+        "PA3": 312,
+        "PA4": 43,
+        "PA7": 24,
+        "PB0": 3669,
+        "PA5_voltage": 1580,
+        "PA6_current": 11
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1253679177,
+      "values": {
+        "PA3": 307,
+        "PA4": 38,
+        "PA7": 20,
+        "PB0": 3678,
+        "PA5_voltage": 1578,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1253850467,
+      "values": {
+        "PA3": 305,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3695,
+        "PA5_voltage": 1587,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1254021971,
+      "values": {
+        "PA3": 315,
+        "PA4": 41,
+        "PA7": 21,
+        "PB0": 3677,
+        "PA5_voltage": 1590,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1254193117,
+      "values": {
+        "PA3": 310,
+        "PA4": 41,
+        "PA7": 21,
+        "PB0": 3671,
+        "PA5_voltage": 1577,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1254364628,
+      "values": {
+        "PA3": 308,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3677,
+        "PA5_voltage": 1577,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1254535977,
+      "values": {
+        "PA3": 304,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3694,
+        "PA5_voltage": 1587,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1254707172,
+      "values": {
+        "PA3": 312,
+        "PA4": 43,
+        "PA7": 24,
+        "PB0": 3670,
+        "PA5_voltage": 1580,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1254878632,
+      "values": {
+        "PA3": 308,
+        "PA4": 39,
+        "PA7": 21,
+        "PB0": 3675,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1255049857,
+      "values": {
+        "PA3": 306,
+        "PA4": 37,
+        "PA7": 17,
+        "PB0": 3687,
+        "PA5_voltage": 1582,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1255221337,
+      "values": {
+        "PA3": 313,
+        "PA4": 40,
+        "PA7": 21,
+        "PB0": 3678,
+        "PA5_voltage": 1591,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1255392577,
+      "values": {
+        "PA3": 309,
+        "PA4": 40,
+        "PA7": 22,
+        "PB0": 3670,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1255564189,
+      "values": {
+        "PA3": 306,
+        "PA4": 40,
+        "PA7": 19,
+        "PB0": 3675,
+        "PA5_voltage": 1577,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1255735549,
+      "values": {
+        "PA3": 305,
+        "PA4": 37,
+        "PA7": 17,
+        "PB0": 3691,
+        "PA5_voltage": 1583,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1255906857,
+      "values": {
+        "PA3": 312,
+        "PA4": 42,
+        "PA7": 23,
+        "PB0": 3678,
+        "PA5_voltage": 1591,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1256077950,
+      "values": {
+        "PA3": 309,
+        "PA4": 41,
+        "PA7": 22,
+        "PB0": 3669,
+        "PA5_voltage": 1580,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1256249452,
+      "values": {
+        "PA3": 306,
+        "PA4": 38,
+        "PA7": 20,
+        "PB0": 3676,
+        "PA5_voltage": 1576,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1256420822,
+      "values": {
+        "PA3": 305,
+        "PA4": 37,
+        "PA7": 16,
+        "PB0": 3691,
+        "PA5_voltage": 1584,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1256592135,
+      "values": {
+        "PA3": 312,
+        "PA4": 42,
+        "PA7": 23,
+        "PB0": 3676,
+        "PA5_voltage": 1589,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1256763608,
+      "values": {
+        "PA3": 307,
+        "PA4": 40,
+        "PA7": 21,
+        "PB0": 3675,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1256934867,
+      "values": {
+        "PA3": 306,
+        "PA4": 38,
+        "PA7": 20,
+        "PB0": 3683,
+        "PA5_voltage": 1580,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1257106444,
+      "values": {
+        "PA3": 307,
+        "PA4": 36,
+        "PA7": 15,
+        "PB0": 3694,
+        "PA5_voltage": 1587,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1257277513,
+      "values": {
+        "PA3": 314,
+        "PA4": 44,
+        "PA7": 24,
+        "PB0": 3671,
+        "PA5_voltage": 1582,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1257449097,
+      "values": {
+        "PA3": 309,
+        "PA4": 40,
+        "PA7": 20,
+        "PB0": 3676,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1257620509,
+      "values": {
+        "PA3": 307,
+        "PA4": 36,
+        "PA7": 17,
+        "PB0": 3691,
+        "PA5_voltage": 1584,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1257791872,
+      "values": {
+        "PA3": 313,
+        "PA4": 42,
+        "PA7": 23,
+        "PB0": 3672,
+        "PA5_voltage": 1586,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1257962910,
+      "values": {
+        "PA3": 308,
+        "PA4": 40,
+        "PA7": 20,
+        "PB0": 3674,
+        "PA5_voltage": 1576,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1258134300,
+      "values": {
+        "PA3": 306,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3681,
+        "PA5_voltage": 1579,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1258305932,
+      "values": {
+        "PA3": 306,
+        "PA4": 35,
+        "PA7": 15,
+        "PB0": 3694,
+        "PA5_voltage": 1587,
+        "PA6_current": 10
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1258477122,
+      "values": {
+        "PA3": 313,
+        "PA4": 44,
+        "PA7": 23,
+        "PB0": 3670,
+        "PA5_voltage": 1581,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1258648407,
+      "values": {
+        "PA3": 307,
+        "PA4": 40,
+        "PA7": 20,
+        "PB0": 3673,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1258820033,
+      "values": {
+        "PA3": 305,
+        "PA4": 36,
+        "PA7": 17,
+        "PB0": 3689,
+        "PA5_voltage": 1582,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1258991420,
+      "values": {
+        "PA3": 312,
+        "PA4": 41,
+        "PA7": 21,
+        "PB0": 3680,
+        "PA5_voltage": 1591,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1259162613,
+      "values": {
+        "PA3": 309,
+        "PA4": 41,
+        "PA7": 21,
+        "PB0": 3671,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1259333922,
+      "values": {
+        "PA3": 306,
+        "PA4": 38,
+        "PA7": 21,
+        "PB0": 3677,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1259505207,
+      "values": {
+        "PA3": 306,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3691,
+        "PA5_voltage": 1584,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1259676551,
+      "values": {
+        "PA3": 314,
+        "PA4": 41,
+        "PA7": 21,
+        "PB0": 3675,
+        "PA5_voltage": 1589,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1259848195,
+      "values": {
+        "PA3": 309,
+        "PA4": 41,
+        "PA7": 22,
+        "PB0": 3671,
+        "PA5_voltage": 1578,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1260019427,
+      "values": {
+        "PA3": 305,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3687,
+        "PA5_voltage": 1581,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1260190912,
+      "values": {
+        "PA3": 309,
+        "PA4": 35,
+        "PA7": 15,
+        "PB0": 3693,
+        "PA5_voltage": 1588,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1260362007,
+      "values": {
+        "PA3": 313,
+        "PA4": 44,
+        "PA7": 24,
+        "PB0": 3672,
+        "PA5_voltage": 1584,
+        "PA6_current": 18
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1260533377,
+      "values": {
+        "PA3": 308,
+        "PA4": 38,
+        "PA7": 20,
+        "PB0": 3679,
+        "PA5_voltage": 1578,
+        "PA6_current": 16
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1260704670,
+      "values": {
+        "PA3": 305,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3693,
+        "PA5_voltage": 1586,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1260876162,
+      "values": {
+        "PA3": 313,
+        "PA4": 43,
+        "PA7": 23,
+        "PB0": 3673,
+        "PA5_voltage": 1586,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1261047657,
+      "values": {
+        "PA3": 307,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3676,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1261218750,
+      "values": {
+        "PA3": 306,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3685,
+        "PA5_voltage": 1581,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1261390161,
+      "values": {
+        "PA3": 309,
+        "PA4": 34,
+        "PA7": 16,
+        "PB0": 3691,
+        "PA5_voltage": 1588,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1261561521,
+      "values": {
+        "PA3": 313,
+        "PA4": 43,
+        "PA7": 23,
+        "PB0": 3671,
+        "PA5_voltage": 1581,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1261733177,
+      "values": {
+        "PA3": 308,
+        "PA4": 40,
+        "PA7": 21,
+        "PB0": 3671,
+        "PA5_voltage": 1576,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1261904524,
+      "values": {
+        "PA3": 305,
+        "PA4": 36,
+        "PA7": 18,
+        "PB0": 3684,
+        "PA5_voltage": 1580,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1262075550,
+      "values": {
+        "PA3": 312,
+        "PA4": 35,
+        "PA7": 17,
+        "PB0": 3688,
+        "PA5_voltage": 1589,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1262246910,
+      "values": {
+        "PA3": 311,
+        "PA4": 43,
+        "PA7": 23,
+        "PB0": 3669,
+        "PA5_voltage": 1578,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1262418327,
+      "values": {
+        "PA3": 307,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3681,
+        "PA5_voltage": 1579,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1262589958,
+      "values": {
+        "PA3": 307,
+        "PA4": 36,
+        "PA7": 17,
+        "PB0": 3689,
+        "PA5_voltage": 1582,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1262761177,
+      "values": {
+        "PA3": 312,
+        "PA4": 39,
+        "PA7": 21,
+        "PB0": 3682,
+        "PA5_voltage": 1591,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1262932617,
+      "values": {
+        "PA3": 309,
+        "PA4": 41,
+        "PA7": 22,
+        "PB0": 3671,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1263103777,
+      "values": {
+        "PA3": 306,
+        "PA4": 38,
+        "PA7": 20,
+        "PB0": 3683,
+        "PA5_voltage": 1580,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1263275137,
+      "values": {
+        "PA3": 306,
+        "PA4": 35,
+        "PA7": 15,
+        "PB0": 3695,
+        "PA5_voltage": 1587,
+        "PA6_current": 10
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1263446497,
+      "values": {
+        "PA3": 313,
+        "PA4": 41,
+        "PA7": 22,
+        "PB0": 3677,
+        "PA5_voltage": 1591,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1263618057,
+      "values": {
+        "PA3": 312,
+        "PA4": 42,
+        "PA7": 24,
+        "PB0": 3672,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1263789544,
+      "values": {
+        "PA3": 306,
+        "PA4": 38,
+        "PA7": 19,
+        "PB0": 3684,
+        "PA5_voltage": 1580,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1263961018,
+      "values": {
+        "PA3": 311,
+        "PA4": 38,
+        "PA7": 20,
+        "PB0": 3685,
+        "PA5_voltage": 1590,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1264131890,
+      "values": {
+        "PA3": 311,
+        "PA4": 41,
+        "PA7": 23,
+        "PB0": 3671,
+        "PA5_voltage": 1584,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1264303480,
+      "values": {
+        "PA3": 307,
+        "PA4": 39,
+        "PA7": 21,
+        "PB0": 3674,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1264474792,
+      "values": {
+        "PA3": 304,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3691,
+        "PA5_voltage": 1583,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1264646121,
+      "values": {
+        "PA3": 312,
+        "PA4": 41,
+        "PA7": 22,
+        "PB0": 3673,
+        "PA5_voltage": 1587,
+        "PA6_current": 10
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1264817497,
+      "values": {
+        "PA3": 307,
+        "PA4": 39,
+        "PA7": 21,
+        "PB0": 3671,
+        "PA5_voltage": 1577,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1264988937,
+      "values": {
+        "PA3": 305,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3680,
+        "PA5_voltage": 1579,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1265160352,
+      "values": {
+        "PA3": 304,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3693,
+        "PA5_voltage": 1585,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1265331712,
+      "values": {
+        "PA3": 314,
+        "PA4": 43,
+        "PA7": 23,
+        "PB0": 3670,
+        "PA5_voltage": 1582,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1265502937,
+      "values": {
+        "PA3": 308,
+        "PA4": 41,
+        "PA7": 20,
+        "PB0": 3675,
+        "PA5_voltage": 1577,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1265674297,
+      "values": {
+        "PA3": 306,
+        "PA4": 36,
+        "PA7": 18,
+        "PB0": 3688,
+        "PA5_voltage": 1582,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1265845789,
+      "values": {
+        "PA3": 310,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3691,
+        "PA5_voltage": 1588,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1266017027,
+      "values": {
+        "PA3": 312,
+        "PA4": 43,
+        "PA7": 24,
+        "PB0": 3670,
+        "PA5_voltage": 1579,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1266188403,
+      "values": {
+        "PA3": 307,
+        "PA4": 39,
+        "PA7": 21,
+        "PB0": 3679,
+        "PA5_voltage": 1577,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1266361026,
+      "values": {
+        "PA3": 306,
+        "PA4": 37,
+        "PA7": 16,
+        "PB0": 3690,
+        "PA5_voltage": 1583,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1266531080,
+      "values": {
+        "PA3": 314,
+        "PA4": 42,
+        "PA7": 24,
+        "PB0": 3671,
+        "PA5_voltage": 1583,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1266702457,
+      "values": {
+        "PA3": 308,
+        "PA4": 40,
+        "PA7": 21,
+        "PB0": 3671,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1266873772,
+      "values": {
+        "PA3": 306,
+        "PA4": 38,
+        "PA7": 20,
+        "PB0": 3680,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1267045117,
+      "values": {
+        "PA3": 310,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3691,
+        "PA5_voltage": 1589,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1267216562,
+      "values": {
+        "PA3": 311,
+        "PA4": 43,
+        "PA7": 24,
+        "PB0": 3670,
+        "PA5_voltage": 1583,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1267387753,
+      "values": {
+        "PA3": 306,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3676,
+        "PA5_voltage": 1578,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1267559407,
+      "values": {
+        "PA3": 306,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3687,
+        "PA5_voltage": 1581,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1267730642,
+      "values": {
+        "PA3": 312,
+        "PA4": 40,
+        "PA7": 20,
+        "PB0": 3681,
+        "PA5_voltage": 1591,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1267902002,
+      "values": {
+        "PA3": 309,
+        "PA4": 41,
+        "PA7": 22,
+        "PB0": 3671,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1268073217,
+      "values": {
+        "PA3": 307,
+        "PA4": 38,
+        "PA7": 20,
+        "PB0": 3679,
+        "PA5_voltage": 1578,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1268244707,
+      "values": {
+        "PA3": 306,
+        "PA4": 36,
+        "PA7": 17,
+        "PB0": 3687,
+        "PA5_voltage": 1582,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1268416192,
+      "values": {
+        "PA3": 312,
+        "PA4": 41,
+        "PA7": 22,
+        "PB0": 3675,
+        "PA5_voltage": 1589,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1268587580,
+      "values": {
+        "PA3": 308,
+        "PA4": 39,
+        "PA7": 21,
+        "PB0": 3673,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1268758838,
+      "values": {
+        "PA3": 304,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3689,
+        "PA5_voltage": 1582,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1268930201,
+      "values": {
+        "PA3": 311,
+        "PA4": 41,
+        "PA7": 22,
+        "PB0": 3673,
+        "PA5_voltage": 1585,
+        "PA6_current": 17
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1269101362,
+      "values": {
+        "PA3": 308,
+        "PA4": 42,
+        "PA7": 24,
+        "PB0": 3669,
+        "PA5_voltage": 1579,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1269272947,
+      "values": {
+        "PA3": 305,
+        "PA4": 36,
+        "PA7": 19,
+        "PB0": 3678,
+        "PA5_voltage": 1578,
+        "PA6_current": 16
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1269444232,
+      "values": {
+        "PA3": 305,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3692,
+        "PA5_voltage": 1584,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1269615709,
+      "values": {
+        "PA3": 314,
+        "PA4": 41,
+        "PA7": 21,
+        "PB0": 3678,
+        "PA5_voltage": 1592,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1269787072,
+      "values": {
+        "PA3": 310,
+        "PA4": 41,
+        "PA7": 22,
+        "PB0": 3671,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1269958435,
+      "values": {
+        "PA3": 307,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3678,
+        "PA5_voltage": 1578,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1270129792,
+      "values": {
+        "PA3": 306,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3694,
+        "PA5_voltage": 1585,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1270301097,
+      "values": {
+        "PA3": 313,
+        "PA4": 42,
+        "PA7": 24,
+        "PB0": 3674,
+        "PA5_voltage": 1588,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1270472257,
+      "values": {
+        "PA3": 308,
+        "PA4": 41,
+        "PA7": 21,
+        "PB0": 3672,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1270643869,
+      "values": {
+        "PA3": 306,
+        "PA4": 38,
+        "PA7": 21,
+        "PB0": 3681,
+        "PA5_voltage": 1579,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1270815042,
+      "values": {
+        "PA3": 304,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3693,
+        "PA5_voltage": 1584,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1270987257,
+      "values": {
+        "PA3": 312,
+        "PA4": 42,
+        "PA7": 23,
+        "PB0": 3674,
+        "PA5_voltage": 1587,
+        "PA6_current": 11
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1271157732,
+      "values": {
+        "PA3": 307,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3677,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1271329173,
+      "values": {
+        "PA3": 306,
+        "PA4": 37,
+        "PA7": 17,
+        "PB0": 3687,
+        "PA5_voltage": 1582,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1271500482,
+      "values": {
+        "PA3": 310,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3691,
+        "PA5_voltage": 1589,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1271671710,
+      "values": {
+        "PA3": 311,
+        "PA4": 43,
+        "PA7": 24,
+        "PB0": 3670,
+        "PA5_voltage": 1581,
+        "PA6_current": 15
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1271843257,
+      "values": {
+        "PA3": 307,
+        "PA4": 41,
+        "PA7": 20,
+        "PB0": 3673,
+        "PA5_voltage": 1577,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1272014617,
+      "values": {
+        "PA3": 306,
+        "PA4": 39,
+        "PA7": 20,
+        "PB0": 3683,
+        "PA5_voltage": 1580,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1272186115,
+      "values": {
+        "PA3": 309,
+        "PA4": 35,
+        "PA7": 17,
+        "PB0": 3689,
+        "PA5_voltage": 1589,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1272357362,
+      "values": {
+        "PA3": 311,
+        "PA4": 43,
+        "PA7": 24,
+        "PB0": 3671,
+        "PA5_voltage": 1576,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1272528777,
+      "values": {
+        "PA3": 306,
+        "PA4": 39,
+        "PA7": 19,
+        "PB0": 3683,
+        "PA5_voltage": 1581,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1272700057,
+      "values": {
+        "PA3": 310,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3691,
+        "PA5_voltage": 1589,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1272871372,
+      "values": {
+        "PA3": 313,
+        "PA4": 44,
+        "PA7": 24,
+        "PB0": 3669,
+        "PA5_voltage": 1580,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1273042857,
+      "values": {
+        "PA3": 307,
+        "PA4": 39,
+        "PA7": 21,
+        "PB0": 3678,
+        "PA5_voltage": 1578,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1273214092,
+      "values": {
+        "PA3": 306,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3689,
+        "PA5_voltage": 1584,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1273385320,
+      "values": {
+        "PA3": 313,
+        "PA4": 39,
+        "PA7": 21,
+        "PB0": 3682,
+        "PA5_voltage": 1591,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1273556787,
+      "values": {
+        "PA3": 310,
+        "PA4": 41,
+        "PA7": 22,
+        "PB0": 3670,
+        "PA5_voltage": 1578,
+        "PA6_current": 11
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1273728310,
+      "values": {
+        "PA3": 305,
+        "PA4": 37,
+        "PA7": 19,
+        "PB0": 3683,
+        "PA5_voltage": 1580,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1273899577,
+      "values": {
+        "PA3": 305,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3693,
+        "PA5_voltage": 1586,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1274071100,
+      "values": {
+        "PA3": 313,
+        "PA4": 42,
+        "PA7": 24,
+        "PB0": 3671,
+        "PA5_voltage": 1585,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1274242192,
+      "values": {
+        "PA3": 308,
+        "PA4": 41,
+        "PA7": 21,
+        "PB0": 3671,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1274413777,
+      "values": {
+        "PA3": 305,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3683,
+        "PA5_voltage": 1579,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1274584962,
+      "values": {
+        "PA3": 310,
+        "PA4": 36,
+        "PA7": 18,
+        "PB0": 3687,
+        "PA5_voltage": 1590,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1274756457,
+      "values": {
+        "PA3": 309,
+        "PA4": 43,
+        "PA7": 23,
+        "PB0": 3671,
+        "PA5_voltage": 1576,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1274927550,
+      "values": {
+        "PA3": 305,
+        "PA4": 38,
+        "PA7": 19,
+        "PB0": 3684,
+        "PA5_voltage": 1580,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1275099097,
+      "values": {
+        "PA3": 306,
+        "PA4": 35,
+        "PA7": 15,
+        "PB0": 3694,
+        "PA5_voltage": 1586,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1275270337,
+      "values": {
+        "PA3": 313,
+        "PA4": 41,
+        "PA7": 22,
+        "PB0": 3672,
+        "PA5_voltage": 1585,
+        "PA6_current": 16
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1275441762,
+      "values": {
+        "PA3": 308,
+        "PA4": 40,
+        "PA7": 21,
+        "PB0": 3671,
+        "PA5_voltage": 1578,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1275613047,
+      "values": {
+        "PA3": 305,
+        "PA4": 39,
+        "PA7": 19,
+        "PB0": 3681,
+        "PA5_voltage": 1578,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1275784432,
+      "values": {
+        "PA3": 310,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3690,
+        "PA5_voltage": 1589,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1275956066,
+      "values": {
+        "PA3": 311,
+        "PA4": 43,
+        "PA7": 24,
+        "PB0": 3671,
+        "PA5_voltage": 1583,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1276127413,
+      "values": {
+        "PA3": 307,
+        "PA4": 40,
+        "PA7": 21,
+        "PB0": 3674,
+        "PA5_voltage": 1576,
+        "PA6_current": 15
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1276298523,
+      "values": {
+        "PA3": 304,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3687,
+        "PA5_voltage": 1582,
+        "PA6_current": 15
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1276469992,
+      "values": {
+        "PA3": 312,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3688,
+        "PA5_voltage": 1590,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1276641427,
+      "values": {
+        "PA3": 313,
+        "PA4": 45,
+        "PA7": 24,
+        "PB0": 3670,
+        "PA5_voltage": 1577,
+        "PA6_current": 22
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1276812846,
+      "values": {
+        "PA3": 309,
+        "PA4": 38,
+        "PA7": 21,
+        "PB0": 3676,
+        "PA5_voltage": 1578,
+        "PA6_current": 16
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1276984137,
+      "values": {
+        "PA3": 306,
+        "PA4": 35,
+        "PA7": 16,
+        "PB0": 3693,
+        "PA5_voltage": 1585,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1277155417,
+      "values": {
+        "PA3": 314,
+        "PA4": 41,
+        "PA7": 22,
+        "PB0": 3675,
+        "PA5_voltage": 1588,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1277326642,
+      "values": {
+        "PA3": 310,
+        "PA4": 41,
+        "PA7": 22,
+        "PB0": 3670,
+        "PA5_voltage": 1577,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1277497950,
+      "values": {
+        "PA3": 306,
+        "PA4": 38,
+        "PA7": 21,
+        "PB0": 3677,
+        "PA5_voltage": 1578,
+        "PA6_current": 6
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1277669330,
+      "values": {
+        "PA3": 305,
+        "PA4": 36,
+        "PA7": 16,
+        "PB0": 3692,
+        "PA5_voltage": 1584,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1277840994,
+      "values": {
+        "PA3": 314,
+        "PA4": 42,
+        "PA7": 24,
+        "PB0": 3671,
+        "PA5_voltage": 1583,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1278012217,
+      "values": {
+        "PA3": 308,
+        "PA4": 39,
+        "PA7": 21,
+        "PB0": 3674,
+        "PA5_voltage": 1576,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1278183727,
+      "values": {
+        "PA3": 306,
+        "PA4": 37,
+        "PA7": 18,
+        "PB0": 3683,
+        "PA5_voltage": 1579,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1278354973,
+      "values": {
+        "PA3": 312,
+        "PA4": 40,
+        "PA7": 20,
+        "PB0": 3681,
+        "PA5_voltage": 1591,
+        "PA6_current": 13
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1278526388,
+      "values": {
+        "PA3": 309,
+        "PA4": 43,
+        "PA7": 23,
+        "PB0": 3670,
+        "PA5_voltage": 1577,
+        "PA6_current": 14
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1278697576,
+      "values": {
+        "PA3": 305,
+        "PA4": 38,
+        "PA7": 18,
+        "PB0": 3685,
+        "PA5_voltage": 1580,
+        "PA6_current": 10
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    },
+    {
+      "cycles": 1278868830,
+      "values": {
+        "PA3": 307,
+        "PA4": 35,
+        "PA7": 14,
+        "PB0": 3694,
+        "PA5_voltage": 1587,
+        "PA6_current": 12
+      },
+      "gpio_raw": [
+        32768,
+        16,
+        0
+      ],
+      "step": 1,
+      "running": 0
+    }
+  ],
+  "caveats": [
+    "Slow asynchronous regular ADC groups; cycles/step/GPIO are consumption time, not ADC sample time.",
+    "No neutral/zero-cross identification from mean alone. No simultaneous three-phase reference.",
+    "GPIO analog modes have unusable digital levels; no SWD pins sampled. Aliasing prevents reliable edge frequency inference."
+  ]
+}
