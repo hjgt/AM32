@@ -1701,14 +1701,13 @@ void loadEEpromSettings()
     }
 #ifdef TARGET_FD_NATIVE_SINE
     /* Trial-only RAM overrides; the existing settings page remains untouched. */
-    eepromBuffer.startup_power = 150u;
-    eepromBuffer.motor_kv = 22u; /* 22*40+20 = 900 KV */
-    eepromBuffer.motor_poles = 14u;
-    eepromBuffer.advance_level = 18u; /* (18-10)*0.9375 = 7.5 degrees */
-    eepromBuffer.auto_advance = 0u;
+    eepromBuffer.startup_power = FD_NATIVE_SINE_STARTUP_POWER;
+    eepromBuffer.motor_kv = FD_NATIVE_SINE_MOTOR_KV_CODE; /* 22*40+20 = 900 KV */
+    eepromBuffer.motor_poles = FD_NATIVE_SINE_MOTOR_POLES;
+    /* Keep the stored timing and automatic/manual timing selection. */
     eepromBuffer.use_sine_start = 1u;
-    eepromBuffer.sine_mode_changeover_thottle_level = 15u;
-    eepromBuffer.sine_mode_power = 6u;
+    eepromBuffer.sine_mode_changeover_thottle_level = FD_NATIVE_SINE_RANGE;
+    eepromBuffer.sine_mode_power = FD_NATIVE_SINE_POWER;
     eepromBuffer.comp_pwm = 1u;
     eepromBuffer.variable_pwm = 0u;
     eepromBuffer.pwm_frequency = 24u;

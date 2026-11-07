@@ -57,7 +57,7 @@ static void generatePwmTimerEvent(void){}
 void commutate(void){assert(!bridge);assert(ccr[0]==ccr[1]&&ccr[1]==ccr[2]);assert(ccr[3]);step=step==6?1:step+1;commutations++;bridge=2;}
 `;
 const prefix=src;
-const program=prefix+`\n#include "${path.join(root,'Src/fd6288_native_sine.inc')}"\n`+`
+let program=prefix+`\n#include "${path.join(root,'Src/fd6288_native_sine.inc')}"\n`+`
 static void phaseAPWM(void){bridge=1;}
 static void phaseBPWM(void){bridge=1;}
 static void phaseCPWM(void){bridge=1;}
@@ -78,7 +78,10 @@ static void nativeStep(void){for(unsigned once=0;once<1;once++){${sine}}}
 static void zero(void){adjusted_input=0;fdBenchGuardInput();assert(!bridge&&!fd_power_bench.inhibit);}
 static void begin(unsigned throttle){zero();adjusted_input=throttle;assert(!fdBenchGuardInput());mapInput();assert(fd_native_sine.phase==1);}
 int main(void){
- eepromBuffer.use_sine_start=0;settingsOverride();assert(fdBenchConfigOk());assert(eepromBuffer.minimum_duty_cycle==1);
+ eepromBuffer.use_sine_start=0;eepromBuffer.advance_level=34;eepromBuffer.auto_advance=1;
+ settingsOverride();assert(fdBenchConfigOk());assert(eepromBuffer.minimum_duty_cycle==1);
+ assert(eepromBuffer.advance_level==34&&eepromBuffer.auto_advance==1);
+ eepromBuffer.advance_level=18;eepromBuffer.auto_advance=0;
  // A held positive input after boot never acquires permission by itself.
  adjusted_input=215;assert(fdBenchGuardInput());assert(!fd_power_bench.active_id);
  begin(215);nativeStep();assert(stepper_sine&&bridge==1);assert(input==123&&step_delay==57);assert(fd_native_sine.sine_steps==1);assert(ccr[0]!=ccr[1]);
@@ -107,5 +110,76 @@ int main(void){
  (void)fdBenchBegin;fdBenchWritePwm(1200);assert(!bridge);
  puts("PASS native sine ramp/handover, fresh feedback count, zero/disarm races, cap priority, bounded stop and restart latch");return 0;}
 `;
+
+if(process.argv.includes('--adc')){
+ const adc=fs.readFileSync(path.join(root,'Mcu/g431/Src/comparator.c'),'utf8');
+ assert(/#define TARGET_MIN_BEMF_COUNTS 0/.test(fs.readFileSync(path.join(root,'Inc/targets.h'),'utf8')));
+ program=program.replace('#define TARGET_FD_NATIVE_SINE',`#define TARGET_FD_NATIVE_SINE
+#define TARGET_ADC_ZCD_GUARD
+#define TARGET_FD_ADC_JEOS
+#define TARGET_FD_ADC_COHERENT
+#define TARGET_FD_ASYNC_COMM
+#define USE_ADC_ZCD
+#define FD6288_STARTUP_TIMING_FIX 1
+#define FD_DIAG(...) ((void)0)
+#define FD_DECISION(...) ((void)0)
+#define fdTraceNoFresh() ((void)0)
+#define fdTraceEvent(...) ((void)0)
+#define ADC_ZCD_BLANK_SAMPLES 1
+#define ADC_ZCD_HYSTERESIS_COUNTS 8
+#define ADC_ZCD_MIN_DRIVE_DELTA 64
+#define FD_EVENT_ZC 0
+#define ADC1 0
+#define LL_ADC_INJ_RANK_1 0
+#define LL_ADC_INJ_RANK_2 1
+#define LL_ADC_INJ_RANK_3 2`);
+ program=program.replace('static unsigned average_interval,last_average_interval,commutation_interval,commutation_intervals[6];','static unsigned average_interval,last_average_interval,commutation_intervals[6];\nvolatile uint32_t commutation_interval,polling_mode_changeover=2000;');
+ program=program.replace('static void adcZcdResetAcquisition(unsigned x){(void)x;}','void adcZcdResetAcquisition(uint8_t x);\nvoid changeCompInput(void);\nstatic volatile char rising;');
+ program=program.replace('commutations++;bridge=2;}','commutations++;bridge=2;rising=step%2;changeCompInput();}');
+ const real=`
+static uint8_t adc_zcd_phase,adc_zcd_blank,adc_zcd_last_out,adc_zcd_before_seen,adc_zcd_confirmations,adc_zcd_reported,adc_zcd_drive_crossings,adc_zcd_required_samples;
+static uint32_t adc_zcd_earliest,adc_zcd_last_real_interval;
+static unsigned fresh,read_count,rearmed,schedules,scheduled_ticks;
+static unsigned interval_timer,thiszctime,waitTime,advance,temp_advance=8,auto_advance_level=8,bemfcounter,bad_count,bad_count_threshold=6,zcfound,min_bemf_counts_up,min_bemf_counts_down;
+static uint16_t samples[3];
+#undef SET_INTERVAL_TIMER_COUNT
+#define SET_INTERVAL_TIMER_COUNT(x) (interval_timer=(x))
+#define INTERVAL_TIMER_COUNT interval_timer
+static unsigned LL_ADC_IsActiveFlag_JEOS(unsigned x){(void)x;return fresh;}
+static void LL_ADC_ClearFlag_JEOS(unsigned x){(void)x;fresh=0;}
+static unsigned LL_ADC_INJ_ReadConversionData12(unsigned x,unsigned rank){(void)x;read_count++;return samples[rank];}
+static void adcZcdRearmInjected(void){rearmed++;}
+static void heliCoastRecordZeroCross(void){}
+static void enableCompInterrupts(void){old_routine=1;}
+static void fdAsyncSchedule(uint32_t at,uint32_t ticks){(void)at;schedules++;scheduled_ticks=ticks;}
+${block(adc,'void adcZcdResetAcquisition(uint8_t reason)')}
+${block(adc,'uint32_t adcZcdDrivePeriod(uint32_t elapsed, uint32_t previous)')}
+${block(adc,'static uint8_t adcZcdQualifyDrive(int32_t margin)')}
+${block(adc,'uint8_t getCompOutputSample(uint8_t *level)')}
+${block(adc,'void changeCompInput(void)')}
+${block(main,'void getBemfState()')}
+${block(main,'void zcfoundroutine()')}
+${block(main,'void fdAdcJeosService(void)')}
+static void sample(unsigned b,unsigned ticks){samples[0]=1600;samples[1]=b;samples[2]=0;interval_timer=ticks;fresh=1;DWT->CYCCNT+=6667u;fdAdcJeosService();}
+`;
+ const i=program.indexOf('int main(void){');program=program.slice(0,i)+real+`
+int main(void){
+ begin(150);nativeStep();assert(stepper_sine&&bridge==1);
+ sample(400,100);assert(!fresh&&read_count==0&&schedules==0); // no ZC-driven commutation in sine
+ phase_A_position=0;assert(fdNativeSineHandoff());assert(step==6&&rising==0&&adc_zcd_phase==6);
+ assert(adc_zcd_drive_crossings==0&&adc_zcd_earliest==0&&adc_zcd_required_samples==2); // seed20 is not20 acquired ADC edges
+ sample(400,200);assert(schedules==0); // boundary group blanked
+ sample(400,300);sample(400,400);assert(schedules==0); // POST level alone cannot accept
+ sample(1200,500);assert(schedules==0); // actual PRE arms the falling edge
+ sample(400,600);assert(schedules==0); // first fresh POST confirmation
+ unsigned reads=read_count;fdAdcJeosService();assert(schedules==0&&read_count==reads); // no duplicate vote
+ sample(400,700);assert(schedules==1&&fd_native_sine.edges==1);
+ assert(commutation_interval==9000&&scheduled_ticks==3375); // native seed period, inherited7.5deg timing
+ sample(400,800);assert(schedules==1&&fd_native_sine.edges==1); // once per sector
+ assert(rearmed>=7&&mask==0&&old_routine==1);
+ puts("PASS actual native handover -> ADC fresh PRE/POST qualification -> JEOS event -> inherited timing -> async schedule; no hardware comparator dependency");return 0;}
+`;
+}
+
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'fd-native-sine-host-')),c=path.join(dir,'test.c'),exe=path.join(dir,'test');fs.writeFileSync(c,program);
 for(const [cmd,args] of [['cc',['-std=c11','-O1','-fsanitize=address,undefined','-I'+path.join(root,'Inc'),c,'-o',exe]],[exe,[]]]){const r=cp.spawnSync(cmd,args,{encoding:'utf8'});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');assert.equal(r.status,0);}

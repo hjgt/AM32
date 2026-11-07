@@ -1,0 +1,12 @@
+{
+  "read_at": "2026-11-07T18:18:14.368Z",
+  "read_only": true,
+  "halt": false,
+  "reset": false,
+  "write": false,
+  "matched_elf": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-EARLY-REKICK-20261107/AM32_CUSTOM_FD6288_G431_2.20.elf",
+  "flash_start": "0x0800f800",
+  "page_bytes": 2048,
+  "flash_hex_first48": "0103110214a001000a64006400ffffffff000000010000121896160e00000501af4b7e3200500000050a01ff00050100",
+  "runtime_hex": "0103110214a001000a64006400ffffffff000000010000121896160e00000501af4b7e3200500000050a01ff00050100fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffdfdfdfdfdfdfdfdffffffffffffffff"
+}

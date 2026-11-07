@@ -20,7 +20,7 @@ async function dump(elf,out,stopped){
   for(const name of ['advanceincrement','loadEEpromSettings','fdBenchService','fdBenchStop','fdNativeSineBridgeAllowed']){const s=syms[name];assert(s&&s.size>0&&s.size<2048,name);const b=await mem(s.address,s.size);for(let i=0;i<b.length;i++)assert.equal(b[i],hex.get(s.address+i),'Code identity: '+name);}
   const address=syms.fd_native_sine.address,a=await mem(address,60),settings=await mem(syms.eepromBuffer.address,48);
   await check();assert.deepEqual(await mem(address,60),a,'Summary changed during stopped read');
-  const result={read_at:new Date().toISOString(),elf:path.resolve(elf),summary:decode(a),ram_settings:{sine:settings[19],startup_power:settings[25],motor_kv:settings[26]*40+20,motor_poles:settings[27],advance_raw:settings[23],sine_range:settings[40],sine_power:settings[45]},raw_hex:a.toString('hex')};
+  const result={read_at:new Date().toISOString(),elf:path.resolve(elf),summary:decode(a),ram_settings:{sine:settings[19],startup_power:settings[25],motor_kv:settings[26]*40+20,motor_poles:settings[27],advance_raw:settings[23],auto_advance:settings[47],sine_range:settings[40],sine_power:settings[45]},raw_hex:a.toString('hex')};
   fs.writeFileSync(out,JSON.stringify(result,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify(result,null,2));return result;
  }finally{c.close();}
 }

@@ -1,0 +1,73 @@
+{
+  "date": "2026-11-08",
+  "branch": "codex/fd6288-native-sine-20261108",
+  "flashed": false,
+  "timing_policy": "inherit stored timing and auto/manual selection",
+  "timing_backup_raw": {
+    "advance_level": 18,
+    "auto_advance": 0
+  },
+  "backup_read_only": true,
+  "settings_deltas": [
+    {
+      "offset": 19,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "offset": 40,
+      "before": 5,
+      "after": 15
+    },
+    {
+      "offset": 45,
+      "before": 5,
+      "after": 6
+    }
+  ],
+  "settings": {
+    "sine_start": 1,
+    "startup_power": 150,
+    "motor_kv": 900,
+    "motor_poles": 14,
+    "advance_level_raw": 18,
+    "auto_advance": 0,
+    "manual_advance_deg": 7.5,
+    "sine_range": 15,
+    "sine_power": 6,
+    "pwm_khz": 24
+  },
+  "checks": {
+    "native_C_ramp_guard_ASan_UBSan": "PASS",
+    "actual_ADC_JEOS_to_ZC_to_async_schedule_ASan_UBSan": "PASS",
+    "manual_and_auto_timing_preserved": "PASS",
+    "settings_and_combined_hex_roundtrip": "PASS",
+    "original_page_restore_roundtrip": "PASS",
+    "main_bin_hex_regions": "PASS",
+    "disabled_hex_equals_EARLY_REKICK": "PASS"
+  },
+  "files": {
+    "RESTORE-PREVIOUS-SETTINGS.hex": "2559d6b4daf6e46cffc2ed3ec01a76d5899114bee42385ae06d6658beee20f5c",
+    "AM32_CUSTOM_FD6288_G431_2.20.bin": "543d5537e238522c64cb879a20d55c110e75c309838680f7860b350031219051",
+    "AM32_CUSTOM_FD6288_G431_2.20.hex": "e5504fb493c4370ebbaec8b1f049edf52ada035096189873bff414222a15ed7a",
+    "NATIVE-SINE-SETTINGS.bin": "2d8f196ed94c943c873bd90af5a27d4f3bd38c68339f38608399bf5bb4a6de19",
+    "NATIVE-SINE-SETTINGS.hex": "6c366f7c6f5b92f01993208b898eb7c1a1326f6703ee851b50e40a6777ab15c1",
+    "AM32_CUSTOM_FD6288_G431_2.20.elf": "1736c6fea71209982bf8130688aa3fc593e003baf5af6584ae78bff75b341fee",
+    "NATIVE-SINE-COMBINED.hex": "ec4c8c583a5df747608f938dd4801acb439364efe8ea62b01c037215a1bdf104"
+  },
+  "backup_sha256": {
+    "restore-settings.hex": "2559d6b4daf6e46cffc2ed3ec01a76d5899114bee42385ae06d6658beee20f5c",
+    "settings-page.bin": "4f426d535486cb0d9b9c8b7bc0b74cd390efb56c73e9116e3a64f6c5a7baf7f3",
+    "runtime-settings.bin": "df7d154afa92e60e2ba802766f9efaa19469e420059453a9d5c631c69fc5b1d0",
+    "capture.json": "a12d3794a1195c5e0f4cc5edd5e90a4092f43b95e3d1d3854d0c92a9c1c7f9a3",
+    "README.md": "fccbedb1a2583866f943a890ae062da23edd7f99941252d90174b359ddbc7164"
+  },
+  "source_sha256": {
+    "Src/main.c": "c8100d650d75ca7cb32c14a20e0f4a72f278bad1b46ed1cb70ba6f33572c9222",
+    "Src/fd6288_native_sine.inc": "904f212983579f2a51782c6fe557a34ca5885894cca1b823582fc7f8e3609ba3",
+    "Inc/fd6288_native_sine_config.h": "fe5a41d35115b54484d92531eea42d7b93c6219080b258ab2e5e3a1c3b893412",
+    "Mcu/g431/Src/phaseouts.c": "e1202d8c7f288ed85c8e0a9130aa000e580817a2d4d38f9bd290f384fae78adf",
+    "Inc/targets.h": "57ea702f086eb273c2203bdf25de9f339928f795d2783a693098a474e6b94110",
+    "Makefile": "d73d1c0ff4333ed07f47c7602304aa11e21fd49cc75a0f1c7b9842390efa2e2c"
+  }
+}

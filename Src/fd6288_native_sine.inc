@@ -5,6 +5,7 @@
  * six real feedback events, whichever comes first. Observe zero before reuse.
  */
 #include "fd6288_async.h"
+#include "fd6288_native_sine_config.h"
 
 volatile FdPowerDiagnostics fd_power_bench = {
     .magic = FD_POWER_BENCH_MAGIC, .abi = 1u
@@ -29,11 +30,12 @@ uint8_t fdNativeSineBridgeAllowed(void)
 
 static uint8_t fdBenchConfigOk(void)
 {
-    return eepromBuffer.use_sine_start == 1u && eepromBuffer.startup_power == 150u &&
-        eepromBuffer.motor_kv == 22u && eepromBuffer.motor_poles == 14u &&
-        eepromBuffer.sine_mode_changeover_thottle_level == 15u &&
-        eepromBuffer.sine_mode_power == 6u && eepromBuffer.advance_level == 18u &&
-        !eepromBuffer.auto_advance && eepromBuffer.comp_pwm &&
+    return eepromBuffer.use_sine_start == 1u && eepromBuffer.startup_power == FD_NATIVE_SINE_STARTUP_POWER &&
+        eepromBuffer.motor_kv == FD_NATIVE_SINE_MOTOR_KV_CODE && eepromBuffer.motor_poles == FD_NATIVE_SINE_MOTOR_POLES &&
+        eepromBuffer.sine_mode_changeover_thottle_level == FD_NATIVE_SINE_RANGE &&
+        eepromBuffer.sine_mode_power == FD_NATIVE_SINE_POWER &&
+        eepromBuffer.advance_level >= 10u && eepromBuffer.advance_level <= 42u &&
+        eepromBuffer.auto_advance <= 1u && eepromBuffer.comp_pwm &&
         !eepromBuffer.variable_pwm && eepromBuffer.pwm_frequency == 24u &&
         !eepromBuffer.bi_direction && !eepromBuffer.rc_car_reverse &&
         !use_speed_control_loop && minimum_duty_cycle == 210u &&
