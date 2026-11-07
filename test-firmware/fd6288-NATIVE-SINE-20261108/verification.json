@@ -1,0 +1,35 @@
+{
+  "date": "2026-11-08",
+  "branch": "codex/fd6288-native-sine-20261108",
+  "baseline_commit": "d1cac05a234057f7aae19c4f47e167601ed0c0c4",
+  "flashed": false,
+  "settings": {
+    "startup_power": 150,
+    "kv": 900,
+    "poles": 14,
+    "advance_deg": 7.5,
+    "sine_start": 1,
+    "range": 15,
+    "sine_power": 6,
+    "pwm_khz": 24
+  },
+  "checks": {
+    "actual_C_native_ramp_and_interlocks_ASan_UBSan": "PASS",
+    "event_decoder_ABI": "PASS",
+    "bin_hex_main_region": "PASS",
+    "disabled_hex_equals_EARLY_REKICK": true
+  },
+  "disabled_hex_sha256": "7a8a20d7ad3742b744ed19097974cd4a5318c0eccb75273b1e8e90f0981b6207",
+  "files": {
+    "AM32_CUSTOM_FD6288_G431_2.20.bin": "e147bc67547c0300302adf83285b41f01a2d7fb3bda77ffc004cf6a6b069181e",
+    "AM32_CUSTOM_FD6288_G431_2.20.hex": "49e6908f5e5bad41ee068fe00866afc4b9a605631e4d3faaf668eb45978d5445",
+    "AM32_CUSTOM_FD6288_G431_2.20.elf": "26bde76e30647c813d48bbe9454307c90888b7e2dee8116c236d893676908498"
+  },
+  "source_sha256": {
+    "Src/main.c": "95bf7a33d4441ece890883cdd85902fbb7a8c82feca165e6fc36237e6bc0c83f",
+    "Src/fd6288_native_sine.inc": "bf127dd8b6e2675cda5de0c6cb05efbb98939bc7041961da91ab652052221647",
+    "Mcu/g431/Src/phaseouts.c": "e1202d8c7f288ed85c8e0a9130aa000e580817a2d4d38f9bd290f384fae78adf",
+    "Inc/targets.h": "57ea702f086eb273c2203bdf25de9f339928f795d2783a693098a474e6b94110",
+    "Makefile": "d73d1c0ff4333ed07f47c7602304aa11e21fd49cc75a0f1c7b9842390efa2e2c"
+  }
+}

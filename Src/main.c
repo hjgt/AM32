@@ -877,7 +877,9 @@ static uint8_t stuckRotorGuardInput(void)
 volatile char input_ready = 0;
 #endif
 
-#ifdef TARGET_STARTUP_POWER_BENCH
+#ifdef TARGET_FD_NATIVE_SINE
+#include "fd6288_native_sine.inc"
+#elif defined(TARGET_STARTUP_POWER_BENCH)
 /* FD_POWER_BENCH_ADAPTER_BEGIN -- every policy/summary access is serialized.
  * This is an opt-in, short-shot bench image, NOT a flight/production mode. */
 #include "fd6288_light_log.h"
@@ -1697,6 +1699,23 @@ void loadEEpromSettings()
       eepromBuffer.reserved_eeprom_3[2] = 0;
       eepromBuffer.reserved_eeprom_3[3] = 0;
     }
+#ifdef TARGET_FD_NATIVE_SINE
+    /* Trial-only RAM overrides; the existing settings page remains untouched. */
+    eepromBuffer.startup_power = 150u;
+    eepromBuffer.motor_kv = 22u; /* 22*40+20 = 900 KV */
+    eepromBuffer.motor_poles = 14u;
+    eepromBuffer.advance_level = 18u; /* (18-10)*0.9375 = 7.5 degrees */
+    eepromBuffer.auto_advance = 0u;
+    eepromBuffer.use_sine_start = 1u;
+    eepromBuffer.sine_mode_changeover_thottle_level = 15u;
+    eepromBuffer.sine_mode_power = 6u;
+    eepromBuffer.comp_pwm = 1u;
+    eepromBuffer.variable_pwm = 0u;
+    eepromBuffer.pwm_frequency = 24u;
+    eepromBuffer.minimum_duty_cycle = 1u;
+    eepromBuffer.bi_direction = 0u;
+    eepromBuffer.rc_car_reverse = 0u;
+#endif
     // eepromBuffer.advance_level can either be set to 0-3 with config tools less than 1.90 or 10-42 with 1.90 or above 
     if (eepromBuffer.advance_level > 42 || (eepromBuffer.advance_level < 10 && eepromBuffer.advance_level > 3)){
         temp_advance = 16;
@@ -2445,6 +2464,13 @@ static void fd6288TimeoutStep(void)
         if (heli_coast_active != 0u) {
             heliCoastTrackingLost((input >= 47u) ? 1u : 0u);
         } else {
+#ifdef TARGET_FD_NATIVE_SINE
+            if (fd_native_sine.edges >= 6u) {
+                fdBenchStop(FD_BENCH_LOST_FEEDBACK);
+                __set_PRIMASK(mask);
+                return;
+            }
+#endif
             bemf_timeout_happened++;
 #ifdef TARGET_STARTUP_SEQUENCE_V2
             /* Longer observation is not permission for blind forced-step
@@ -3302,6 +3328,16 @@ void processDshot()
 
 void advanceincrement()
 {
+#ifdef TARGET_FD_NATIVE_SINE
+    uint32_t sine_mask = __get_PRIMASK();
+    __disable_irq();
+    fdBenchService();
+    if (fd_power_bench.inhibit || !fd_power_bench.active_id || !armed || !adjusted_input) {
+        __set_PRIMASK(sine_mask);
+        return;
+    }
+    fd_native_sine.sine_steps++;
+#endif
     if (!forward) {
         phase_A_position++;
         if (phase_A_position > 359) {
@@ -3341,6 +3377,9 @@ void advanceincrement()
     setPWMCompare3(
         (((2 * pwmSin[phase_C_position] / SINE_DIVIDER) + gate_drive_offset) * TIMER1_MAX_ARR / 2000) * eepromBuffer.sine_mode_power / 10);
 #endif
+#ifdef TARGET_FD_NATIVE_SINE
+    __set_PRIMASK(sine_mask);
+#endif
 }
 
 void zcfoundroutine()
@@ -3362,6 +3401,9 @@ void zcfoundroutine()
 #endif
 #ifdef TARGET_FD_ASYNC_COMM
     uint32_t accepted_at = DWT->CYCCNT;
+#endif
+#ifdef TARGET_FD_NATIVE_SINE
+    fdNativeSineEdge();
 #endif
     thiszctime = INTERVAL_TIMER_COUNT;
     SET_INTERVAL_TIMER_COUNT(0);
@@ -3553,7 +3595,9 @@ int main(void)
         eepromBuffer.version.major = VERSION_MAJOR;
         eepromBuffer.version.minor = VERSION_MINOR;
         eepromBuffer.eeprom_version = EEPROM_VERSION;
+#ifndef TARGET_FD_NATIVE_SINE
         saveEEpromSettings();
+#endif
     }
     
     if (eepromBuffer.dir_reversed == 1) {
@@ -4083,6 +4127,9 @@ if(zero_crosses < 5){
 
                     delayMicros(step_delay);
                     if (phase_A_position == 0) {
+#ifdef TARGET_FD_NATIVE_SINE
+                        if (!fdNativeSineHandoff()) continue;
+#else
                         stepper_sine = 0;
                         running = 1;
                         old_routine = 1;
@@ -4099,6 +4146,7 @@ if(zero_crosses < 5){
                         }
                         commutate();
                         generatePwmTimerEvent();
+#endif
                     }
                 }
 

@@ -13,6 +13,9 @@
 #endif
 
 extern char prop_brake_active;
+#ifdef TARGET_FD_NATIVE_SINE
+uint8_t fdNativeSineBridgeAllowed(void);
+#endif
 
 #ifndef PWM_ENABLE_BRIDGE
 
@@ -400,6 +403,9 @@ void allpwm()
     uint32_t mask = __get_PRIMASK();
     __disable_irq();
     if (fd_power_bench.inhibit
+#ifdef TARGET_FD_NATIVE_SINE
+        || !fdNativeSineBridgeAllowed()
+#endif
 #ifdef TARGET_FD_HIZ_OBSERVE
         || fd_hiz_active
 #endif

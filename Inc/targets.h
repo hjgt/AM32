@@ -3204,6 +3204,19 @@
 /* Loaded-ZCD candidate: target-local ADC qualification and native stuck-rotor
  * stop integration. No EEPROM/configurator or bridge timing changes. */
 #define TARGET_ADC_ZCD_GUARD
+#ifndef FD6288_NATIVE_SINE_START
+#define FD6288_NATIVE_SINE_START 0
+#endif
+#if FD6288_NATIVE_SINE_START != 0 && FD6288_NATIVE_SINE_START != 1
+#error "Native sine switch must be boolean"
+#endif
+#if FD6288_NATIVE_SINE_START
+#if FD6288_STARTUP_SEQUENCE || FD6288_STARTUP_POWER_BENCH || FD6288_STARTUP_TRACE
+#error "Native sine excludes the previous startup policies and waveform recorders"
+#endif
+#define TARGET_FD_NATIVE_SINE
+#define TARGET_STARTUP_POWER_BENCH /* output interlocks only; separate adapter */
+#endif
 #define TARGET_STUCK_ROTOR_LATCH
 #if defined(FD6288_STARTUP_TRACE) && FD6288_STARTUP_TRACE
 #define TARGET_STARTUP_TRACE
@@ -3384,7 +3397,7 @@
 #error "JEOS requires nonblocking commutation"
 #endif
 #if FD6288_ASYNC_COMM
-#if !FD6288_STARTUP_FIRST_WAIT
+#if !FD6288_STARTUP_FIRST_WAIT && !FD6288_NATIVE_SINE_START
 #error "Experimental async path requires the S4I FIRST30 bench baseline"
 #endif
 #define TARGET_FD_ASYNC_COMM
@@ -3453,7 +3466,7 @@
 #error "Diagnostic and early-commutation switches must be boolean"
 #endif
 #if FD6288_NO_DIAGNOSTICS
-#if !FD6288_ALIGN_BUDGET || !FD6288_QUIET_LOG || FD6288_SECTOR_DIAG || FD6288_DENSE_LOG
+#if !FD6288_NATIVE_SINE_START && (!FD6288_ALIGN_BUDGET || !FD6288_QUIET_LOG || FD6288_SECTOR_DIAG || FD6288_DENSE_LOG)
 #error "No diagnostics requires quiet S4L-B control and no recorders"
 #endif
 #define TARGET_FD_NO_DIAGNOSTICS
@@ -3635,7 +3648,7 @@
 #error "FD6288_ZCD_ACTUAL_DEADTIME must be 0 or 1"
 #endif
 #if FD6288_ZCD_ACTUAL_DEADTIME
-#if !FD6288_STARTUP_WAVE_TRACE
+#if !FD6288_STARTUP_WAVE_TRACE && !FD6288_NATIVE_SINE_START
 #error "Actual-deadtime sampling candidate requires S3-D diagnostics"
 #endif
 #define TARGET_ADC_ZCD_ACTUAL_DEADTIME
@@ -6159,4 +6172,10 @@
 #error "EARLY_REKICK requires normal300ms tail capture, coherent ADC, async and release gates; incompatible diagnostic control mode"
 #endif
 #define TARGET_FD_EARLY_REKICK
+#endif
+
+#ifdef TARGET_FD_NATIVE_SINE
+#if !defined(TARGET_FD_ADC_COHERENT) || !defined(TARGET_FD_ASYNC_COMM) || !defined(TARGET_ADC_ZCD_ACTUAL_DEADTIME) || !defined(TARGET_FD_NO_DIAGNOSTICS)
+#error "Native sine trial retains coherent ADC, asynchronous commutation and actual deadtime sampling"
+#endif
 #endif
