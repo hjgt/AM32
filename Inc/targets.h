@@ -6064,6 +6064,18 @@
 #define TARGET_FD_ADC_COHERENT
 #endif
 
+#if defined(FD6288_SCOPE_PB7) && FD6288_SCOPE_PB7
+#if !defined(TARGET_FD_LAUNCH_ADVANCE) || !FD6288_ALIGN_SAMPLE_PAIR || FD6288_STARTUP_LEVEL
+#error "PB7 probe requires ALIGN-PAIR baseline without level acquisition"
+#endif
+#define TARGET_FD_SCOPE_PB7
+#endif
+#if defined(FD6288_ALIGN_ONLY) && FD6288_ALIGN_ONLY
+#if FD6288_ALIGN_ONLY != 1 || !defined(TARGET_FD_SCOPE_PB7) || !defined(TARGET_FD_ALIGN_HOLD) || !defined(TARGET_FD_ALIGN_SETTLE)
+#error "ALIGN_ONLY requires ALIGN-PAIR/PB7 with second-vector hold and settle"
+#endif
+#define TARGET_FD_ALIGN_ONLY
+#endif
 #ifndef FD6288_STARTUP_LEVEL
 #define FD6288_STARTUP_LEVEL 0
 #endif
@@ -6101,4 +6113,50 @@
 #error "Alignment pairs require raw observer and coherent ADC"
 #endif
 #define TARGET_FD_ALIGN_SAMPLE_PAIR
+#endif
+
+#if defined(FD6288_LAUNCH_RAW) && FD6288_LAUNCH_RAW
+#if FD6288_LAUNCH_RAW != 1 || !defined(TARGET_FD_ALIGN_SAMPLE_PAIR) || defined(TARGET_FD_ALIGN_ONLY)
+#error "Launch raw capture requires ALIGN-PAIR normal launch, not ALIGN_ONLY"
+#endif
+#define TARGET_FD_LAUNCH_RAW
+#endif
+#if defined(FD6288_ALIGN_TAIL) && FD6288_ALIGN_TAIL
+#if FD6288_ALIGN_TAIL != 1 || !defined(TARGET_FD_LAUNCH_RAW)
+#error "Alignment tail checkpoints require the launch raw recorder"
+#endif
+#define TARGET_FD_ALIGN_TAIL
+#endif
+#if defined(FD6288_LAUNCH_HOLD) && FD6288_LAUNCH_HOLD
+#if FD6288_LAUNCH_HOLD != 1 || !defined(TARGET_FD_ALIGN_TAIL) || defined(TARGET_FD_ALIGN_ONLY) || FD6288_SECOND_ALIGN_MS != 300
+#error "Launch hold requires300ms alignment, tail capture and normal launch path"
+#endif
+#define TARGET_FD_LAUNCH_HOLD
+#endif
+#if defined(FD6288_LAUNCH_TWO) && FD6288_LAUNCH_TWO
+#if FD6288_LAUNCH_TWO != 1 || !defined(TARGET_FD_LAUNCH_HOLD) || !defined(TARGET_FD_FIRST_EDGE_500US)
+#error "Two-vector diagnostic requires launch hold and tail capture"
+#endif
+#define TARGET_FD_LAUNCH_TWO
+#endif
+
+#if defined(FD6288_HIZ_OBSERVE) && FD6288_HIZ_OBSERVE
+#if FD6288_HIZ_OBSERVE != 1 || !defined(TARGET_FD_ALIGN_TAIL) || FD6288_SECOND_ALIGN_MS != 300 || defined(TARGET_FD_LAUNCH_HOLD) || defined(TARGET_FD_ALIGN_ONLY)
+#error "Hi-Z observation requires300ms tail capture, no launch-hold/align-only"
+#endif
+#define TARGET_FD_HIZ_OBSERVE
+#endif
+
+#if defined(FD6288_BLUE_START) && FD6288_BLUE_START
+#if FD6288_BLUE_START != 1 || !defined(TARGET_FD_ALIGN_TAIL) || !defined(TARGET_FD_REPOSITION) || !defined(TARGET_FD_ADC_COHERENT) || !defined(TARGET_FD_ASYNC_COMM) || FD6288_SECOND_ALIGN_MS != 300 || defined(TARGET_FD_HIZ_OBSERVE) || defined(TARGET_FD_LAUNCH_HOLD) || defined(TARGET_FD_STARTUP_LEVEL)
+#error "BLUE_START requires normal300ms tail capture, coherent ADC, async, reposition gates; no other diagnostic control mode"
+#endif
+#define TARGET_FD_BLUE_START
+#endif
+
+#if defined(FD6288_EARLY_REKICK) && FD6288_EARLY_REKICK
+#if FD6288_EARLY_REKICK != 1 || !defined(TARGET_FD_ALIGN_TAIL) || !defined(TARGET_FD_REPOSITION) || !defined(TARGET_FD_ADC_COHERENT) || !defined(TARGET_FD_ASYNC_COMM) || FD6288_SECOND_ALIGN_MS != 300 || defined(TARGET_FD_BLUE_START) || defined(TARGET_FD_HIZ_OBSERVE) || defined(TARGET_FD_LAUNCH_HOLD) || defined(TARGET_FD_STARTUP_LEVEL)
+#error "EARLY_REKICK requires normal300ms tail capture, coherent ADC, async and release gates; incompatible diagnostic control mode"
+#endif
+#define TARGET_FD_EARLY_REKICK
 #endif

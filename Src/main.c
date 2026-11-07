@@ -487,6 +487,9 @@ uint32_t total = 0;
 uint16_t readings[50];
 
 uint8_t bemf_timeout_happened = 0;
+#ifdef TARGET_FD_SCOPE_PB7
+static uint8_t fd_scope_launch;
+#endif
 uint8_t changeover_step = 5;
 uint8_t filter_level = 5;
 uint8_t running = 0;
@@ -903,7 +906,39 @@ static uint32_t fd_power_accepted_start, fd_power_timeouts_start;
 static uint8_t fd_power_starting;
 #ifdef TARGET_STARTUP_SEQUENCE
 static FdRevPolicy fd_rev;
+#ifdef TARGET_FD_EARLY_REKICK
+/* Header8 words, four pulse rows8 words; no waveform control reads. */
+volatile uint32_t fd_rk_diag[40]={0x46524b31u,1u};
+static void fdRkRecord(uint32_t now,uint8_t action) {
+ fd_rk_diag[4]=fd_rev.stage;fd_rk_diag[5]=fd_rev.confidence;
+ if(action==FD_REV_LAUNCH || action==FD_REV_RK_LAUNCH) {
+  fd_rk_diag[3]=fd_rev.rk_count;
+  fd_rk_diag[8u+8u*fd_rev.rk_count]=now-fd_power_policy.started;
+ }
+ if(action==FD_REV_RELEASE && fd_rev.rk_count) {
+  unsigned idx=8u+8u*(fd_rev.rk_count-1u);
+  fd_rk_diag[idx+4u]=fd_rk_diag[idx+5u]=now-fd_power_policy.started;
+ }
+}
+#endif
+#ifdef TARGET_FD_BLUE_START
+volatile uint32_t fd_blue_diag[32] = {0x46424c31u,1u};
+static void fdBlueRecord(uint32_t now,uint8_t action) {
+ unsigned i=fd_rev.blue_attempts-1u;
+ if(i>=3u)return;
+ fd_blue_diag[3]=fd_rev.blue_attempts;fd_blue_diag[4]=fd_rev.stage;
+ fd_blue_diag[5]=fd_rev.confidence;fd_blue_diag[6]=fd_rev.blue_first;
+ unsigned slot= action==FD_REV_BLUE_RESTART?0u:action==FD_REV_LAUNCH?1u:
+   action==FD_REV_BLUE_FORCED?3u:action==FD_REV_RELEASE?5u:
+   action==FD_REV_BLUE_STOP?6u:99u;
+ if(slot<8u)fd_blue_diag[8u+8u*i+slot]=now-fd_power_policy.started;
+ if(action==FD_REV_RELEASE)fd_blue_diag[8u+8u*i+6u]=now-fd_power_policy.started;
+}
+#endif
 volatile uint8_t fd_rev_acquiring;
+#ifdef TARGET_FD_HIZ_OBSERVE
+volatile uint8_t fd_hiz_active;
+#endif
 void commutate(void);
 #endif
 
@@ -950,6 +985,15 @@ static void fdBenchFinish(uint8_t reason)
 {
     if (!fd_power_bench.active_id) return;
     fdEdgeFinish(DWT->CYCCNT);
+#ifdef TARGET_FD_EARLY_REKICK
+    fd_rk_diag[4]=fd_rev.stage;fd_rk_diag[5]=fd_rev.confidence;fd_rk_diag[6]=reason;
+    if(fd_rk_diag[3]<=3u)fd_rk_diag[8u+8u*fd_rk_diag[3]+5u]=DWT->CYCCNT-fd_power_policy.started;
+#endif
+#ifdef TARGET_FD_BLUE_START
+    fd_blue_diag[7]=reason;
+    if(fd_rev.blue_attempts && fd_rev.blue_attempts<=3u)
+        fd_blue_diag[8u+8u*(fd_rev.blue_attempts-1u)+6u]=DWT->CYCCNT-fd_power_policy.started;
+#endif
 #ifdef TARGET_FD_REPOSITION
     fd_reposition_diag[6] = reason;
     fd_reposition_diag[7] = DWT->CYCCNT-fd_power_policy.started;
@@ -989,14 +1033,32 @@ static void fdBenchStop(uint8_t reason)
     if (!fd_power_bench.inhibit) {
         fd_power_bench.inhibit = 1u; /* publish before canceling pending work */
 #ifdef TARGET_STARTUP_SEQUENCE
+#ifdef TARGET_FD_HIZ_OBSERVE
+        if (reason == FD_BENCH_WINDOW) reason = FD_BENCH_HIZ_DONE;
+#elif defined(TARGET_FD_ALIGN_ONLY)
+        if (reason == FD_BENCH_WINDOW) reason = FD_BENCH_ALIGN_DONE;
+#elif defined(TARGET_FD_LAUNCH_HOLD)
+        if (reason == FD_BENCH_WINDOW) reason = FD_BENCH_LAUNCH_DONE;
+#else
         if (reason == FD_BENCH_WINDOW && fd_rev.stage != FD_REV_CLOSED)
             reason = FD_BENCH_NO_LOCK;
+#endif
 #ifndef TARGET_STARTUP_FEEDBACK
         if (reason == FD_BENCH_WINDOW &&
             adc_zcd_diag.resets[ADC_ZCD_RESET_TIMEOUT] != fd_power_timeouts_start)
             reason = FD_BENCH_LOST_FEEDBACK;
 #endif
-        if (reason != FD_BENCH_WINDOW && fd_power_bench.active_id) fdTracePinFailure();
+        if (reason != FD_BENCH_WINDOW &&
+#ifdef TARGET_FD_HIZ_OBSERVE
+            reason != FD_BENCH_HIZ_DONE &&
+#endif
+#ifdef TARGET_FD_ALIGN_ONLY
+            reason != FD_BENCH_ALIGN_DONE &&
+#endif
+#ifdef TARGET_FD_LAUNCH_HOLD
+            reason != FD_BENCH_LAUNCH_DONE &&
+#endif
+            fd_power_bench.active_id) fdTracePinFailure();
         fd_rev_acquiring = 0u;
 #endif
         fdBenchFinish(reason);
@@ -1026,6 +1088,13 @@ static void fdBenchService(void)
         if (stuck_rotor_inhibit) fdBenchStop(FD_BENCH_NATIVE_STUCK);
         else if (drive_safety_limit_inhibit) fdBenchStop(FD_BENCH_SAFETY_CAP);
         else if (!adjusted_input) {
+#ifdef TARGET_FD_HIZ_OBSERVE
+            if (fd_hiz_active) {
+                fdBenchStop(FD_BENCH_OPERATOR_ZERO);
+                __set_PRIMASK(mask);
+                return;
+            }
+#endif
             fdBenchFinish(FD_BENCH_OPERATOR_ZERO);
 #ifdef TARGET_STARTUP_SEQUENCE
             fd_rev_acquiring = 0u;
@@ -1099,6 +1168,9 @@ static void fdBenchService(void)
 #ifdef TARGET_FD_REPOSITION
                 if (fd_rev.stage == FD_REV_RELAX) requested = 0u;
 #endif
+#ifdef TARGET_FD_HIZ_OBSERVE
+                if (fd_hiz_active) requested = 0u;
+#endif
                 uint16_t cap = driveEffectiveDutyLimit();
                 fd_power_bench.floor = requested < cap ? requested : cap;
                 if (!cap) fdBenchStop(FD_BENCH_SAFETY_CAP);
@@ -1129,6 +1201,9 @@ static uint8_t fdBenchGuardInput(void)
             heliCoastTrackingLost(0u);
             heli_coast_restart_inhibit = 0u;
         }
+#ifdef TARGET_FD_HIZ_OBSERVE
+        if (fd_hiz_active) { allOff(); SET_DUTY_CYCLE_ALL(0u); fd_hiz_active = 0u; }
+#endif
         fd_power_bench.inhibit = 0u;
         fdPowerOperatorZero(&fd_power_policy);
     } else if (heli_coast_active) {
@@ -1180,6 +1255,18 @@ static uint8_t fdBenchBegin(void)
 #endif
 #ifdef TARGET_STARTUP_SEQUENCE
     fdRevBeginPolicy(&fd_rev, DWT->CYCCNT);
+#ifdef TARGET_FD_EARLY_REKICK
+    fd_rk_diag[2]=fd_power_bench.active_id;fd_rk_diag[3]=0u;fd_rk_diag[4]=FD_REV_ALIGN;
+    fd_rk_diag[5]=fd_rk_diag[6]=fd_rk_diag[7]=0u;
+    for(unsigned i=8u;i<40u;i++)fd_rk_diag[i]=UINT32_MAX;
+    for(unsigned i=0u;i<4u;i++)fd_rk_diag[8u+8u*i+6u]=0u;
+#endif
+#ifdef TARGET_FD_BLUE_START
+    for(unsigned i=8u;i<32u;i++)fd_blue_diag[i]=UINT32_MAX;
+    fd_blue_diag[2]=fd_power_bench.active_id;fd_blue_diag[3]=1u;
+    fd_blue_diag[4]=FD_REV_ALIGN;fd_blue_diag[5]=0u;fd_blue_diag[6]=1u;fd_blue_diag[7]=0u;
+    fd_blue_diag[8]=DWT->CYCCNT-fd_power_policy.started;
+#endif
 #ifdef TARGET_FD_ALIGN_SETTLE
     fdAlignBegin(&fd_align_observe, fd_power_bench.active_id);
 #endif
@@ -1225,6 +1312,9 @@ static void fdRevStartDrive(void)
 #ifdef TARGET_FD_ASYNC_COMM
 static void fdAsyncScheduleDeadline(uint32_t accepted_at, uint32_t deadline);
 #endif
+#ifdef TARGET_FD_HIZ_OBSERVE
+static void fdAlignmentPairReset(void);
+#endif
 static void fdRevTick(void)
 {
     uint32_t mask = __get_PRIMASK();
@@ -1240,6 +1330,57 @@ static void fdRevTick(void)
     uint8_t was_align = fd_rev.stage == FD_REV_ALIGN;
 #endif
     uint8_t action = fdRevAdvancePolicy(&fd_rev, now);
+#ifdef TARGET_FD_EARLY_REKICK
+    if(action==FD_REV_RK_STOP) {fdBenchStop(FD_BENCH_NO_LOCK);__set_PRIMASK(mask);return;}
+#endif
+#ifdef TARGET_FD_BLUE_START
+    if(action!=FD_REV_NONE)fdBlueRecord(now,action);
+    if(action==FD_REV_BLUE_STOP) {
+        fdBenchStop(FD_BENCH_NO_LOCK);__set_PRIMASK(mask);return;
+    }
+#endif
+#ifdef TARGET_FD_HIZ_OBSERVE
+    if (action == FD_REV_HIZ_STOP) {
+        fdBenchStop(FD_BENCH_HIZ_DONE);
+        __set_PRIMASK(mask); return;
+    }
+    if (action == FD_REV_HIZ_RELEASE) {
+        fd_hiz_active = 1u; /* lock every bridge enable before six gates go off */
+        allOff(); /* also cancels TIM16 and lowers PB7 */
+        uint32_t off_at = DWT->CYCCNT;
+        duty_cycle_setpoint = duty_cycle = adjusted_duty_cycle = last_duty_cycle = 0u;
+        fd_power_bench.floor = 0u;
+        fdAlignmentPairReset();
+        SET_HELI_COAST_HIGH_Z_SAMPLE(tim1_arr);
+        fdEdgeHiZBegin(off_at, DWT->CYCCNT);
+        fd_rev.sector_at = off_at;
+        fd_align_observe.frozen = 1u;
+        adcZcdResetAcquisition(ADC_ZCD_RESET_COUNT);
+#ifdef TARGET_FD_SCOPE_PB7
+        GPIOB->BSRR = (1u << 7); /* off-boundary service marker; not sample time */
+#endif
+        __set_PRIMASK(mask); return;
+    }
+#endif
+#ifdef TARGET_FD_LAUNCH_HOLD
+    if(action==FD_REV_LAUNCH_STOP) {
+        fdBenchStop(FD_BENCH_LAUNCH_DONE);
+        __set_PRIMASK(mask);
+        return;
+    }
+#endif
+#ifdef TARGET_FD_ALIGN_ONLY
+    if (action == FD_REV_ALIGN_STOP) {
+        fdBenchStop(FD_BENCH_ALIGN_DONE);
+        __set_PRIMASK(mask);
+        return;
+    }
+    if (action == FD_REV_ALIGN_MARK) {
+        /* Marker only: no comStep, no launch gap, no ADC acquisition. */
+        GPIOB->BSRR = (1u << 7);
+        fd_align_observe.frozen = 1u;
+    }
+#endif
     if (action != FD_REV_NONE) fdEdgeClose(now);
 #ifdef TARGET_FD_ALIGN_SETTLE
     if (fd_rev.stage != FD_REV_ALIGN) fd_align_observe.frozen = 1u;
@@ -1286,9 +1427,32 @@ static void fdRevTick(void)
         zero_crosses = 0u;
         adcZcdResetAcquisition(ADC_ZCD_RESET_COUNT);
         fd_rev.sector_at = DWT->CYCCNT; /* dwell starts AFTER bridge release */
+#ifdef TARGET_FD_EARLY_REKICK
+        fdRkRecord(fd_rev.sector_at,action);
+#endif
     }
 #endif
-    else if (action == FD_REV_STEP || action == FD_REV_RETRY || action == FD_REV_LAUNCH || action == FD_REV_PLANNED || action == FD_REV_REALIGN) {
+    else if (action == FD_REV_STEP || action == FD_REV_RETRY || action == FD_REV_LAUNCH || action == FD_REV_PLANNED || action == FD_REV_REALIGN
+#ifdef TARGET_FD_EARLY_REKICK
+        || action == FD_REV_RK_LAUNCH
+#endif
+#ifdef TARGET_FD_BLUE_START
+        || action == FD_REV_BLUE_RESTART || action == FD_REV_BLUE_FORCED
+#endif
+    ) {
+#ifdef TARGET_FD_BLUE_START
+        if(action==FD_REV_BLUE_RESTART) {
+            /* Full release was100ms. Repeat original positioning, no rotated retry seed. */
+            step=fdDoubleAlignSeed(forward);commutation_interval=10000u;zero_crosses=0u;
+            adcZcdResetAcquisition(ADC_ZCD_RESET_COUNT);
+            fdAlignBegin(&fd_align_observe,fd_power_bench.active_id);
+            fdEdgeBegin(fd_power_bench.active_id,fd_power_policy.started);
+        }
+        if(action==FD_REV_BLUE_FORCED) {
+            /* Discard detector history from the first fixed vector. */
+            adcZcdResetAcquisition(ADC_ZCD_RESET_COUNT);zero_crosses=0u;
+        }
+#endif
 #ifdef TARGET_FD_REPOSITION
         if (action == FD_REV_REALIGN) {
             fd_reposition_diag[3] = now-fd_power_policy.started;
@@ -1301,7 +1465,11 @@ static void fdRevTick(void)
         }
 #endif
 #ifdef TARGET_FD_LAUNCH_ADVANCE
-        if (action == FD_REV_LAUNCH) {
+        if (action == FD_REV_LAUNCH
+#ifdef TARGET_FD_EARLY_REKICK
+            || action == FD_REV_RK_LAUNCH
+#endif
+        ) {
             /* Non-adjacent vectors can change PWM directly to LOW (reverse
              * direction C phase). Break all legs before GPIO mode changes;
              * timer complementary deadtime alone cannot guard static GPIO.
@@ -1310,6 +1478,12 @@ static void fdRevTick(void)
             uint32_t off_at = DWT->CYCCNT;
             while ((uint32_t)(DWT->CYCCNT - off_at) < 5u * FD_REV_US) {}
             step = fdDoubleAlignLaunchSeed();
+#ifdef TARGET_FD_EARLY_REKICK
+            if(action==FD_REV_RK_LAUNCH) {
+                adcZcdResetAcquisition(ADC_ZCD_RESET_COUNT);zero_crosses=0u;
+                commutation_interval=10000u;
+            }
+#endif
 #ifdef TARGET_FD_REPOSITION
             if (fd_rev.reposition_used) step = fdRetryLaunchSeed(forward);
 #endif
@@ -1333,9 +1507,32 @@ static void fdRevTick(void)
         /* A step never invents a zero_cross or feeds the closed-loop IIR.
          * S2 planned steps do not count as timeouts; S3 missing-feedback
          * retries were explicitly counted above. */
+#ifdef TARGET_FD_SCOPE_PB7
+        fd_scope_launch = (action == FD_REV_LAUNCH
+#ifdef TARGET_FD_EARLY_REKICK
+            || action == FD_REV_RK_LAUNCH
+#endif
+        );
+#endif
         SET_INTERVAL_TIMER_COUNT(0u);
         fdTraceEvent(FD_EVENT_REV_STEP, fd_rev.period / FD_REV_US);
         commutate();
+#ifdef TARGET_FD_LAUNCH_HOLD
+#ifdef TARGET_FD_LAUNCH_TWO
+        if(action==FD_REV_LAUNCH || (action==FD_REV_STEP && fd_rev.launch_vectors==2u))
+            fd_rev.sector_at=DWT->CYCCNT;
+#else
+        if(action==FD_REV_LAUNCH)fd_rev.sector_at=DWT->CYCCNT;
+#endif
+#endif
+#ifdef TARGET_FD_BLUE_START
+        if(action==FD_REV_LAUNCH || action==FD_REV_BLUE_FORCED)fd_rev.sector_at=DWT->CYCCNT;
+#endif
+#ifdef TARGET_FD_EARLY_REKICK
+        if(action==FD_REV_LAUNCH || action==FD_REV_RK_LAUNCH) {
+            fd_rev.sector_at=DWT->CYCCNT;fdRkRecord(fd_rev.sector_at,action);
+        }
+#endif
         bad_count = 0u;
     }
     __set_PRIMASK(mask);
@@ -1346,12 +1543,55 @@ static void fdRevObserveEdge(void)
     uint32_t mask = __get_PRIMASK();
     __disable_irq();
     if (!fd_power_bench.inhibit && fd_rev_acquiring) {
+#ifdef TARGET_FD_BLUE_START
+        if(!fd_rev.blue_first && (fd_rev.stage!=FD_REV_OPEN || fd_rev.seen ||
+           (uint32_t)(DWT->CYCCNT-fd_rev.sector_at)>=fdRevRetryTicks(&fd_rev) ||
+           (uint32_t)(DWT->CYCCNT-fd_rev.blue_attempt_at)>=FD_BLUE_ATTEMPT_TICKS)) {
+            fdRevTick();__set_PRIMASK(mask);return;
+        }
+        unsigned idx=8u+8u*(fd_rev.blue_attempts-1u);
+        if(fd_rev.stage==FD_REV_OPEN && fd_rev.blue_attempts && fd_rev.blue_attempts<=3u) {
+            unsigned slot=fd_rev.blue_first?2u:4u;
+            if(fd_blue_diag[idx+slot]==UINT32_MAX)fd_blue_diag[idx+slot]=DWT->CYCCNT-fd_power_policy.started;
+            if(!fd_rev.blue_first) {
+                if(fd_blue_diag[idx+7u]==UINT32_MAX)fd_blue_diag[idx+7u]=0u;
+                fd_blue_diag[idx+7u]++;
+            }
+        }
+        if(fd_rev.blue_first) {__set_PRIMASK(mask);return;} /* record only, no edge/period confidence */
+#endif
+#ifdef TARGET_FD_EARLY_REKICK
+        uint32_t rk_at=DWT->CYCCNT;unsigned rk_idx=8u+8u*fd_rev.rk_count;
+        uint8_t rk_was_first=fd_rev.rk_first, rk_previous=fd_rev.confidence;
+        if(fd_rev.stage!=FD_REV_OPEN || fd_rev.seen || fd_rev.rk_pending ||
+           (uint32_t)(rk_at-fd_rev.sector_at)>=fd_rev.period ||
+           fdRevDeadlinePolicy(&fd_rev,rk_at,fd_power_policy.started)) {
+            fdRevTick();__set_PRIMASK(mask);return;
+        }
+#endif
         uint8_t timing = eepromBuffer.auto_advance ? auto_advance_level : temp_advance;
 #ifdef TARGET_FD_STARTUP_LEVEL
         uint8_t crossing = adcZcdEventIsCrossing();
         (void)fdRevStartupEvent(&fd_rev, DWT->CYCCNT, timing, crossing);
 #else
-        (void)fdRevEdgePolicy(&fd_rev, DWT->CYCCNT, timing);
+        (void)fdRevEdgePolicy(&fd_rev,
+#ifdef TARGET_FD_EARLY_REKICK
+            rk_at,
+#else
+            DWT->CYCCNT,
+#endif
+            timing);
+#endif
+#ifdef TARGET_FD_EARLY_REKICK
+        if(rk_was_first) {
+            fd_rk_diag[rk_idx+1u]=rk_at-fd_power_policy.started;
+            fd_rk_diag[rk_idx+2u]=rk_at-fd_rev.sector_at;
+            fd_rk_diag[rk_idx+3u]=fd_rev.rk_pending==FD_REV_RELEASE?1u:
+                fd_rev.rk_pending==FD_REV_RK_STOP?3u:2u;
+        }
+        if(fd_rev.rk_pending) {fdRevTick();__set_PRIMASK(mask);return;}
+        if(fd_rev.confidence==rk_previous) {__set_PRIMASK(mask);return;}
+        fd_rk_diag[rk_idx+6u]++;fd_rk_diag[5]=fd_rev.confidence;
 #endif
 #ifdef TARGET_FD_REPOSITION
         if (fd_rev.reposition_used && fd_rev.observed_once && fd_reposition_diag[4] == UINT32_MAX)
@@ -1392,6 +1632,11 @@ static void fdBenchWritePwm(uint16_t ticks)
     ) {
         duty_cycle_setpoint = duty_cycle = adjusted_duty_cycle = last_duty_cycle = 0u;
         SET_DUTY_CYCLE_ALL(0u);
+#ifdef TARGET_FD_HIZ_OBSERVE
+    } else if (fd_hiz_active) {
+        duty_cycle_setpoint = duty_cycle = adjusted_duty_cycle = last_duty_cycle = 0u;
+        SET_HELI_COAST_HIGH_Z_SAMPLE(tim1_arr);
+#endif
     } else if (heli_coast_active) {
         last_duty_cycle = 0u;
         SET_HELI_COAST_HIGH_Z_SAMPLE(tim1_arr);
@@ -1863,6 +2108,22 @@ static void fdAlignmentPairReset(void)
 }
 static void fdAlignmentPairSample(const uint16_t v[3], uint32_t at, uint32_t cnt, uint32_t duty, uint32_t trigger)
 {
+#ifdef TARGET_FD_LAUNCH_RAW
+    /* Do not reuse drive counters as a fresh pair budget during retries. */
+#ifdef TARGET_FD_ALIGN_TAIL
+#ifdef TARGET_FD_EARLY_REKICK
+    if(fd_edge_observe.abi==9u) {fdAlignmentPairReset();return;}
+#elif defined(TARGET_FD_BLUE_START)
+    if(fd_edge_observe.abi==8u) {fdAlignmentPairReset();return;}
+#elif defined(TARGET_FD_LAUNCH_TWO)
+    if(fd_edge_observe.abi==6u) {fdAlignmentPairReset();return;}
+#else
+    if(fd_edge_observe.abi==5u) {fdAlignmentPairReset();return;}
+#endif
+#else
+    if(fd_edge_observe.abi==4u) {fdAlignmentPairReset();return;}
+#endif
+#endif
     if(fd_pair_trial!=fd_edge_observe.trial) {
         fd_pair_trial=fd_edge_observe.trial;fdAlignmentPairReset();
     }
@@ -1911,11 +2172,28 @@ static void fdObserveAlignmentAdc(void)
     if(slot<2u){
         uint32_t at=DWT->CYCCNT;
         fdEdgeStore(slot,(FdEdgeSample){.at=at,.a=v[0],.b=v[1],.c=v[2],
+#ifdef TARGET_FD_ALIGN_TAIL
+            .margin=(int16_t)((int32_t)v[1]-((int32_t)v[0]+v[2])/2),
+#endif
             .cnt=cnt,.duty=duty,.trigger=trigger,.reason=255,.step=step,
             .flags=(usable?1u:0u)|4u});
         fdEdgeCost(DWT->CYCCNT-at);
     }
 #endif
+}
+#endif
+#ifdef TARGET_FD_HIZ_OBSERVE
+static void fdObserveHiZAdc(void)
+{
+    uint32_t at = DWT->CYCCNT;
+    LL_ADC_ClearFlag_JEOS(ADC1);
+    uint16_t v[3] = {LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_1),
+        LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_2),
+        LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_3)};
+    fdEdgeHiZSample((FdEdgeSample){.at=at,.a=v[0],.b=v[1],.c=v[2],
+        .cnt=TIM1->CNT,.duty=TIM1->CCR1,.trigger=TIM1->CCR4,.step=step,
+        .reason=253,.flags=(uint8_t)(32u|(!LL_ADC_IsActiveFlag_JEOS(ADC1)?1u:0u))});
+    fdEdgeCost(DWT->CYCCNT-at);
 }
 #endif
 void fdAdcJeosService(void)
@@ -1929,6 +2207,14 @@ void fdAdcJeosService(void)
     uint32_t started = DWT->CYCCNT;
     fd_async_diag.irq_count++;
     fd_async_diag.irq_last_at = started;
+#endif
+#ifdef TARGET_FD_HIZ_OBSERVE
+    if (fd_hiz_active) {
+        if (fd_rev_acquiring && fd_rev.stage == FD_REV_HIZ && armed && running &&
+            !fd_power_bench.inhibit && !stuck_rotor_inhibit && !drive_safety_limit_inhibit)
+            fdObserveHiZAdc();
+        else LL_ADC_ClearFlag_JEOS(ADC1);
+    } else
 #endif
 #ifdef TARGET_FD_ALIGN_SETTLE
     if (fd_rev_acquiring && fd_rev.stage == FD_REV_ALIGN && armed && running &&
@@ -1987,6 +2273,9 @@ void commutate()
 #ifdef TARGET_STARTUP_POWER_BENCH
     fdBenchService();
     if (fd_power_bench.inhibit ||
+#ifdef TARGET_FD_HIZ_OBSERVE
+        fd_hiz_active ||
+#endif
         (!fd_power_bench.active_id && !heli_coast_active)) {
         __set_PRIMASK(primask);
         return;
@@ -2032,6 +2321,10 @@ void commutate()
 #endif
     ) {
         comStep(step);
+#ifdef TARGET_FD_SCOPE_PB7
+        GPIOB->BSRR = fd_scope_launch ? (1u << 7) : (1u << 23);
+        fd_scope_launch = 0u;
+#endif
     }
 #ifndef TARGET_ADC_ZCD_GUARD
     __enable_irq();
@@ -3244,6 +3537,14 @@ int main(void)
     initAfterJump();
     checkDeviceInfo();
     initCorePeripherals();
+#ifdef TARGET_FD_SCOPE_PB7
+    LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_GPIOB);
+    GPIOB->BRR = (1u << 7);
+    LL_GPIO_SetPinOutputType(GPIOB, LL_GPIO_PIN_7, LL_GPIO_OUTPUT_PUSHPULL);
+    LL_GPIO_SetPinPull(GPIOB, LL_GPIO_PIN_7, LL_GPIO_PULL_NO);
+    LL_GPIO_SetPinSpeed(GPIOB, LL_GPIO_PIN_7, LL_GPIO_SPEED_FREQ_LOW);
+    LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_7, LL_GPIO_MODE_OUTPUT);
+#endif
     fdTraceInit();
     enableCorePeripherals();
     loadEEpromSettings();

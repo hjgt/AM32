@@ -9,7 +9,10 @@ assert.equal(d.records[0].first_accept_us,100/160);assert.equal(d.records[0].exi
 assert.equal(d.records[0].reasons.accepted,1);
 const extended=Buffer.from(raw);extended.writeUInt32LE(820000*160,32+4);
 assert.equal(decode(extended).records[0].end_us,820000);
-for(const [at,value] of [[0,0],[4,2],[16,0],[24,0],[32+4,160000001]]){
+extended.writeUInt32LE(1300000*160,32+4);
+assert.equal(decode(extended).records[0].end_us,1300000);
+extended.writeUInt32LE(2090000*160,32+4);assert.equal(decode(extended).records[0].end_us,2090000);
+for(const [at,value] of [[0,0],[4,2],[16,0],[24,0],[32+4,480000001]]){
  const bad=Buffer.from(raw);bad.writeUInt32LE(value,at);assert.throws(()=>decode(bad));
 }
 assert.throws(()=>decode(raw.subarray(0,raw.length-1)));

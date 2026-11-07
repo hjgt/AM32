@@ -1,0 +1,55 @@
+{
+  "target": "CUSTOM_FD6288_G431",
+  "mode": "one_feedback_commutation_then_second_vector_hold30ms",
+  "abi": 6,
+  "first_wait_max_ms": 30,
+  "first_event_delay_us": 500,
+  "second_hold_ms": 30,
+  "whole_trial_software_cap_ms": 392,
+  "waveform_window_ms": 61,
+  "dense_prefix_each_vector_ms": 2,
+  "otherwise_one_in_groups": 4,
+  "max_records": 512,
+  "ram_bytes": 20248,
+  "disabled_hex_matches_single_hold": true,
+  "tests": [
+    "actual_tick_event_stop_guard_PWM_two_and_single_ASan_UBSan",
+    "ABI6_recorder_with_actual_pair_adapter_and_ABI5_regression",
+    "main_only_image_BIN_HEX_consistency"
+  ],
+  "flash_status": "write_and_reset_run_success_after_normal_SWD_reconnect",
+  "user_no_flash": false,
+  "current_board": "LAUNCH-TWO two-vector diagnostic",
+  "readback": false,
+  "last_connection_voltage_V": 3.240876,
+  "reset_release_cleanup": "prior failed attempt retained in logs; normal SWD later reconnected successfully",
+  "pending_input": null,
+  "hardware_trial": {
+    "trial": 86,
+    "operator": "alignment then click without taking off",
+    "first_event_after_launch_ms": 0.50294375,
+    "event_to_second_vector_ms": 0.5177375,
+    "second_vector_held_ms": 30.02535625,
+    "second_valid_groups": 720,
+    "second_accepted": 0,
+    "second_margin_range": [
+      -78,
+      -23
+    ],
+    "stop_reason": "launch_hold_done",
+    "hook_max_us": 1.525
+  },
+  "normal_comparison": {
+    "trial": 1,
+    "different_session_from_no_turn": true,
+    "settings_equal": true,
+    "first_event_after_launch_ms": 4.03180625,
+    "second_event_after_second_vector_ms": 16.43921875,
+    "second_held_ms": 30.01444375,
+    "prelaunch_3ms_normal_mid_error": 36,
+    "prelaunch_3ms_no_turn_mid_error": 221,
+    "both_3ms_screen_valid": true,
+    "normal_0_2ms_screen_valid": false,
+    "hook_max_us": 1.59375
+  }
+}

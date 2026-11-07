@@ -1,0 +1,16 @@
+{
+  "target": "CUSTOM_FD6288_G431",
+  "first_align_ms": 30,
+  "second_align_ms": 300,
+  "launch_at_ms": 330,
+  "acquisition_per_attempt_ms": 300,
+  "first_attempt_deadline_ms": 630,
+  "retry_entry_end_ms": 650,
+  "total_failed_trial_limit_ms": 1300,
+  "default60ms_hex_matches_pb7": true,
+  "policy_and_adapter_tests": "PASS",
+  "main_only_image_check": "PASS",
+  "flash_status": "write_and_reset_run_success",
+  "hardware_readback": false,
+  "motor_startup_result": "same-session trials1..6 smooth, six consecutive events and handoff; trial7 no_lock, max_streak1"
+}

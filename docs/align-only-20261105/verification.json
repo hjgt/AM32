@@ -1,0 +1,16 @@
+{
+  "built_target": "CUSTOM_FD6288_G431",
+  "hardware_access": false,
+  "flashed": false,
+  "baseline_hex_byte_identical": true,
+  "checks_passed": [
+    "align-only policy ASan/UBSan",
+    "existing async scheduler/JEOS with align, settle, reposition",
+    "existing host regression: 15 configurations",
+    "main-only image and BIN/HEX consistency"
+  ],
+  "limits": [
+    "New feature integration and GPIO timing have not been measured on hardware",
+    "Mechanical behavior not observed yet"
+  ]
+}

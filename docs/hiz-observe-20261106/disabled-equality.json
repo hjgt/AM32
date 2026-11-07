@@ -1,0 +1,5 @@
+{
+  "byte_equal": true,
+  "sha256": "2516a529e6b3ef3659b07a8bdabf68d1192a891614a3ebee4482a84b4313bbe0",
+  "baseline": "test-firmware/fd6288-LAUNCH-TWO-20261106/AM32_CUSTOM_FD6288_G431_2.20.hex"
+}

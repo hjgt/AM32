@@ -35,7 +35,13 @@ extern char prop_brake_active;
 #endif
 
 void proportionalBrake()
-{ // alternate all channels between braking (ABC LOW)
+{
+#ifdef TARGET_FD_HIZ_OBSERVE
+    uint32_t hiz_mask = __get_PRIMASK();
+    __disable_irq();
+    if (fd_hiz_active || fd_power_bench.inhibit) { __set_PRIMASK(hiz_mask); return; }
+#endif
+ // alternate all channels between braking (ABC LOW)
     // and coasting (ABC float) put lower channel into
     // alternate mode and turn upper OFF for each
     // channel
@@ -60,6 +66,10 @@ void proportionalBrake()
         LL_GPIO_MODE_ALTERNATE);
     LL_GPIO_SetPinMode(PHASE_C_GPIO_PORT_LOW, PHASE_C_GPIO_LOW,
         LL_GPIO_MODE_ALTERNATE);
+
+#ifdef TARGET_FD_HIZ_OBSERVE
+    __set_PRIMASK(hiz_mask);
+#endif
 }
 
 void phaseBPWM()
@@ -292,6 +302,9 @@ void phaseALOW()
 
 void allOff()
 {
+#ifdef TARGET_FD_SCOPE_PB7
+    GPIOB->BRR = (1u << 7);
+#endif
 #ifdef TARGET_FD_ASYNC_COMM
     uint32_t mask = __get_PRIMASK();
     __disable_irq();
@@ -310,7 +323,11 @@ void comStep(int newStep)
 #ifdef TARGET_STARTUP_POWER_BENCH
     uint32_t mask = __get_PRIMASK();
     __disable_irq();
-    if (fd_power_bench.inhibit) {
+    if (fd_power_bench.inhibit
+#ifdef TARGET_FD_HIZ_OBSERVE
+        || fd_hiz_active
+#endif
+    ) {
         __set_PRIMASK(mask);
         return;
     }
@@ -361,10 +378,20 @@ void comStep(int newStep)
 }
 
 void fullBrake()
-{ // full braking shorting all low sides
+{
+#ifdef TARGET_FD_HIZ_OBSERVE
+    uint32_t hiz_mask = __get_PRIMASK();
+    __disable_irq();
+    if (fd_hiz_active || fd_power_bench.inhibit) { __set_PRIMASK(hiz_mask); return; }
+#endif
+ // full braking shorting all low sides
     phaseALOW();
     phaseBLOW();
     phaseCLOW();
+
+#ifdef TARGET_FD_HIZ_OBSERVE
+    __set_PRIMASK(hiz_mask);
+#endif
 }
 
 void allpwm()
@@ -372,7 +399,11 @@ void allpwm()
 #ifdef TARGET_STARTUP_POWER_BENCH
     uint32_t mask = __get_PRIMASK();
     __disable_irq();
-    if (fd_power_bench.inhibit) {
+    if (fd_power_bench.inhibit
+#ifdef TARGET_FD_HIZ_OBSERVE
+        || fd_hiz_active
+#endif
+    ) {
         __set_PRIMASK(mask);
         return;
     }
@@ -387,14 +418,34 @@ void allpwm()
 
 void twoChannelForward()
 {
+#ifdef TARGET_FD_HIZ_OBSERVE
+    uint32_t hiz_mask = __get_PRIMASK();
+    __disable_irq();
+    if (fd_hiz_active || fd_power_bench.inhibit) { __set_PRIMASK(hiz_mask); return; }
+#endif
+
     phaseAPWM();
     phaseBLOW();
     phaseCPWM();
+
+#ifdef TARGET_FD_HIZ_OBSERVE
+    __set_PRIMASK(hiz_mask);
+#endif
 }
 
 void twoChannelReverse()
 {
+#ifdef TARGET_FD_HIZ_OBSERVE
+    uint32_t hiz_mask = __get_PRIMASK();
+    __disable_irq();
+    if (fd_hiz_active || fd_power_bench.inhibit) { __set_PRIMASK(hiz_mask); return; }
+#endif
+
     phaseALOW();
     phaseBPWM();
     phaseCLOW();
+
+#ifdef TARGET_FD_HIZ_OBSERVE
+    __set_PRIMASK(hiz_mask);
+#endif
 }

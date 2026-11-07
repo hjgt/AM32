@@ -9,7 +9,7 @@ const SIZE = 23656, HEADER = 104, MAGIC = 0x46535431;
 const reasons = ['invalid', 'blank', 'pre', 'hysteresis', 'early', 'unarmed', 'confirmation', 'accepted', 'reported', 'coast'];
 const events = ['', 'start', 'commutate', 'zc', 'timeout', 'desync', 'stop', 'fault', 'bench_stop', 'rev_step', 'rev_edge', 'rev_handoff', 'rev_decision'];
 const revDecisions = ['ignored_stage_or_duplicate', 'too_early', 'too_late', 'first_qualified_edge', 'inconsistent_period', 'qualified_pair', 'ready_for_handoff'];
-const benchReasons = ['', 'window_300ms', 'native_stuck', 'safety_cap', 'not_running', 'bad_config', 'no_zero_or_start_not_allowed', 'operator_zero', 'rev_no_lock', 'rev_lost_feedback'];
+const benchReasons = ['', 'window_300ms', 'native_stuck', 'safety_cap', 'not_running', 'bad_config', 'no_zero_or_start_not_allowed', 'operator_zero', 'rev_no_lock', 'rev_lost_feedback', 'commutation_late', 'commutation_invalid', 'alignment_done', 'launch_hold_done', 'hiz_observation_done'];
 const revStages = ['off', 'align', 'open_loop', 'pending_handoff', 'closed_loop'];
 const sha = b => crypto.createHash('sha256').update(b).digest('hex');
 function header(b) {

@@ -13,9 +13,9 @@ function decode(b){
   const o=32+60*i,u=n=>b.readUInt32LE(o+n),s=n=>b.readUInt16LE(o+n);
   const reasons=Array.from({length:10},(_,j)=>s(16+j*2));
   assert.equal(reasons.reduce((a,v)=>a+v,0),s(36));assert(s(38)<=s(36));
-  // S4T may acquire until820ms. This is a decode plausibility bound,
-  // not a firmware timeout; allow service latency below1s.
-  assert(u(4)>=u(0)&&u(4)<=160000000);assert(b[o+52]>=1&&b[o+52]<=6);
+  // Long300ms alignment can acquire until1300ms. Decoder plausibility
+  // bound only: allow BLUE_START2090ms plus service latency below3s, not a firmware timeout.
+  assert(u(4)>=u(0)&&u(4)<=480000000);assert(b[o+52]>=1&&b[o+52]<=6);
   records.push({sector:i+1,start_us:u(0)/160,end_us:u(4)/160,
    first_accept_us:u(8)===0xffffffff?null:u(8)/160,last_accept_us:u(12)===0xffffffff?null:u(12)/160,
    reasons:Object.fromEntries(['invalid','blank','pre','hysteresis','early','unarmed','confirmation','accepted','reported','coast'].map((k,j)=>[k,reasons[j]])),
@@ -81,7 +81,20 @@ async function dump(elf,out,stopped){
    assert.equal(edge_observer.header.trial,result.header.trial);
    assert.deepEqual(await ram('fd_edge_observe'),b);
   }
-  const output={capturedAt:new Date().toISOString(),elf:path.resolve(elf),identity:'Known flashed session and selected code bytes, not full flash',...result,bench,alignment,reposition,edge_observer,settings_hex:settings.toString('hex'),async_hex:async.toString('hex')};
+  let blue_start=null;
+  if(syms.fd_blue_diag){
+   assert.equal(syms.fd_blue_diag.n,128);const b=await ram('fd_blue_diag');
+   blue_start=require('./fd6288_blue_decode.cjs').decode(b);
+   assert.equal(blue_start.trial,result.header.trial);
+   assert.deepEqual(await ram('fd_blue_diag'),b);
+  }
+  let early_rekick=null;
+  if(syms.fd_rk_diag) {
+   assert.equal(syms.fd_rk_diag.n,160);const b=await ram('fd_rk_diag');
+   early_rekick=require('./fd6288_rekick_decode.cjs').decode(b);
+   assert.equal(early_rekick.trial,result.header.trial);assert.deepEqual(await ram('fd_rk_diag'),b);
+  }
+  const output={early_rekick,blue_start,capturedAt:new Date().toISOString(),elf:path.resolve(elf),identity:'Known flashed session and selected code bytes, not full flash',...result,bench,alignment,reposition,edge_observer,settings_hex:settings.toString('hex'),async_hex:async.toString('hex')};
   fs.writeFileSync(out,raw,{flag:'wx'});fs.writeFileSync(out+'.json',JSON.stringify(output,null,2),{flag:'wx'});
   console.log(JSON.stringify(output,null,2));
  }finally{c.close()}

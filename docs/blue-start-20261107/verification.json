@@ -1,0 +1,71 @@
+{
+  "mode": "BLUE_START",
+  "alignment_ms": [
+    30,
+    300
+  ],
+  "first_drive_fixed_ms": 30,
+  "release_ms": 100,
+  "max_total_attempts": 3,
+  "attempt_cap_ms": 630,
+  "whole_startup_cap_ms": 2090,
+  "restart_scope": "acquisition_only; post-handoff loss stops",
+  "first_usable_event_delay_us": 500,
+  "old_rescue_and_rotated_retry": "replaced by new bounded policy",
+  "raw_abi": 8,
+  "wave_window_ms": 61,
+  "raw_scope": "latest attempt; first2ms each first2 vectors full rate then1in4;512records",
+  "raw_buffer_bytes": 12404,
+  "ram_bytes": 20384,
+  "disabled_hex_matches_ALIGN_TAIL": true,
+  "flash_status": "write_and_reset_run_success_after_user_reconnected",
+  "readback": false,
+  "current_board": "BLUE_START",
+  "last_connection_voltage_V": 3.236581,
+  "user_confirmed_restart_scope": "startup_failure_only",
+  "pending_input": null,
+  "hardware_result": "rejected_major_startup_regression",
+  "hardware_summary": {
+    "trial": 8,
+    "operator": "几乎都失败，定位后每轮短促转约45度，三声、不到一圈、约1.2秒；用户估计而非角度时标测量",
+    "trial_count": 8,
+    "no_lock": 7,
+    "handoff_then_operator_zero": 1,
+    "final_elapsed_ms": 1347.96265,
+    "attempts": [
+      {
+        "attempt": 1,
+        "first_event_from_drive_ms": 8.416012499999953,
+        "first_drive_held_ms": 30.023,
+        "following_drive_ms": 22.533150000000024,
+        "following_first_margin": 147,
+        "following_last_margin": -95,
+        "following_accepted": 0,
+        "release_to_restart_ms": 100.01126249999996
+      },
+      {
+        "attempt": 2,
+        "first_event_from_drive_ms": 3.537412500000093,
+        "first_drive_held_ms": 30.023318750000094,
+        "following_drive_ms": 22.53365625,
+        "following_first_margin": 194,
+        "following_last_margin": -116,
+        "following_accepted": 0,
+        "release_to_restart_ms": 100.01042499999993
+      },
+      {
+        "attempt": 3,
+        "first_event_from_drive_ms": 12.698675000000046,
+        "first_drive_held_ms": 30.02371250000014,
+        "following_drive_ms": 22.535456250000045,
+        "following_first_margin": 113,
+        "following_last_margin": -90,
+        "following_accepted": 0,
+        "release_to_restart_ms": null
+      }
+    ],
+    "wave_groups": 389,
+    "hook_max_us": 1.525
+  },
+  "next": "Stop testing fixed30ms first drive; restore normal feedback and design isolated early-event recovery"
+}

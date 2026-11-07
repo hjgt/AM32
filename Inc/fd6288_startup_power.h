@@ -11,7 +11,8 @@ enum {
     FD_BENCH_WINDOW = 1, FD_BENCH_NATIVE_STUCK, FD_BENCH_SAFETY_CAP,
     FD_BENCH_NOT_RUNNING, FD_BENCH_BAD_CONFIG, FD_BENCH_NO_ZERO,
     FD_BENCH_OPERATOR_ZERO, FD_BENCH_NO_LOCK, FD_BENCH_LOST_FEEDBACK,
-    FD_BENCH_COMM_LATE, FD_BENCH_COMM_INVALID
+    FD_BENCH_COMM_LATE, FD_BENCH_COMM_INVALID, FD_BENCH_ALIGN_DONE,
+    FD_BENCH_LAUNCH_DONE, FD_BENCH_HIZ_DONE
 };
 typedef struct {
     uint32_t id, elapsed_cycles, accepted, timeouts;
@@ -28,4 +29,7 @@ typedef struct {
 #endif
 } FdPowerDiagnostics;
 extern volatile FdPowerDiagnostics fd_power_bench;
+#ifdef TARGET_FD_HIZ_OBSERVE
+extern volatile uint8_t fd_hiz_active; /* bridge lock, cleared only after zero+off */
+#endif
 #endif

@@ -1,0 +1,41 @@
+{
+  "source": "LAUNCH-TWO trial86 first drive sector",
+  "scope": "Original bridge excitation and dense retained groups only; predicts event qualification, not motor response after counterfactual commutation",
+  "cases": [
+    {
+      "blank_valid_groups": 1,
+      "post_confirm_groups": 2,
+      "accept_from_logger_us": 497.38125
+    },
+    {
+      "blank_valid_groups": 2,
+      "post_confirm_groups": 2,
+      "accept_from_logger_us": 497.38125
+    },
+    {
+      "blank_valid_groups": 3,
+      "post_confirm_groups": 2,
+      "accept_from_logger_us": 497.38125
+    },
+    {
+      "blank_valid_groups": 4,
+      "post_confirm_groups": 2,
+      "accept_from_logger_us": null
+    },
+    {
+      "blank_valid_groups": 1,
+      "post_confirm_groups": 3,
+      "accept_from_logger_us": 532.9875
+    },
+    {
+      "blank_valid_groups": 1,
+      "post_confirm_groups": 4,
+      "accept_from_logger_us": 575.325
+    },
+    {
+      "blank_valid_groups": 1,
+      "post_confirm_groups": 5,
+      "accept_from_logger_us": 616.3125
+    }
+  ]
+}

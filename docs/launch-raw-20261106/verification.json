@@ -1,0 +1,32 @@
+{
+  "target": "CUSTOM_FD6288_G431",
+  "recording_abi": 4,
+  "ram_bytes": 20240,
+  "full_rate_window_ms": 2,
+  "total_window_ms": 40,
+  "max_records": 512,
+  "baseline_hex_byte_identical_when_disabled": true,
+  "tests": [
+    "actual_pair_adapter_with_launch_recorder_ASan_UBSan",
+    "legacy_pair_ABI3",
+    "legacy_raw_ABI2",
+    "main_only_image_BIN_HEX_consistency"
+  ],
+  "flash_status": "write_and_reset_run_success",
+  "hardware_readback": false,
+  "hardware_recorder_timing": {
+    "max_cycles": 221,
+    "hook_max_us": 1.38125,
+    "entire_isr": false
+  },
+  "motor_startup_with_recorder": "trial1..12 handoff (9 zero retries,3 delayed); trial13 no_lock, first sector719 valid all post-side",
+  "last_capture_records": 505,
+  "smooth_comparison": {
+    "trial": 14,
+    "first_valid_margin": -82,
+    "first_accept_after_launch_ms": 18.8124875,
+    "handoff_ms": 397.36273125,
+    "timeouts": 0,
+    "hook_max_us": 1.50625
+  }
+}

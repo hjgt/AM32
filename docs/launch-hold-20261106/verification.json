@@ -1,0 +1,45 @@
+{
+  "target": "CUSTOM_FD6288_G431",
+  "mode": "launch_vector_hold30ms_after30plus300ms_alignment",
+  "hold_ms": 30,
+  "whole_trial_software_cap_ms": 361,
+  "edge_driven_commutation": false,
+  "retry": false,
+  "handoff": false,
+  "stop_reason": 13,
+  "disabled_hex_matches_align_tail": true,
+  "tests": [
+    "actual_tick_event_stop_guard_PWM_ASan_UBSan_with_mock_service_and_peripherals",
+    "existing_full_retry_policy_and_adapter",
+    "main_only_image_BIN_HEX_consistency"
+  ],
+  "flash_status": "write_and_reset_run_success",
+  "readback": false,
+  "hardware_trial": {
+    "trial": 1,
+    "operator_observation": "smooth forward about half a revolution then natural stop; corrected from one revolution",
+    "first_event_after_launch_ms": 7.7967875,
+    "held_sector_ms": 30.0260375,
+    "sectors": [
+      5,
+      6,
+      2
+    ],
+    "stop_reason": "launch_hold_done",
+    "no_followup_commutation": true,
+    "tail_screen_valid": [
+      true,
+      true
+    ],
+    "tail_mid_error": [
+      -196,
+      -143
+    ]
+  },
+  "operator_repeated_observation": {
+    "approximate_trials": 50,
+    "initial_position": "random per operator",
+    "behavior": "all forward about half a revolution then natural stop",
+    "per_trial_ram_read": false
+  }
+}

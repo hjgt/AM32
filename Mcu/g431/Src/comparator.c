@@ -163,7 +163,9 @@ uint8_t adcZcdEventIsCrossing(void) { return adc_zcd_event_crossing; }
 static uint8_t adcZcdQualifyDrive(int32_t margin)
 {
     int32_t directed_margin = rising ? margin : -margin;
+#ifdef TARGET_FD_STARTUP_LEVEL
     uint32_t elapsed = INTERVAL_TIMER_COUNT;
+#endif
     if (adc_zcd_reported != 0u) {
         FD_DECISION(FD_SAMPLE_REPORTED);
         return 0u;
@@ -202,6 +204,9 @@ static uint8_t adcZcdQualifyDrive(int32_t margin)
         return 0u;
     }
 
+#ifndef TARGET_FD_STARTUP_LEVEL
+    uint32_t elapsed = INTERVAL_TIMER_COUNT;
+#endif
     if ((adc_zcd_earliest != 0u) && (elapsed <= adc_zcd_earliest)) {
         FD_DECISION(FD_SAMPLE_EARLY);
         /* Do not let a rejected early pulse remain armed and turn into a

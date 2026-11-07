@@ -1,0 +1,46 @@
+{
+  "target": "CUSTOM_FD6288_G431",
+  "abi": 5,
+  "tail_checkpoints_second_align_ms": [
+    297,
+    299.8
+  ],
+  "ram_bytes": 20240,
+  "drive_max_records": 512,
+  "drive_window_ms": 40,
+  "disabled_hex_matches_launch_raw": true,
+  "tests": [
+    "actual_pair_adapter_and_ABI5_tail_recorder_ASan_UBSan",
+    "legacy_ABI2_ABI3_ABI4",
+    "main_only_image_BIN_HEX_consistency"
+  ],
+  "flash_status": "write_and_reset_run_success",
+  "hardware_readback": false,
+  "new_capture_status": "trial9 no_lock; first event0.911ms, max_streak1",
+  "tail_screen_valid": [
+    true,
+    false
+  ],
+  "hardware_hook_max_us": {
+    "after_launch": 1.475,
+    "before_launch_selected_work": 1.9375,
+    "entire_isr": false
+  },
+  "smooth_capture": {
+    "trial": 1,
+    "different_session_from_failure": true,
+    "first_event_after_launch_ms": 7.936225,
+    "handoff_ms": 397.00024375,
+    "retries": 0,
+    "tail_mid_error": [
+      182,
+      159
+    ],
+    "tail_window_screen": [
+      false,
+      true
+    ],
+    "hook_max_us": 1.50625,
+    "alignment_hook_max_us": 1.90625
+  }
+}

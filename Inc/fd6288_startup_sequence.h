@@ -8,12 +8,42 @@
 #include "fd6288_sector_diag.h"
 enum { FD_REV_OFF, FD_REV_ALIGN, FD_REV_OPEN, FD_REV_PENDING, FD_REV_CLOSED, FD_REV_RELAX };
 enum { FD_REV_NONE, FD_REV_STEP, FD_REV_HANDOFF, FD_REV_RETRY, FD_REV_LAUNCH, FD_REV_PLANNED, FD_REV_RELEASE, FD_REV_REALIGN };
+#ifdef TARGET_FD_ALIGN_ONLY
+#ifndef FD6288_ALIGN_ONLY_SECOND_MS
+#define FD6288_ALIGN_ONLY_SECOND_MS 90
+#endif
+#if FD6288_ALIGN_ONLY_SECOND_MS < 90 || FD6288_ALIGN_ONLY_SECOND_MS > 300
+#error "ALIGN_ONLY second-vector observation must be bounded to 90..300 ms"
+#endif
+enum { FD_REV_ALIGN_MARK = 8, FD_REV_ALIGN_STOP };
+/* Keep the original 60ms second-vector boundary/marker. Only the diagnostic
+ * hold after that boundary changes; original90ms and long300ms are archived
+ * as distinct images. This is a software service deadline, not a HW cutoff. */
+enum { FD_ALIGN_ONLY_EXTRA_TICKS = (FD6288_ALIGN_ONLY_SECOND_MS - 60u) * 1000u * 160u,
+    FD_ALIGN_ONLY_TOTAL_TICKS = (30u + FD6288_ALIGN_ONLY_SECOND_MS) * 1000u * 160u };
+#endif
+#ifdef TARGET_FD_HIZ_OBSERVE
+enum { FD_REV_HIZ = 6u, FD_REV_HIZ_RELEASE = 11u, FD_REV_HIZ_STOP = 12u,
+    FD_HIZ_TICKS = 5000u * 160u,
+    FD_HIZ_TOTAL_TICKS = (30u + 300u + 6u) * 1000u * 160u };
+#endif
 enum { FD_REV_EDGE_IGNORED, FD_REV_EDGE_EARLY, FD_REV_EDGE_LATE,
     FD_REV_EDGE_SEED, FD_REV_EDGE_PERIOD, FD_REV_EDGE_GOOD, FD_REV_EDGE_READY };
+#ifdef TARGET_FD_ALIGN_SETTLE
+#ifndef FD6288_SECOND_ALIGN_MS
+#define FD6288_SECOND_ALIGN_MS 60
+#endif
+#if FD6288_SECOND_ALIGN_MS < 60 || FD6288_SECOND_ALIGN_MS > 300
+#error "Second alignment must be bounded to 60..300 ms"
+#endif
+#if defined(TARGET_FD_ALIGN_ONLY) && FD6288_SECOND_ALIGN_MS != 60
+#error "ALIGN_ONLY preserves the original60ms marker; use ALIGN_ONLY_SECOND_MS"
+#endif
+#endif
 enum {
     FD_REV_US = 160u, FD_REV_ALIGN_TICKS = 30000u * FD_REV_US,
 #ifdef TARGET_FD_ALIGN_SETTLE
-    FD_REV_SECOND_ALIGN_TICKS = 60000u * FD_REV_US,
+    FD_REV_SECOND_ALIGN_TICKS = FD6288_SECOND_ALIGN_MS * 1000u * FD_REV_US,
 #else
     FD_REV_SECOND_ALIGN_TICKS = FD_REV_ALIGN_TICKS,
 #endif
@@ -29,7 +59,37 @@ enum {
 #endif
     FD_REV_OBSERVE_TICKS = 1000000u * FD_REV_US
 };
+#ifdef TARGET_FD_LAUNCH_HOLD
+enum { FD_REV_LAUNCH_STOP = 10u, FD_LAUNCH_HOLD_TICKS = 30000u*FD_REV_US,
+#ifdef TARGET_FD_LAUNCH_TWO
+    /* First event within30ms +500us delay + second-vector30ms, bounded. */
+    FD_LAUNCH_HOLD_TOTAL_TICKS = FD_REV_ALIGN_TICKS + FD_REV_SECOND_ALIGN_TICKS +
+        62000u*FD_REV_US };
+#else
+    /* 1ms service allowance, never renewed by an observed edge. */
+    FD_LAUNCH_HOLD_TOTAL_TICKS = FD_REV_ALIGN_TICKS + FD_REV_SECOND_ALIGN_TICKS +
+        FD_LAUNCH_HOLD_TICKS + 1000u*FD_REV_US };
+#endif
+#endif
+#ifdef TARGET_FD_BLUE_START
+enum { FD_BLUE_FIRST_TICKS=30000u*FD_REV_US, FD_BLUE_RELAX_TICKS=100000u*FD_REV_US,
+ FD_BLUE_ATTEMPT_TICKS=FD_REV_ACQUIRE_TICKS, FD_BLUE_MAX_ATTEMPTS=3u,
+ FD_BLUE_TOTAL_TICKS=3u*FD_REV_ACQUIRE_TICKS+2u*FD_BLUE_RELAX_TICKS,
+ FD_REV_BLUE_RESTART=13u, FD_REV_BLUE_FORCED=14u, FD_REV_BLUE_STOP=15u };
+#endif
+#ifdef TARGET_FD_EARLY_REKICK
+enum { FD_RK_EARLY_TICKS=1000u*FD_REV_US, FD_RK_RELAX_TICKS=20000u*FD_REV_US,
+ FD_RK_FIRST_TICKS=30000u*FD_REV_US, FD_RK_MAX=3u,
+ FD_REV_RK_LAUNCH=16u, FD_REV_RK_STOP=17u };
+#endif
 typedef struct {
+#ifdef TARGET_FD_EARLY_REKICK
+    uint8_t rk_count, rk_first, rk_pending;
+#endif
+#ifdef TARGET_FD_BLUE_START
+    uint32_t blue_attempt_at;
+    uint8_t blue_attempts, blue_first;
+#endif
 #ifdef TARGET_FD_REPOSITION
     uint32_t acquisition_at, trial_started;
     uint8_t reposition_used, observed_once;
@@ -54,6 +114,9 @@ typedef struct {
 #endif
 #ifdef TARGET_STARTUP_HANDOFF_REAL
     uint32_t last_real_period;
+#endif
+#ifdef TARGET_FD_LAUNCH_TWO
+    uint8_t launch_vectors;
 #endif
 } FdRevPolicy;
 #ifdef TARGET_STARTUP_FEEDBACK
@@ -114,6 +177,12 @@ static inline void fdRevBeginPolicy(FdRevPolicy *s, uint32_t now)
 {
     *s = (FdRevPolicy){ .sector_at = now, .period = FD_REV_RETRY_TICKS,
         .stage = FD_REV_OPEN, .phase_percent = 255u };
+#ifdef TARGET_FD_EARLY_REKICK
+    s->rk_first=1u;
+#endif
+#ifdef TARGET_FD_BLUE_START
+    s->blue_attempt_at=now;s->blue_attempts=1u;s->blue_first=1u;
+#endif
 #ifdef TARGET_STARTUP_FIRST_WAIT
     /* S4I: only the first cold-start sector gets a 30ms deadline.
      * An ADC-qualified edge still advances via the existing pending delay.
@@ -158,7 +227,11 @@ static inline uint16_t fdDoubleAlignDuty(const FdRevPolicy *s, uint32_t now)
      * positioning vector keeps the prior 360 request instead of dropping
      * to 210 for a second 10ms ramp. This is duty, not regulated torque.
      * No change to vector order, dwell, acquisition budget or duty cap. */
-    if (s->align_left == 1u) return 360u;
+    if (s->align_left == 1u
+#ifdef TARGET_FD_ALIGN_ONLY
+        || s->align_left == 0u
+#endif
+    ) return 360u;
 #endif
     uint32_t us = (uint32_t)(now - s->sector_at) / FD_REV_US;
     if (us > 10000u) us = 10000u;
@@ -187,12 +260,11 @@ enum { FD_REPOSITION_RELEASE_TICKS = 20000u*FD_REV_US,
     FD_REPOSITION_REQUIRED = FD_REPOSITION_RELEASE_TICKS + FD_REV_ALIGN_TICKS +
         FD_REV_SECOND_ALIGN_TICKS + FD_REPOSITION_ACQ_RESERVE };
 #ifdef TARGET_FD_FULL_RETRY
-/* S4T: preserve the entire first390ms attempt. Admit ONE restart only
- * at an expired sector within390..410ms, then hard stop at820ms total.
- * Latest entry leaves20ms release +90ms alignment +300ms acquisition.
- * Bounds are experimental wall-clock limits, not a thermal guarantee. */
-enum { FD_FULL_RETRY_ENTRY_END = 410000u*FD_REV_US,
-    FD_FULL_RETRY_END = 820000u*FD_REV_US };
+/* One restart, preserving each attempt's alignment + acquisition allowance.
+ * Baseline390/410/820ms; second-align300ms gives630/650/1300ms.
+ * These bounds do not renew on partial streaks or late service. */
+enum { FD_FULL_RETRY_ENTRY_END = FD_REV_ACQUIRE_TICKS + 20000u*FD_REV_US,
+    FD_FULL_RETRY_END = 2u*FD_REV_ACQUIRE_TICKS + 40000u*FD_REV_US };
 static __attribute__((noinline)) uint8_t fdRevRetryEligible(const FdRevPolicy *s, uint32_t now)
 {
     uint8_t feedback_absent = !s->observed_once;
@@ -225,8 +297,135 @@ static inline uint8_t fdRevCanReposition(const FdRevPolicy *s, uint32_t now)
 #endif
 }
 #endif
+#ifdef TARGET_FD_BLUE_START
+/* Startup-only recovery. Never turn an observed first-sector level into
+ * position/period evidence. Native faults/operator zero remain external. */
+static inline uint8_t fdBlueFail(FdRevPolicy *s,uint32_t now) {
+ s->seen=s->confidence=0u;s->delay=s->measured=s->last_real_period=0u;
+ if(s->blue_attempts>=FD_BLUE_MAX_ATTEMPTS) {s->stage=FD_REV_OFF;return FD_REV_BLUE_STOP;}
+ s->stage=FD_REV_RELAX;s->sector_at=now;return FD_REV_RELEASE;
+}
+static inline uint8_t fdBlueAdvance(FdRevPolicy *s,uint32_t now) {
+ if(s->stage==FD_REV_OFF || s->stage==FD_REV_CLOSED)return FD_REV_NONE;
+ if(s->stage==FD_REV_RELAX) {
+  if((uint32_t)(now-s->sector_at)<FD_BLUE_RELAX_TICKS)return FD_REV_NONE;
+  uint8_t attempts=s->blue_attempts;uint32_t started=s->trial_started;
+  fdRevBeginPolicy(s,now);s->blue_attempts=attempts+1u;s->trial_started=started;
+  return FD_REV_BLUE_RESTART;
+ }
+ if((uint32_t)(now-s->blue_attempt_at)>=FD_BLUE_ATTEMPT_TICKS)return fdBlueFail(s,now);
+ if(s->stage==FD_REV_ALIGN) {
+  uint32_t dwell=s->align_left==1u?FD_REV_SECOND_ALIGN_TICKS:FD_REV_ALIGN_TICKS;
+  if((uint32_t)(now-s->sector_at)<dwell)return FD_REV_NONE;
+  s->sector_at=now;
+  if(--s->align_left)return FD_REV_STEP;
+  s->stage=FD_REV_OPEN;return FD_REV_LAUNCH;
+ }
+ if(s->stage==FD_REV_PENDING) {
+  if((uint32_t)(now-s->edge_at)<s->delay)return FD_REV_NONE;
+  if(s->confidence>=FD_REV_REQUIRED_EDGES) {s->stage=FD_REV_CLOSED;s->closed_at=now;return FD_REV_HANDOFF;}
+  s->stage=FD_REV_OPEN;s->sector_at=now;s->seen=0u;return FD_REV_STEP;
+ }
+ if(s->stage==FD_REV_OPEN && s->blue_first) {
+  if((uint32_t)(now-s->sector_at)<FD_BLUE_FIRST_TICKS)return FD_REV_NONE;
+  s->blue_first=0u;s->seen=s->confidence=0u;s->edge_at=0u;
+  s->period=FD_REV_RETRY_TICKS;s->sector_at=now;
+  return FD_REV_BLUE_FORCED; /* not an accepted ZC */
+ }
+ if(s->stage==FD_REV_OPEN && (uint32_t)(now-s->sector_at)>=s->period)return fdBlueFail(s,now);
+ return FD_REV_NONE;
+}
+#endif
+#ifdef TARGET_FD_EARLY_REKICK
+static inline uint8_t fdRkAdvance(FdRevPolicy *s,uint32_t now) {
+ if(s->rk_pending) {
+  uint8_t action=s->rk_pending;s->rk_pending=0u;
+  s->seen=s->confidence=0u;s->delay=s->measured=s->last_real_period=0u;
+  s->stage=action==FD_REV_RK_STOP?FD_REV_OFF:FD_REV_RELAX;s->sector_at=now;
+  return action;
+ }
+ if(s->stage==FD_REV_OFF || s->stage==FD_REV_CLOSED)return FD_REV_NONE;
+ if(s->stage==FD_REV_RELAX) {
+  if((uint32_t)(now-s->sector_at)<FD_RK_RELAX_TICKS)return FD_REV_NONE;
+  s->stage=FD_REV_OPEN;s->sector_at=now;s->period=FD_RK_FIRST_TICKS;
+  s->seen=s->confidence=0u;s->edge_at=s->measured=s->delay=s->last_real_period=0u;
+  s->rk_first=1u;return FD_REV_RK_LAUNCH;
+ }
+ if(s->stage==FD_REV_ALIGN) {
+  uint32_t dwell=s->align_left==1u?FD_REV_SECOND_ALIGN_TICKS:FD_REV_ALIGN_TICKS;
+  if((uint32_t)(now-s->sector_at)<dwell)return FD_REV_NONE;
+  s->sector_at=now;
+  if(--s->align_left)return FD_REV_STEP;
+  s->stage=FD_REV_OPEN;s->period=FD_RK_FIRST_TICKS;return FD_REV_LAUNCH;
+ }
+ if(s->stage==FD_REV_PENDING) {
+  if((uint32_t)(now-s->edge_at)<s->delay)return FD_REV_NONE;
+  if(s->confidence>=FD_REV_REQUIRED_EDGES){s->stage=FD_REV_CLOSED;s->closed_at=now;return FD_REV_HANDOFF;}
+  s->stage=FD_REV_OPEN;s->sector_at=now;s->seen=0u;return FD_REV_STEP;
+ }
+ if(s->stage==FD_REV_OPEN && (uint32_t)(now-s->sector_at)>=s->period) {
+  s->stage=FD_REV_OFF;return FD_REV_RK_STOP; /* no timeout rescue/reposition */
+ }
+ return FD_REV_NONE;
+}
+#endif
 static inline uint8_t fdRevAdvancePolicy(FdRevPolicy *s, uint32_t now)
 {
+#ifdef TARGET_FD_EARLY_REKICK
+    return fdRkAdvance(s,now);
+#endif
+#ifdef TARGET_FD_BLUE_START
+    return fdBlueAdvance(s,now);
+#endif
+#ifdef TARGET_FD_HIZ_OBSERVE
+    if (s->stage == FD_REV_OFF) return FD_REV_NONE;
+    if (s->stage == FD_REV_HIZ) {
+        if ((uint32_t)(now-s->sector_at) < FD_HIZ_TICKS) return FD_REV_NONE;
+        s->stage = FD_REV_OFF;
+        return FD_REV_HIZ_STOP;
+    }
+    if (s->stage != FD_REV_ALIGN) return FD_REV_HIZ_STOP;
+    if (s->align_left == 1u && (uint32_t)(now-s->sector_at) >= FD_REV_SECOND_ALIGN_TICKS) {
+        s->stage = FD_REV_HIZ; s->sector_at = now; s->align_left = 0u;
+        return FD_REV_HIZ_RELEASE; /* intercept BEFORE any launch/deadtime/seed */
+    }
+#endif
+#ifdef TARGET_FD_LAUNCH_HOLD
+    if(s->stage==FD_REV_OFF)return FD_REV_NONE;
+    if(s->stage!=FD_REV_ALIGN) {
+#ifdef TARGET_FD_LAUNCH_TWO
+        if(s->stage==FD_REV_PENDING && s->launch_vectors==1u) {
+            if((uint32_t)(now-s->edge_at)<s->delay)return FD_REV_NONE;
+            s->stage=FD_REV_OPEN;s->launch_vectors=2u;
+            s->sector_at=now;s->seen=0u;s->delay=0u;
+            return FD_REV_STEP; /* exactly one feedback-led bridge step */
+        }
+#endif
+        if(s->stage!=FD_REV_OPEN || (uint32_t)(now-s->sector_at)>=FD_LAUNCH_HOLD_TICKS) {
+            s->stage=FD_REV_OFF;return FD_REV_LAUNCH_STOP;
+        }
+        return FD_REV_NONE; /* no feedback step, timeout retry or handoff */
+    }
+#endif
+#ifdef TARGET_FD_ALIGN_ONLY
+    /* Never enter acquisition/reposition. Keep ALIGN throughout the extra
+     * hold so ADC feedback cannot schedule a commutation. sector_at remains
+     * the second vector's start: late marking cannot renew the hold budget. */
+    if (s->stage == FD_REV_OFF) return FD_REV_NONE;
+    if (s->stage != FD_REV_ALIGN) return FD_REV_ALIGN_STOP;
+    if (s->align_left <= 1u) {
+        uint32_t age = now - s->sector_at;
+        if (age >= FD_REV_SECOND_ALIGN_TICKS + FD_ALIGN_ONLY_EXTRA_TICKS) {
+            s->stage = FD_REV_OFF;
+            return FD_REV_ALIGN_STOP;
+        }
+        if (s->align_left == 1u && age >= FD_REV_SECOND_ALIGN_TICKS) {
+            s->align_left = 0u;
+            return FD_REV_ALIGN_MARK;
+        }
+        return FD_REV_NONE;
+    }
+#endif
 #ifdef TARGET_FD_REPOSITION
     /* Only AFTER the original rescue is exhausted, at an expired sector
      * boundary, with enough total time for the complete replacement attempt. */
@@ -265,6 +464,9 @@ static inline uint8_t fdRevAdvancePolicy(FdRevPolicy *s, uint32_t now)
         s->sector_at = now;
         if (!--s->align_left) {
             s->stage = FD_REV_OPEN;
+#ifdef TARGET_FD_LAUNCH_TWO
+            s->launch_vectors=1u;
+#endif
 #ifdef TARGET_FD_REPOSITION
             s->acquisition_at = now;
 #endif
@@ -342,6 +544,43 @@ static inline uint8_t fdRevAdvancePolicy(FdRevPolicy *s, uint32_t now)
 }
 static inline uint8_t fdRevEdgePolicy(FdRevPolicy *s, uint32_t now, uint8_t advance64)
 {
+#ifdef TARGET_FD_EARLY_REKICK
+    if(s->stage!=FD_REV_OPEN || s->seen || s->rk_pending ||
+       (uint32_t)(now-s->sector_at)>=s->period)return 0u;
+    if(s->rk_first && (uint32_t)(now-s->sector_at)<=FD_RK_EARLY_TICKS) {
+        if(s->rk_count<FD_RK_MAX) {s->rk_count++;s->rk_pending=FD_REV_RELEASE;}
+        else s->rk_pending=FD_REV_RK_STOP;
+        return 0u; /* no period/confidence/async schedule from suspect event */
+    }
+    s->rk_first=0u;
+#endif
+#ifdef TARGET_FD_BLUE_START
+    if(s->blue_first || s->stage!=FD_REV_OPEN ||
+       (uint32_t)(now-s->blue_attempt_at)>=FD_BLUE_ATTEMPT_TICKS)return 0u;
+#endif
+#ifdef TARGET_FD_HIZ_OBSERVE
+    (void)s; (void)now; (void)advance64;
+    return 0u; /* no event may schedule a driven sector in this diagnostic */
+#endif
+#ifdef TARGET_FD_LAUNCH_HOLD
+#ifdef TARGET_FD_LAUNCH_TWO
+    (void)advance64;
+    if(s->stage!=FD_REV_OPEN || s->seen ||
+        (uint32_t)(now-s->sector_at)>=FD_LAUNCH_HOLD_TICKS)return 0u;
+    s->seen=1u;s->edge_at=now;s->confidence++;
+    if(s->launch_vectors==1u) {
+        s->period=FD_REV_RETRY_TICKS;
+        s->delay=500u*FD_REV_US;s->stage=FD_REV_PENDING;
+    }
+    return 0u; /* second-vector event is observation only, never handoff */
+#else
+    /* The ADC qualification and raw recorder still run. An observed event
+     * never arms a delay or changes the held bridge vector. */
+    (void)advance64;
+    if(s->stage==FD_REV_OPEN && !s->seen) {s->seen=1u;s->edge_at=now;}
+    return 0u;
+#endif
+#endif
 #ifdef TARGET_FD_PLANNED_ACQ
     /* Observe the first five edges without moving the commanded boundary.
      * Six consecutive eligible sectors are evidence, not proof of rotation.
@@ -603,6 +842,21 @@ static inline uint8_t fdRevEdgePolicy(FdRevPolicy *s, uint32_t now, uint8_t adva
 static inline uint8_t fdRevDeadlinePolicy(const FdRevPolicy *s, uint32_t now,
     uint32_t started)
 {
+#ifdef TARGET_FD_EARLY_REKICK
+    return s->stage!=FD_REV_CLOSED && (uint32_t)(now-started)>=FD_REV_ACQUIRE_TICKS;
+#elif defined(TARGET_FD_BLUE_START)
+    return s->stage!=FD_REV_CLOSED && (uint32_t)(now-started)>=FD_BLUE_TOTAL_TICKS;
+#elif defined(TARGET_FD_HIZ_OBSERVE)
+    (void)s;
+    return (uint32_t)(now-started) >= FD_HIZ_TOTAL_TICKS;
+#elif defined(TARGET_FD_ALIGN_ONLY)
+    (void)s;
+    /* Whole-trial deadline also bounds a late first-vector transition. */
+    return (uint32_t)(now - started) >= FD_ALIGN_ONLY_TOTAL_TICKS;
+#elif defined(TARGET_FD_LAUNCH_HOLD)
+    (void)s;
+    return (uint32_t)(now-started)>=FD_LAUNCH_HOLD_TOTAL_TICKS;
+#else
 #ifdef TARGET_STARTUP_S4E
     if (s->stage == FD_REV_CLOSED) return 0u;
 #endif
@@ -618,6 +872,7 @@ static inline uint8_t fdRevDeadlinePolicy(const FdRevPolicy *s, uint32_t now,
     return s->stage == FD_REV_CLOSED ?
         (uint32_t)(now - s->closed_at) >= FD_REV_OBSERVE_TICKS :
         (uint32_t)(now - started) >= FD_REV_ACQUIRE_TICKS;
+#endif
 }
 #endif
 #ifdef TARGET_STARTUP_SEQUENCE

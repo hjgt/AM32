@@ -1,0 +1,145 @@
+{
+  "mode": "EARLY_REKICK",
+  "alignment_ms": [
+    30,
+    300
+  ],
+  "early_first_event_us_inclusive": 1000,
+  "release_ms": 20,
+  "max_rekicks": 3,
+  "max_pulses": 4,
+  "initial_or_rekick_no_event_timeout_ms": 30,
+  "subsequent_sector_no_event_timeout_ms": 22.5,
+  "whole_startup_cap_ms": 630,
+  "normal_first_accepted_delay_us": 500,
+  "normal_required_feedback_edges": 6,
+  "raw_abi": 9,
+  "waveform_window_ms": 124,
+  "waveform_capacity": 512,
+  "raw_buffer_bytes": 12404,
+  "ram_bytes": 20408,
+  "flash_code_bytes": 40572,
+  "disabled_hex_matches_ALIGN_TAIL": true,
+  "old_rescue_reposition": "not used; ordinary timeout stops",
+  "flash_status": "20261108_write_and_reset_run_success_after_reconnect",
+  "current_board": "EARLY_REKICK",
+  "hardware_access_this_task": true,
+  "user_no_flash": false,
+  "hardware_validation": "trial5 and14 failures read; both no re-kick; session11 handoffs3no_lock",
+  "tests": [
+    "actual_tick_service_event_PWM_async_allowed_stop_ASan_UBSan",
+    "same_launch_vector_and5us_gap_with_simulated_DWT",
+    "1ms_boundary_and3_rekicks_count",
+    "ordinary500us_path_and6_usable_edges",
+    "630ms_cap_faults_zero_cancel_directions_wrap",
+    "ABI9_C_recorder_to_JS_all4pulses_and_gaps",
+    "160B_rekick_metadata_decoder",
+    "BLUE_START_and_ALIGN_TAIL_regressions",
+    "main_only_BIN_HEX_consistency"
+  ],
+  "last_connection_voltage_V": 3.256802,
+  "pending_input": null,
+  "readback": false,
+  "hardware_trial5_20261108": {
+    "trial": 5,
+    "operator_report": "第五次失败，要求读取；未补充本次具体机械动作",
+    "rekicks_applied": 0,
+    "first_event_after_actual_launch_ms": 3.9411875,
+    "event_to_following_vector_us": 517.7125000000233,
+    "following_vector_ms": 22.504099999999976,
+    "following_valid_groups": 539,
+    "following_pre_groups": 539,
+    "following_margin_range": [
+      -55,
+      -11
+    ],
+    "following_accepted": 0,
+    "last_end_ms": 357.02394375,
+    "session_trials": 5,
+    "session_handoffs": 4,
+    "raw_records": 235,
+    "raw_consumed_groups": 647,
+    "hook_max_us": 1.36875,
+    "conclusion": "This failure was a normal3.94ms first event followed by no second event; no early-event recovery invoked. Timing alone cannot classify failures."
+  },
+  "hardware_trial14_20261108": {
+    "trial": 14,
+    "operator_report": "又失败，请读取；未补充本次机械动作",
+    "rekicks_applied": 0,
+    "first_event_age_us": 1378.23125,
+    "event_to_next_vector_us": 517.6124999999884,
+    "next_vector_ms": 22.520868749999966,
+    "next_valid": 539,
+    "next_pre": 537,
+    "next_hysteresis": 2,
+    "next_accepted": 0,
+    "next_margin_range": [
+      -58,
+      -7
+    ],
+    "stop_reason": "no_lock",
+    "session_trials": 14,
+    "session_handoffs": 11,
+    "session_failed_ids": [
+      5,
+      7,
+      14
+    ],
+    "raw_records": 217,
+    "hook_max_us": 1.36875,
+    "after_accept_raw": [
+      {
+        "after_accept_us": 0.0,
+        "margin": 10
+      },
+      {
+        "after_accept_us": 41.543750000000045,
+        "margin": 11
+      },
+      {
+        "after_accept_us": 82.68124999999986,
+        "margin": 11
+      },
+      {
+        "after_accept_us": 124.45000000000005,
+        "margin": 12
+      },
+      {
+        "after_accept_us": 166.08749999999986,
+        "margin": 12
+      },
+      {
+        "after_accept_us": 207.76250000000005,
+        "margin": 13
+      },
+      {
+        "after_accept_us": 249.43124999999986,
+        "margin": 13
+      },
+      {
+        "after_accept_us": 290.98125000000005,
+        "margin": 14
+      },
+      {
+        "after_accept_us": 332.75,
+        "margin": 14
+      },
+      {
+        "after_accept_us": 374.41875000000005,
+        "margin": 13
+      },
+      {
+        "after_accept_us": 416.0625,
+        "margin": 14
+      },
+      {
+        "after_accept_us": 457.74374999999986,
+        "margin": 14
+      },
+      {
+        "after_accept_us": 501.36874999999986,
+        "margin": 15
+      }
+    ]
+  }
+}

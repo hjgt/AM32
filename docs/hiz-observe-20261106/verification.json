@@ -1,0 +1,162 @@
+{
+  "target": "CUSTOM_FD6288_G431",
+  "mode": "align30_300_then_all_six_off_no_launch_observe5ms",
+  "abi": 7,
+  "alignment_ms": [
+    30,
+    300
+  ],
+  "high_z_capture_ms": 5,
+  "whole_trial_software_cap_ms": 336,
+  "max_records": 512,
+  "ram_bytes": 20248,
+  "flash_code_bytes": 40716,
+  "disabled_hex_matches_LAUNCH_TWO": true,
+  "tests": [
+    "actual_tick_service_stop_event_PWM_JEOS_ASan_UBSan",
+    "actual_bridge_entrypoints_ASan_UBSan",
+    "ABI7_C_logger_to_JS_decoder",
+    "LAUNCH_TWO_adapter_and_ABI6_pair_recorder_regression",
+    "main_only_image_BIN_HEX_consistency"
+  ],
+  "flash_status": "write_and_reset_run_success_after_user_reconnected_SWD",
+  "current_board": "HIZ-OBSERVE",
+  "readback": false,
+  "hardware_timing_validated": false,
+  "last_connection_voltage_V": 3.238727,
+  "pending_input": null,
+  "hardware_trial_20261107": {
+    "trial": 5,
+    "operator_observation": "猛地被吸住，小幅抖一下停住，像打冷颤；无额外机械/电气同步时标",
+    "alignment_tail_mid_errors": [
+      -220,
+      -229
+    ],
+    "alignment_tail_window_pass": [
+      true,
+      true
+    ],
+    "software_off_us": 330065.44375,
+    "trigger_write_after_off_us": 0.4,
+    "software_stop_after_off_us": 5026.75,
+    "retained_groups": 120,
+    "first_read_after_off_us": 27.575,
+    "last_read_after_off_us": 4984.51875,
+    "boundary_groups": 3,
+    "nonboundary_groups": 117,
+    "nonboundary_raw_ranges": {
+      "a": [
+        0,
+        13
+      ],
+      "b": [
+        4,
+        15
+      ],
+      "c": [
+        3,
+        13
+      ],
+      "ab": [
+        -7,
+        4
+      ],
+      "bc": [
+        -3,
+        5
+      ],
+      "ca": [
+        -2,
+        4
+      ]
+    },
+    "nonboundary_max_line_spread_counts": 7,
+    "record_hook_max_us": 1.5125,
+    "record_count_seen": 120,
+    "adc_read_no_repeated_JEOS_all": true,
+    "software_duty_zero_all": true,
+    "next_action": "Same firmware, randomize initial position and read each trial separately; no timing or launch change yet"
+  },
+  "hardware_trial6_20261107": {
+    "trial": 6,
+    "same_settings_as_trial5": true,
+    "operator_observation": "本次仅请求读取，未补充机械现象/是否重新随机起点；不据此假定相同机械运动",
+    "alignment_tail_mid_errors": [
+      -91,
+      -131
+    ],
+    "alignment_tail_window_pass": [
+      true,
+      false
+    ],
+    "retained_groups": 120,
+    "boundary_groups": 4,
+    "first_record": {
+      "slot": 2,
+      "at_us": 330092.50625,
+      "from_bridge_off_us": 6.85625,
+      "a": 0,
+      "b": 1033,
+      "c": 1740,
+      "ab": -1033,
+      "bc": -707,
+      "ca": 1740,
+      "mid_error": null,
+      "cnt": 1696,
+      "duty": 0,
+      "trigger": 3332,
+      "reason": 253,
+      "last_alignment_step": 6,
+      "flags": 49,
+      "boundary_group": true
+    },
+    "second_record": {
+      "slot": 3,
+      "at_us": 330147.08125,
+      "from_bridge_off_us": 61.43125,
+      "a": 8,
+      "b": 8,
+      "c": 5,
+      "ab": 0,
+      "bc": 3,
+      "ca": -3,
+      "mid_error": null,
+      "cnt": 3762,
+      "duty": 0,
+      "trigger": 3332,
+      "reason": 253,
+      "last_alignment_step": 6,
+      "flags": 49,
+      "boundary_group": true
+    },
+    "nonboundary_ranges": {
+      "a": [
+        1,
+        12
+      ],
+      "b": [
+        6,
+        14
+      ],
+      "c": [
+        2,
+        12
+      ],
+      "ab": [
+        -7,
+        -1
+      ],
+      "bc": [
+        0,
+        6
+      ],
+      "ca": [
+        -1,
+        3
+      ]
+    },
+    "nonboundary_max_line_spread_counts": 7,
+    "software_stop_after_off_us": 5019.2875,
+    "record_hook_max_us": 1.5125
+  }
+}

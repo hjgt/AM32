@@ -1,0 +1,12 @@
+{
+  "built_target": "CUSTOM_FD6288_G431",
+  "second_vector_ms": 300,
+  "whole_trial_ms": 330,
+  "policy_tests": [
+    "90ms ASan/UBSan PASS",
+    "300ms ASan/UBSan PASS"
+  ],
+  "image_check": "PASS",
+  "flash_status": "write_and_reset_run_success",
+  "readback_performed": false
+}

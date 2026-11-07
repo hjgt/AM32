@@ -7,7 +7,7 @@ function decode(b){
   const o=64+i*48,r={};names.forEach((n,j)=>r[n]=j===11?b.readInt32LE(o+j*4):b.readUInt32LE(o+j*4));
   if(!r.id)continue;
   for(const n of ['first_edge','handoff'])r[n+'_us']=r[n]===0xffffffff?null:r[n]/160;
-  r.reason_name=({1:'window',2:'native_stuck',3:'safety_cap',4:'not_running',5:'bad_config',6:'no_zero',7:'operator_zero',8:'no_lock',9:'closed_feedback_timeout',10:'commutation_late',11:'commutation_invalid'})[r.reason]||'unknown';
+  r.reason_name=({1:'window',2:'native_stuck',3:'safety_cap',4:'not_running',5:'bad_config',6:'no_zero',7:'operator_zero',8:'no_lock',9:'closed_feedback_timeout',10:'commutation_late',11:'commutation_invalid',12:'alignment_done',13:'launch_hold_done',14:'hiz_observation_done'})[r.reason]||'unknown';
   records.push(r);
  }
  return {trials:b.readUInt32LE(8),completed:b.readUInt32LE(12),records:records.sort((a,b)=>a.id-b.id)};
