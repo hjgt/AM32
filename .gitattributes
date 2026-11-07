@@ -4,3 +4,8 @@
 test-firmware/fd6288-checkpoints-20261031/*.hex -text
 test-firmware/fd6288-checkpoints-20261031/*.elf -text
 test-firmware/fd6288-checkpoints-20261031/*.bin -text
+
+# Native sine trial: keep the published firmware hashes reproducible.
+test-firmware/fd6288-NATIVE-SINE-20261108/*.hex -text
+test-firmware/fd6288-NATIVE-SINE-20261108/*.elf -text
+test-firmware/fd6288-NATIVE-SINE-20261108/*.bin -text
