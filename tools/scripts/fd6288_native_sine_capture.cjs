@@ -20,7 +20,13 @@ async function dump(elf,out,stopped){
   for(const name of ['advanceincrement','loadEEpromSettings','fdBenchService','fdBenchStop','fdNativeSineBridgeAllowed']){const s=syms[name];assert(s&&s.size>0&&s.size<2048,name);const b=await mem(s.address,s.size);for(let i=0;i<b.length;i++)assert.equal(b[i],hex.get(s.address+i),'Code identity: '+name);}
   const address=syms.fd_native_sine.address,a=await mem(address,60),settings=await mem(syms.eepromBuffer.address,48);
   await check();assert.deepEqual(await mem(address,60),a,'Summary changed during stopped read');
-  const result={read_at:new Date().toISOString(),elf:path.resolve(elf),summary:decode(a),ram_settings:{sine:settings[19],startup_power:settings[25],motor_kv:settings[26]*40+20,motor_poles:settings[27],advance_raw:settings[23],auto_advance:settings[47],sine_range:settings[40],sine_power:settings[45]},raw_hex:a.toString('hex')};
+  async function words(address,n){const v=(await c.rpc(`read_memory 0x${address.toString(16)} 32 ${n}`)).trim().split(/\s+/).map(Number);assert.equal(v.length,n);assert(v.every(x=>Number.isInteger(x)&&x>=0&&x<=0xffffffff));return v;}
+  const clockA=await words(0xe0001000,2),demcr=(await words(0xe000edfc,1))[0],clockB=await words(0xe0001000,2);
+  const clock={ctrl:clockB[0],demcr,cyccnt_first:clockA[1],cyccnt_second:clockB[1],delta:(clockB[1]-clockA[1])>>>0,selftest_ok:syms.fd_native_clock_ok?await scalar('fd_native_clock_ok'):null};
+  clock.valid=Boolean((clock.ctrl&1)&&(demcr&0x1000000)&&clock.delta>0&&clock.selftest_ok!==0);
+  const summary=decode(a);summary.timing_valid=clock.valid;
+  if(!clock.valid)for(const n of ['sixstep_at','first_edge_at','sixth_edge_at','stopped_at'])summary[n+'_ms']=null;
+  const result={read_at:new Date().toISOString(),elf:path.resolve(elf),summary,clock,ram_settings:{sine:settings[19],startup_power:settings[25],motor_kv:settings[26]*40+20,motor_poles:settings[27],advance_raw:settings[23],auto_advance:settings[47],sine_range:settings[40],sine_power:settings[45]},raw_hex:a.toString('hex')};
   fs.writeFileSync(out,JSON.stringify(result,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify(result,null,2));return result;
  }finally{c.close();}
 }

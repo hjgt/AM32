@@ -16,3 +16,8 @@ test-firmware/fd6288-NATIVE-SINE-INHERIT-TIMING-20261108/*.bin -text
 test-firmware/fd6288-NATIVE-SINE-INHERIT-TIMING-20261108/*.elf -text
 hardware-backups/NATIVE-SINE-parameters-before-20261108/*.bin -text
 hardware-backups/NATIVE-SINE-parameters-before-20261108/*.hex -text
+
+# Corrected native-sine control clock build.
+test-firmware/fd6288-NATIVE-SINE-CLOCKFIX-20261108/*.hex -text
+test-firmware/fd6288-NATIVE-SINE-CLOCKFIX-20261108/*.bin -text
+test-firmware/fd6288-NATIVE-SINE-CLOCKFIX-20261108/*.elf -text

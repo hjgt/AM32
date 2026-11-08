@@ -1,0 +1,65 @@
+{
+  "timing_policy": "inherit existing stored advance and auto/manual selection",
+  "before_backup": "hardware-backups/NATIVE-SINE-parameters-before-20261108/settings-page.bin",
+  "before_backup_root": "repository",
+  "before_sha256": "4f426d535486cb0d9b9c8b7bc0b74cd390efb56c73e9116e3a64f6c5a7baf7f3",
+  "before": {
+    "sine_start": 0,
+    "startup_power": 150,
+    "motor_kv": 900,
+    "motor_poles": 14,
+    "advance_level_raw": 18,
+    "auto_advance": 0,
+    "manual_advance_deg": 7.5,
+    "sine_range": 5,
+    "sine_power": 5,
+    "pwm_khz": 24
+  },
+  "after": {
+    "sine_start": 1,
+    "startup_power": 150,
+    "motor_kv": 900,
+    "motor_poles": 14,
+    "advance_level_raw": 18,
+    "auto_advance": 0,
+    "manual_advance_deg": 7.5,
+    "sine_range": 15,
+    "sine_power": 6,
+    "pwm_khz": 24
+  },
+  "changes": [
+    {
+      "offset": 19,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "offset": 40,
+      "before": 5,
+      "after": 15
+    },
+    {
+      "offset": 45,
+      "before": 5,
+      "after": 6
+    }
+  ],
+  "combined_regions": [
+    "0x08001000..0x0800f7ff main",
+    "0x0800f800..0x0800ffff settings"
+  ],
+  "bootloader_included": false,
+  "checks": {
+    "untouched_bytes_preserved": true,
+    "timing_bytes_unchanged": true,
+    "settings_roundtrip": true,
+    "combined_roundtrip": true,
+    "restore_roundtrip": true
+  },
+  "files": {
+    "NATIVE-SINE-SETTINGS.bin": "2d8f196ed94c943c873bd90af5a27d4f3bd38c68339f38608399bf5bb4a6de19",
+    "NATIVE-SINE-SETTINGS.hex": "6c366f7c6f5b92f01993208b898eb7c1a1326f6703ee851b50e40a6777ab15c1",
+    "NATIVE-SINE-COMBINED.hex": "30b21adea1699783f7453a890814144f3b49127d46cb9cfc87c4b558282ddf35",
+    "RESTORE-PREVIOUS-SETTINGS.hex": "2559d6b4daf6e46cffc2ed3ec01a76d5899114bee42385ae06d6658beee20f5c"
+  }
+}

@@ -21,10 +21,32 @@ volatile uint8_t fd_rev_acquiring; /* always zero: no custom acquisition */
 static uint8_t fd_power_starting, fd_native_ready;
 void commutate(void);
 static void fdBenchService(void);
+/* DWT is a CONTROL clock here, even with every waveform logger disabled. */
+static uint8_t fd_native_clock_ok;
+#define FD_NATIVE_SINE_CLOCK_FAULT 15u
+static void fdNativeSineClockInit(void)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+    __DSB();
+    __ISB();
+    uint32_t before = DWT->CYCCNT;
+    for (volatile uint32_t i = 0u; i < 32u; i++) __NOP();
+    fd_native_clock_ok = (uint32_t)(DWT->CYCCNT - before) != 0u;
+    __set_PRIMASK(mask);
+}
+static uint8_t fdNativeSineClockReady(void)
+{
+    return fd_native_clock_ok &&
+        (CoreDebug->DEMCR & CoreDebug_DEMCR_TRCENA_Msk) &&
+        (DWT->CTRL & DWT_CTRL_CYCCNTENA_Msk);
+}
 
 uint8_t fdNativeSineBridgeAllowed(void)
 {
-    return fd_power_bench.active_id && !fd_power_bench.inhibit && armed &&
+    return fdNativeSineClockReady() && fd_power_bench.active_id && !fd_power_bench.inhibit && armed &&
         adjusted_input && !stuck_rotor_inhibit && !drive_safety_limit_inhibit;
 }
 
@@ -78,7 +100,9 @@ static void fdBenchService(void)
         heli_coast_restart_inhibit = 0u;
     } else if (fd_power_bench.active_id && !fd_power_bench.inhibit) {
         uint32_t age = DWT->CYCCNT - fd_native_sine.started;
-        if (!armed || stuck_rotor_inhibit || drive_safety_limit_inhibit)
+        if (!fdNativeSineClockReady())
+            fdBenchStop(FD_NATIVE_SINE_CLOCK_FAULT);
+        else if (!armed || stuck_rotor_inhibit || drive_safety_limit_inhibit)
             fdBenchStop(FD_BENCH_SAFETY_CAP);
         else if (age >= 3000000u * 160u || (fd_native_sine.edges >= 6u &&
             age - fd_native_sine.sixth_edge_at >= 1000000u * 160u))
@@ -94,7 +118,8 @@ static uint8_t fdBenchGuardInput(void)
     uint32_t mask = __get_PRIMASK();
     __disable_irq();
     fdBenchService();
-    if (armed && !fdBenchConfigOk()) fdBenchStop(FD_BENCH_BAD_CONFIG);
+    if (armed && !fdNativeSineClockReady()) fdBenchStop(FD_NATIVE_SINE_CLOCK_FAULT);
+    else if (armed && !fdBenchConfigOk()) fdBenchStop(FD_BENCH_BAD_CONFIG);
     if (armed && adjusted_input > 35u && !fd_power_bench.active_id &&
         !fd_power_bench.inhibit && fd_native_ready) {
         fd_native_ready = 0u;

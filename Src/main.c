@@ -3586,6 +3586,9 @@ int main(void)
     LL_GPIO_SetPinSpeed(GPIOB, LL_GPIO_PIN_7, LL_GPIO_SPEED_FREQ_LOW);
     LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_7, LL_GPIO_MODE_OUTPUT);
 #endif
+#ifdef TARGET_FD_NATIVE_SINE
+    fdNativeSineClockInit();
+#endif
     fdTraceInit();
     enableCorePeripherals();
     loadEEpromSettings();

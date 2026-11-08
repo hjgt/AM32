@@ -1,0 +1,26 @@
+{
+  "date": "2026-11-08",
+  "flashed": false,
+  "branch": "codex/fd6288-native-sine-20261108",
+  "fix": "Initialize and self-test DWT as control clock independently of disabled recorders; refuse output on clock fault",
+  "checks": {
+    "clock_disabled_start_refused": "PASS",
+    "enabled_but_not_advancing_start_refused": "PASS",
+    "clock_lost_during_sine_output_refused": "PASS",
+    "init_hook_precedes_peripheral_interrupt_enable": "PASS",
+    "native_C_guard_and_ADC_chain_ASan_UBSan": "PASS",
+    "main_bin_hex_range": "PASS",
+    "settings_and_restore_hex_roundtrip": "PASS"
+  },
+  "files": {
+    "RESTORE-PREVIOUS-SETTINGS.hex": "2559d6b4daf6e46cffc2ed3ec01a76d5899114bee42385ae06d6658beee20f5c",
+    "AM32_CUSTOM_FD6288_G431_2.20.bin": "86b6f8e8a371b2d473cdbcc54c2432bf4a61259ab575f3549676bd1a185b28c6",
+    "AM32_CUSTOM_FD6288_G431_2.20.hex": "d7d27695382e895dd12aa968dd1ca93fb92afcef2fb82dadd32e109bc72882f9",
+    "NATIVE-SINE-SETTINGS.bin": "2d8f196ed94c943c873bd90af5a27d4f3bd38c68339f38608399bf5bb4a6de19",
+    "NATIVE-SINE-SETTINGS.hex": "6c366f7c6f5b92f01993208b898eb7c1a1326f6703ee851b50e40a6777ab15c1",
+    "AM32_CUSTOM_FD6288_G431_2.20.elf": "4b8cc23be17c97cce07da996888558628d7fc0169f4683934615576f79ad2329",
+    "NATIVE-SINE-COMBINED.hex": "30b21adea1699783f7453a890814144f3b49127d46cb9cfc87c4b558282ddf35"
+  },
+  "supersedes": "fd6288-NATIVE-SINE-INHERIT-TIMING-20261108 (DWT disabled, withdraw further testing)",
+  "settings_unchanged_from_previous_trial": true
+}

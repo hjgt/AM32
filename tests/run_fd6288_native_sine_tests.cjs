@@ -3,6 +3,8 @@
 const fs=require('fs'),path=require('path'),os=require('os'),cp=require('child_process'),assert=require('assert');
 const root=path.resolve(__dirname,'..'),main=fs.readFileSync(path.join(root,'Src/main.c'),'utf8');
 function block(s,start){const p=s.indexOf(start);assert(p>=0,start);const b=s.indexOf('{',p);let d=0;for(let i=b;i<s.length;i++){if(s[i]==='{')d++;if(s[i]==='}'&&!--d)return s.slice(p,i+1);}throw Error(start);}
+const initAt=main.indexOf('    fdNativeSineClockInit();',main.indexOf('int main(void)'));
+assert(initAt>main.indexOf('int main(void)')&&initAt<main.indexOf('    enableCorePeripherals();',main.indexOf('int main(void)')),'Control clock must initialize before interrupts, independently of trace');
 const settingStart=main.indexOf('    /* Trial-only RAM overrides;');
 assert(settingStart>=0);
 const settings=main.slice(settingStart,main.indexOf('#endif',settingStart));
@@ -26,7 +28,15 @@ const src=`
 #define EFFECTIVE_BRAKE_ON_STOP 0
 ${reasons}
 typedef struct {uint32_t magic,abi,extra,trials,completed,stops,inhibit,last_reason,active_id,floor;} FdPowerDiagnostics;
-static struct {uint32_t CYCCNT;} dwt;
+static struct {uint32_t CTRL,CYCCNT;} dwt;
+static struct {uint32_t DEMCR;} core_debug;
+#define CoreDebug (&core_debug)
+#define CoreDebug_DEMCR_TRCENA_Msk (1u<<24)
+#define DWT_CTRL_CYCCNTENA_Msk 1u
+#define __DSB() ((void)0)
+#define __ISB() ((void)0)
+static unsigned clock_advances=1;
+#define __NOP() ((void)(clock_advances && (dwt.CTRL&1u) && (core_debug.DEMCR&(1u<<24)) ? ++dwt.CYCCNT : 0u))
 #define DWT (&dwt)
 static uint32_t mask,ccr[4],cap=610,bridge,commutations,compares;
 static unsigned armed=1,adjusted_input,input,running,stepper_sine,do_once_sinemode;
@@ -82,6 +92,9 @@ int main(void){
  settingsOverride();assert(fdBenchConfigOk());assert(eepromBuffer.minimum_duty_cycle==1);
  assert(eepromBuffer.advance_level==34&&eepromBuffer.auto_advance==1);
  eepromBuffer.advance_level=18;eepromBuffer.auto_advance=0;
+ assert(!fdNativeSineClockReady());clock_advances=0;fdNativeSineClockInit();assert(!fdNativeSineClockReady());
+ adjusted_input=150;assert(fdBenchGuardInput());assert(!bridge&&fd_power_bench.last_reason==15);
+ clock_advances=1;fdNativeSineClockInit();assert(fdNativeSineClockReady());
  // A held positive input after boot never acquires permission by itself.
  adjusted_input=215;assert(fdBenchGuardInput());assert(!fd_power_bench.active_id);
  begin(215);nativeStep();assert(stepper_sine&&bridge==1);assert(input==123&&step_delay==57);assert(fd_native_sine.sine_steps==1);assert(ccr[0]!=ccr[1]);
@@ -100,6 +113,8 @@ int main(void){
  // Operator zero and disarm between the last sine step and handover stop output.
  begin(150);nativeStep();adjusted_input=0;unsigned writes=compares;advanceincrement();assert(!bridge&&compares==writes);allpwm();assert(!bridge);assert(!fdNativeSineHandoff());
  begin(150);nativeStep();armed=0;advanceincrement();assert(!bridge&&!fdNativeSineHandoff());armed=1;
+ // Losing the control clock also gates every output and latches the trial.
+ begin(150);nativeStep();DWT->CTRL&=~1u;advanceincrement();assert(!bridge&&fd_native_sine.reason==15);allpwm();assert(!bridge);fdNativeSineClockInit();assert(fdBenchGuardInput());
  // A hard protection ceiling below the valid ADC window cannot be overridden.
  begin(150);nativeStep();cap=100;assert(!fdNativeSineHandoff()&&!bridge);cap=610;
  // A stalled/no-feedback trial is bounded, including DWT wraparound.
@@ -164,6 +179,7 @@ static void sample(unsigned b,unsigned ticks){samples[0]=1600;samples[1]=b;sampl
 `;
  const i=program.indexOf('int main(void){');program=program.slice(0,i)+real+`
 int main(void){
+ fdNativeSineClockInit();assert(fdNativeSineClockReady());
  begin(150);nativeStep();assert(stepper_sine&&bridge==1);
  sample(400,100);assert(!fresh&&read_count==0&&schedules==0); // no ZC-driven commutation in sine
  phase_A_position=0;assert(fdNativeSineHandoff());assert(step==6&&rising==0&&adc_zcd_phase==6);
