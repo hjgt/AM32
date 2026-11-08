@@ -1,0 +1,33 @@
+{
+  "date": "2026-11-08",
+  "flashed": false,
+  "branch": "codex/fd6288-native-sine-20261108",
+  "mode": "sine_only_common_mode_centered",
+  "sine_power": 6,
+  "startup_power_percent": 150,
+  "timing_settings": "inherited, unchanged",
+  "total_limit_ms": 3000,
+  "settings_page_changed": false,
+  "hardware_result": null,
+  "checks": {
+    "actual_C_360_angles_both_directions_ASan_UBSan": "PASS",
+    "line_to_line_compare_differences_exactly_preserved": "PASS",
+    "native_phase_clipped_positions_per_360": 137,
+    "centered_compare_range": [
+      3020,
+      3646
+    ],
+    "minimum_high_or_low_interval_us": 18.875,
+    "preserves_deadtime_and_carrier": "PASS",
+    "snapshot_before_allOff_and_invalid_timer_refusal": "PASS",
+    "normal_sine_only_and_ADC_regressions_ASan_UBSan": "PASS",
+    "optional_snapshot_decoder_ABI": "PASS",
+    "disabled_flag_HEX_equals_SINE_ONLY": "PASS",
+    "ELF_HEX_BIN_identity": "PASS"
+  },
+  "files": {
+    "AM32_CUSTOM_FD6288_G431_2.20.bin": "5ac335f62d389c3dd313da097dc76bc1630d59cb62e3cc0f572760697fa8e95e",
+    "AM32_CUSTOM_FD6288_G431_2.20.hex": "60a4673fa306a65899ca1bb8e7c51c657f3b0d6cbf3d58142a3292eee6be920f",
+    "AM32_CUSTOM_FD6288_G431_2.20.elf": "acdcc79dc0a64e06afc32b284ef5cd23a92ceba8eed4c6ab51e49bf14038ca6b"
+  }
+}

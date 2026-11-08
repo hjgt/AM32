@@ -3368,6 +3368,29 @@ void advanceincrement()
     setPWMCompare1(((2 * pwmSin[phase_A_position]) + gate_drive_offset) * TIMER1_MAX_ARR / 2000);
     setPWMCompare2(((2 * pwmSin[phase_B_position]) + gate_drive_offset) * TIMER1_MAX_ARR / 2000);
     setPWMCompare3(((2 * pwmSin[phase_C_position]) + gate_drive_offset) * TIMER1_MAX_ARR / 2000);
+#elif defined(TARGET_FD_SINE_CENTERED_PWM)
+    uint16_t raw[3] = {
+        (((2 * pwmSin[phase_A_position] / SINE_DIVIDER) + gate_drive_offset) * TIMER1_MAX_ARR / 2000) * eepromBuffer.sine_mode_power / 10,
+        (((2 * pwmSin[phase_B_position] / SINE_DIVIDER) + gate_drive_offset) * TIMER1_MAX_ARR / 2000) * eepromBuffer.sine_mode_power / 10,
+        (((2 * pwmSin[phase_C_position] / SINE_DIVIDER) + gate_drive_offset) * TIMER1_MAX_ARR / 2000) * eepromBuffer.sine_mode_power / 10
+    };
+    uint16_t centered[3];
+    if (TIM1->PSC != 0u || (TIM1->CR1 & (TIM_CR1_CKD_Msk | TIM_CR1_UDIS)) ||
+        (TIM1->BDTR & TIM_BDTR_DTG_Msk) != TARGET_FIXED_DEAD_TIME_CODE ||
+        !fdSineCenterCompares(raw, (uint16_t)(TIM1->ARR + 1u),
+            ZCD_SAMPLE_FLOOR, centered)) {
+        fdBenchStop(FD_BENCH_BAD_CONFIG);
+        __set_PRIMASK(sine_mask);
+        return;
+    }
+    /* Preserve carrier phase; defer the shared preload transfer until all
+     * three compares have been written. Never change bridge dead-time. */
+    uint32_t pwm_cr1 = TIM1->CR1;
+    TIM1->CR1 = pwm_cr1 | TIM_CR1_UDIS;
+    setPWMCompare1(centered[0]);
+    setPWMCompare2(centered[1]);
+    setPWMCompare3(centered[2]);
+    TIM1->CR1 = pwm_cr1;
 #else
     setPWMCompare1(
         (((2 * pwmSin[phase_A_position] / SINE_DIVIDER) + gate_drive_offset) * TIMER1_MAX_ARR / 2000) * eepromBuffer.sine_mode_power / 10);

@@ -1,0 +1,25 @@
+{
+  "scope": "timer high-side command pulse widths only, not winding voltage/current or a mechanical simulation",
+  "timer_clk_mhz": 160,
+  "period_ticks": 6666,
+  "cr1_hex": "0x81",
+  "ccer_hex": "0x1555",
+  "bdtr_hex": "0x200a0ce",
+  "dtg_hex": "0xce",
+  "decoded_deadtime_ticks": 368,
+  "deadtime_us": 2.3,
+  "gate_drive_offset": 70,
+  "sine_power": 6,
+  "ccr_min": 139,
+  "ccr_max": 859,
+  "raw_high_width_us_range": [
+    0.86875,
+    5.36875
+  ],
+  "high_pulse_suppressed_positions": 137,
+  "positions_per_electrical_rev": 360,
+  "remaining_high_width_us_max": 3.06875,
+  "nominal_deadtime_ticks_from_DEAD_TIME_macro": 70,
+  "sixstep_compensation_internal_units": 200,
+  "common_mode": 499.0
+}

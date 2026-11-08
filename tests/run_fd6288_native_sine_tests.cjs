@@ -129,7 +129,7 @@ int main(void){
 `;
 
 
-if(process.argv.includes('--sine-only')){
+if(process.argv.includes('--sine-only')||process.argv.includes('--centered')){
  assert(!process.argv.includes('--adc'),'Select one test mode');
  program=program.replace('#define TARGET_FD_NATIVE_SINE','#define TARGET_FD_NATIVE_SINE\n#define TARGET_FD_NATIVE_SINE_ONLY');
  const i=program.indexOf('int main(void){');program=program.slice(0,i)+`
@@ -146,6 +146,74 @@ int main(void){
  begin(400);nativeStep();armed=0;nativeStep();fdBenchService();assert(!bridge);armed=1;
  begin(400);nativeStep();DWT->CTRL&=~1u;nativeStep();assert(!bridge&&fd_native_sine.reason==15&&commutations==0);
  puts("PASS sine-only: low-to-full throttle in both directions, no six-step/feedback handover, native speed cap, 3s cutoff and zero/fault stop");return 0;}
+`;
+}
+
+
+if(process.argv.includes('--centered')){
+ program=program.replace('#define TARGET_FD_NATIVE_SINE_ONLY','#define TARGET_FD_NATIVE_SINE_ONLY\n#define TARGET_FD_SINE_CENTERED_PWM');
+ const regs=`
+#define TIM_CR1_CKD_Msk 0x300u
+#define TIM_CR1_UDIS 2u
+#define TIM_BDTR_DTG_Msk 255u
+#define TARGET_FIXED_DEAD_TIME_CODE 0xceu
+#define ZCD_SAMPLE_FLOOR 460u
+static struct {uint32_t CR1,PSC,ARR,CCER,BDTR,CCR1,CCR2,CCR3,CCR4;} fake_tim={.CR1=0x81,.ARR=6665,.CCER=0x1555,.BDTR=0x200a0ce};
+#define TIM1 (&fake_tim)
+static struct {uint32_t MODER,AFR[2],BRR,BSRR;} fake_pa={.AFR={0,0x66666}},fake_pf={.AFR={6,0}};
+#define GPIOA (&fake_pa)
+#define GPIOF (&fake_pf)
+#define PHASE_A_GPIO_HIGH (1u<<8)
+#define PHASE_B_GPIO_HIGH (1u<<9)
+#define PHASE_C_GPIO_HIGH (1u<<10)
+#define PHASE_A_GPIO_LOW (1u<<11)
+#define PHASE_B_GPIO_LOW (1u<<12)
+#define PHASE_C_GPIO_LOW 1u
+#define PHASE_A_GPIO_PORT_HIGH GPIOA
+#define PHASE_B_GPIO_PORT_HIGH GPIOA
+#define PHASE_C_GPIO_PORT_HIGH GPIOA
+#define PHASE_A_GPIO_PORT_LOW GPIOA
+#define PHASE_B_GPIO_PORT_LOW GPIOA
+#define PHASE_C_GPIO_PORT_LOW GPIOF
+#define LL_GPIO_MODE_OUTPUT 1u
+#define LL_GPIO_MODE_ALTERNATE 2u
+#define LOW_BITREG_OFF BRR
+`;
+ program=program.replace('#define DEAD_TIME 70','#define DEAD_TIME 70\n'+regs);
+ program=program.replace('static void allOff(void){bridge=0;}','static void allOff(void){bridge=0;GPIOA->MODER=0x1550000;GPIOF->MODER=1;}');
+ program=program.replace('ccr[3]=x>=704?x/2:0;}','ccr[3]=x>=704?x/2:0;TIM1->CCR1=TIM1->CCR2=TIM1->CCR3=x;TIM1->CCR4=ccr[3];}');
+ const phase=fs.readFileSync(path.join(root,'Mcu/g431/Src/phaseouts.c'),'utf8');
+ for(const c of ['A','B','C'])program=program.replace(`static void phase${c}PWM(void){bridge=1;}`,block(phase,`void phase${c}PWM()`));
+ program=program.replace('void phaseAPWM()',`#define LL_GPIO_SetPinMode(port,pin,mode) ((port)->MODER=((port)->MODER&~(3u<<(2*__builtin_ctz(pin))))|((mode)<<(2*__builtin_ctz(pin))),bridge=(mode)==2?1:bridge)
+void phaseAPWM()`);
+ for(const [n,idx] of [[1,0],[2,1],[3,2]])program=program.replace(`ccr[${idx}]=x;compares++;}`,`ccr[${idx}]=x;TIM1->CCR${n}=x;compares++;}`);
+ const i=program.indexOf('int main(void){');
+ const raw=block(main,'void advanceincrement()').replace('void advanceincrement()','static void rawAdvanceincrement()');
+ program=program.slice(0,i)+'\n#undef TARGET_FD_SINE_CENTERED_PWM\n'+raw+'\n#define TARGET_FD_SINE_CENTERED_PWM\n'+`
+int main(void){
+ fdNativeSineClockInit();settingsOverride();assert(fdNativeSineClockReady());
+ unsigned clipped=0,min_out=65535,max_out=0;
+ for(unsigned dir=0;dir<2;dir++){
+  forward=dir;begin(215);nativeStep();assert(bridge==1);
+  for(unsigned angle=0;angle<360;angle++){
+   int16_t a=phase_A_position,b=phase_B_position,c=phase_C_position;
+   rawAdvanceincrement();unsigned raw[3]={ccr[0],ccr[1],ccr[2]};if(raw[0]<=368)clipped++;
+   phase_A_position=a;phase_B_position=b;phase_C_position=c;advanceincrement();
+   assert(TIM1->CR1==0x81&&TIM1->BDTR==0x200a0ce&&bridge==1);
+   for(unsigned x=0;x<3;x++){assert(ccr[x]>=460&&ccr[x]<=6666-460);if(ccr[x]<min_out)min_out=ccr[x];if(ccr[x]>max_out)max_out=ccr[x];for(unsigned y=0;y<3;y++)assert((int)ccr[x]-(int)ccr[y]==(int)raw[x]-(int)raw[y]);}
+  }
+  unsigned last[3]={ccr[0],ccr[1],ccr[2]};zero();assert(!bridge&&ccr[0]==0);
+  assert(fd_sine_pwm_snapshot.steps>0&&fd_sine_pwm_snapshot.ccr1==last[0]&&fd_sine_pwm_snapshot.ccr2==last[1]&&fd_sine_pwm_snapshot.ccr3==last[2]);
+  for(unsigned pin=8;pin<=12;pin++)assert(((fd_sine_pwm_snapshot.gpioa_moder>>(2*pin))&3u)==2u);
+  assert((fd_sine_pwm_snapshot.gpiof_moder&3u)==2u);
+ }
+ assert(clipped==274);assert(commutations==0);assert(min_out>368&&6666-max_out>368);
+ begin(215);TIM1->PSC=1;nativeStep();assert(!bridge&&fd_native_sine.reason==FD_BENCH_BAD_CONFIG);TIM1->PSC=0;
+ begin(215);TIM1->ARR=600;nativeStep();assert(!bridge);TIM1->ARR=6665;
+ begin(215);TIM1->BDTR=70;nativeStep();assert(!bridge);TIM1->BDTR=0x200a0ce;
+ begin(215);TIM1->CR1|=2;nativeStep();assert(!bridge);TIM1->CR1=0x81;
+ printf("PASS actual GPIO/PWM mapping: all360angles/bothdirections, all pair differences preserved, native clipped137/360, centered range%u..%u, live-state frozen before off, invalid timer refused\\n",min_out,max_out);
+ return 0;}
 `;
 }
 

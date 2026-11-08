@@ -1,0 +1,47 @@
+{
+  "read_at": "2026-11-08T04:37:29.784Z",
+  "elf": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-SINE-ONLY-20261108/AM32_CUSTOM_FD6288_G431_2.20.elf",
+  "summary": {
+    "magic": 1179864625,
+    "abi": 1,
+    "trial": 8,
+    "started": 3742461469,
+    "phase": 4,
+    "reason": 7,
+    "sine_steps": 18799,
+    "sixstep_at": 4294967295,
+    "first_edge_at": 4294967295,
+    "sixth_edge_at": 4294967295,
+    "stopped_at": 224069518,
+    "edges": 0,
+    "input_at_start": 48,
+    "input_at_handoff": 0,
+    "last_step": 0,
+    "phase_name": "stopped",
+    "sixstep_at_ms": null,
+    "first_edge_at_ms": null,
+    "sixth_edge_at_ms": null,
+    "stopped_at_ms": 1400.4344875,
+    "timing_valid": true
+  },
+  "clock": {
+    "ctrl": 1073741825,
+    "demcr": 16777216,
+    "cyccnt_first": 1503897173,
+    "cyccnt_second": 1504227740,
+    "delta": 330567,
+    "selftest_ok": 1,
+    "valid": true
+  },
+  "ram_settings": {
+    "sine": 1,
+    "startup_power": 150,
+    "motor_kv": 900,
+    "motor_poles": 14,
+    "advance_raw": 18,
+    "auto_advance": 0,
+    "sine_range": 15,
+    "sine_power": 6
+  },
+  "raw_hex": "314e534601000000080000001d6e11df04000000070000006f490000ffffffffffffffffffffffff8e075b0d00000000300000000000000000000000"
+}

@@ -20,6 +20,17 @@ _Static_assert(sizeof(fd_native_sine) == 60u, "native sine event ABI");
 volatile uint8_t fd_rev_acquiring; /* always zero: no custom acquisition */
 static uint8_t fd_power_starting, fd_native_ready;
 void commutate(void);
+#ifdef TARGET_FD_SINE_CENTERED_PWM
+#include "fd6288_sine_pwm.h"
+/* Frozen once immediately BEFORE shutdown. Registers read here describe the
+ * last driven state, unlike a stopped SWD dump whose GPIO/CCRs are all off. */
+volatile struct {
+    uint32_t magic, abi, trial, steps, cr1, psc, arr, ccer, bdtr;
+    uint32_t ccr1, ccr2, ccr3, ccr4, gpioa_moder, gpiof_moder;
+    uint32_t gpioa_afrh, gpiof_afrl, phase_a, phase_b, phase_c;
+} fd_sine_pwm_snapshot = { .magic = 0x46535031u, .abi = 1u };
+_Static_assert(sizeof(fd_sine_pwm_snapshot) == 80u, "sine PWM snapshot ABI");
+#endif
 static void fdBenchService(void);
 /* DWT is a CONTROL clock here, even with every waveform logger disabled. */
 static uint8_t fd_native_clock_ok;
@@ -71,6 +82,26 @@ static void fdBenchStop(uint8_t reason)
     fd_power_bench.inhibit = 1u;
     fd_native_ready = 0u;
     if (fd_power_bench.active_id) {
+#ifdef TARGET_FD_SINE_CENTERED_PWM
+        fd_sine_pwm_snapshot.trial = fd_native_sine.trial;
+        fd_sine_pwm_snapshot.steps = fd_native_sine.sine_steps;
+        fd_sine_pwm_snapshot.cr1 = TIM1->CR1;
+        fd_sine_pwm_snapshot.psc = TIM1->PSC;
+        fd_sine_pwm_snapshot.arr = TIM1->ARR;
+        fd_sine_pwm_snapshot.ccer = TIM1->CCER;
+        fd_sine_pwm_snapshot.bdtr = TIM1->BDTR;
+        fd_sine_pwm_snapshot.ccr1 = TIM1->CCR1;
+        fd_sine_pwm_snapshot.ccr2 = TIM1->CCR2;
+        fd_sine_pwm_snapshot.ccr3 = TIM1->CCR3;
+        fd_sine_pwm_snapshot.ccr4 = TIM1->CCR4;
+        fd_sine_pwm_snapshot.gpioa_moder = GPIOA->MODER;
+        fd_sine_pwm_snapshot.gpiof_moder = GPIOF->MODER;
+        fd_sine_pwm_snapshot.gpioa_afrh = GPIOA->AFR[1];
+        fd_sine_pwm_snapshot.gpiof_afrl = GPIOF->AFR[0];
+        fd_sine_pwm_snapshot.phase_a = (uint16_t)phase_A_position;
+        fd_sine_pwm_snapshot.phase_b = (uint16_t)phase_B_position;
+        fd_sine_pwm_snapshot.phase_c = (uint16_t)phase_C_position;
+#endif
         fd_native_sine.reason = reason;
         fd_native_sine.stopped_at = DWT->CYCCNT - fd_native_sine.started;
         fd_native_sine.phase = 4u;

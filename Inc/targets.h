@@ -3219,6 +3219,18 @@
 #endif
 #define TARGET_FD_NATIVE_SINE_ONLY
 #endif
+#ifndef FD6288_SINE_CENTERED_PWM
+#define FD6288_SINE_CENTERED_PWM 0
+#endif
+#if FD6288_SINE_CENTERED_PWM != 0 && FD6288_SINE_CENTERED_PWM != 1
+#error "Centered sine PWM must be boolean"
+#endif
+#if FD6288_SINE_CENTERED_PWM
+#if !FD6288_NATIVE_SINE_ONLY
+#error "Centered sine output is an isolated sine-only trial"
+#endif
+#define TARGET_FD_SINE_CENTERED_PWM
+#endif
 #if FD6288_NATIVE_SINE_START != 0 && FD6288_NATIVE_SINE_START != 1
 #error "Native sine switch must be boolean"
 #endif
