@@ -33,7 +33,7 @@ volatile struct {
     uint32_t edges, input_at_start, input_at_handoff, last_step;
 } fd_native_sine = { .magic = 0x46534e31u, .abi = 1u };
 _Static_assert(sizeof(fd_native_sine) == 60u, "native sine event ABI");
-#ifdef TARGET_FD_SINE_FIXED_12KHZ
+#if defined(TARGET_FD_SINE_FIXED_12KHZ) || defined(TARGET_FD_SIXSTEP_ALIGN_CONTROL)
 /* Existing foreground sensor cadence only; not switching-current peaks. */
 volatile struct {
     uint32_t magic, abi, trial, updates;
@@ -153,6 +153,37 @@ static uint8_t fdBenchConfigOk(void)
         min_startup_duty == 360u && startup_max_duty_cycle == 610u;
 }
 
+#ifdef TARGET_FD_SIXSTEP_ALIGN_CONTROL
+static void fdBenchStop(uint8_t reason);
+void comStep(int newStep);
+__attribute__((noinline)) static void fdSixStepAlignApply(void)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    fdBenchService();
+    if (!fdNativeSineBridgeAllowed()) { __set_PRIMASK(mask); return; }
+    if (TIM1->PSC != 0u || TIM1->ARR != 6665u ||
+        (TIM1->CR1 & (TIM_CR1_CKD_Msk | TIM_CR1_UDIS)) ||
+        (TIM1->BDTR & TIM_BDTR_DTG_Msk) != TARGET_FIXED_DEAD_TIME_CODE) {
+        fdBenchStop(FD_BENCH_BAD_CONFIG);
+    } else if (driveEffectiveDutyLimit() < 360u) {
+        fdBenchStop(FD_BENCH_SAFETY_CAP);
+    } else {
+        /* Historical second alignment: step6=A PWM/C LOW/B FLOAT,
+         * duty360/2000 -> compare1200 at24kHz. Apply once with bridge off. */
+        allOff();
+        SET_DUTY_CYCLE_ALL((360u * tim1_arr) / 2000u + 1u);
+        TIM1->CCR4 = 0u; /* no injected ZC trigger or feedback commutation */
+        generatePwmTimerEvent();
+        comStep(6);
+        fd_native_sine.sine_steps = 1u; /* legacy ABI: one vector command */
+        fd_native_sine.last_step = 6u;
+        fd_sine_pins.driven_at = DWT->CYCCNT;
+    }
+    __set_PRIMASK(mask);
+}
+#endif
+
 static void fdBenchStop(uint8_t reason)
 {
     uint32_t mask = __get_PRIMASK();
@@ -245,7 +276,7 @@ static uint8_t fdBenchGuardInput(void)
         fd_native_sine.sixth_edge_at = fd_native_sine.stopped_at = UINT32_MAX;
         fd_native_sine.input_at_start = adjusted_input;
         fd_native_sine.input_at_handoff = fd_native_sine.last_step = 0u;
-#ifdef TARGET_FD_SINE_FIXED_12KHZ
+#if defined(TARGET_FD_SINE_FIXED_12KHZ) || defined(TARGET_FD_SIXSTEP_ALIGN_CONTROL)
         fd_sine_sensors.trial = fd_native_sine.trial;
         fd_sine_sensors.updates = 0u;
         fd_sine_sensors.baseline_current = fd_sine_sensors.peak_current = actual_current;

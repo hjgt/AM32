@@ -3958,7 +3958,7 @@ if(zero_crosses < 5){
             if (actual_current < 0) {
                 actual_current = 0;
             }
-#ifdef TARGET_FD_SINE_FIXED_12KHZ
+#if defined(TARGET_FD_SINE_FIXED_12KHZ) || defined(TARGET_FD_SIXSTEP_ALIGN_CONTROL)
             fdSineRecordSensors();
 #endif
             if (eepromBuffer.low_voltage_cut_off == 1) {  
@@ -4142,9 +4142,13 @@ if(zero_crosses < 5){
                     DISABLE_COM_TIMER_INT();
                     maskPhaseInterrupts();
                     SET_DUTY_CYCLE_ALL(0);
+#ifdef TARGET_FD_SIXSTEP_ALIGN_CONTROL
+                    fdSixStepAlignApply();
+#else
                     allpwm();
+#endif
                     do_once_sinemode = 0;
-#ifdef TARGET_FD_SINE_FIXED_PROBE
+#if defined(TARGET_FD_SINE_FIXED_PROBE) && !defined(TARGET_FD_SIXSTEP_ALIGN_CONTROL)
                     advanceincrement();
                     fd_sine_pins.driven_at = DWT->CYCCNT;
 #endif

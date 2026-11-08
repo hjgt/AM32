@@ -21,7 +21,8 @@ async function dump(elf,out,stopped){
   async function check(){assert.equal((await c.rpc('[target current] curstate')).trim(),'running');assert.equal((await mem(0xe000ed08,4)).readUInt32LE(),0x08001000);for(const n of ['input','adjusted_input','newinput','running','duty_cycle','heli_coast_active'])assert.equal(await scalar(n),0,n);assert.equal((await mem(0x48000010,4)).readUInt32LE()&0x1f00,0);assert.equal((await mem(0x48001410,4)).readUInt32LE()&1,0);for(let i=0;i<4;i++)assert.equal((await mem(0x40012c34+4*i,4)).readUInt32LE(),0);}
   await check();
   // Selected code identity, not a full-flash readback.
-  for(const name of ['advanceincrement','loadEEpromSettings','fdBenchService','fdBenchStop','fdNativeSineBridgeAllowed','main']){const s=syms[name];assert(s&&s.size>0&&s.size<8192,name);const b=await mem(s.address,s.size);for(let i=0;i<b.length;i++)assert.equal(b[i],hex.get(s.address+i),'Code identity: '+name);}
+  const outputIdentity=syms.fdSixStepAlignApply?['fdSixStepAlignApply','comStep']:['advanceincrement','fdNativeSineBridgeAllowed'];
+  for(const name of [...outputIdentity,'loadEEpromSettings','fdBenchService','fdBenchStop','main']){const s=syms[name];assert(s&&s.size>0&&s.size<8192,name);const b=await mem(s.address,s.size);for(let i=0;i<b.length;i++)assert.equal(b[i],hex.get(s.address+i),'Code identity: '+name);}
   const address=syms.fd_native_sine.address,a=await mem(address,60),settings=await mem(syms.eepromBuffer.address,48);
   await check();assert.deepEqual(await mem(address,60),a,'Summary changed during stopped read');
   let pwm_snapshot=null;
@@ -35,6 +36,7 @@ async function dump(elf,out,stopped){
   const clock={ctrl:clockB[0],demcr,cyccnt_first:clockA[1],cyccnt_second:clockB[1],delta:(clockB[1]-clockA[1])>>>0,selftest_ok:syms.fd_native_clock_ok?await scalar('fd_native_clock_ok'):null};
   clock.valid=Boolean((clock.ctrl&1)&&(demcr&0x1000000)&&clock.delta>0&&clock.selftest_ok!==0);
   const summary=decode(a);summary.timing_valid=clock.valid;
+  if(pin_trace)summary.drive_mode=pin_trace.analysis.drive_mode;
   if(!clock.valid)for(const n of ['sixstep_at','first_edge_at','sixth_edge_at','stopped_at'])summary[n+'_ms']=null;
   const result={read_at:new Date().toISOString(),elf:path.resolve(elf),summary,clock,pwm_snapshot,pin_trace,sensors,ram_settings:{sine:settings[19],pwm_frequency_khz:settings[24],startup_power:settings[25],motor_kv:settings[26]*40+20,motor_poles:settings[27],advance_raw:settings[23],auto_advance:settings[47],sine_range:settings[40],sine_power:settings[45]},raw_hex:a.toString('hex')};
   fs.writeFileSync(out,JSON.stringify(result,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify({...result,pin_trace:pin_trace?{header:pin_trace.header,analysis:pin_trace.analysis}:null},null,2));return result;

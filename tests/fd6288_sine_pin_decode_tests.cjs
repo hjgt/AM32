@@ -18,3 +18,11 @@ const sensor=Buffer.alloc(40);[0x46535331,1,3,95,0,53,820,805,10,30].forEach((v,
 const decoded=decodeSensors(sensor);assert.equal(decoded.updates,95);assert.equal(decoded.baseline_current,-3);assert.equal(decoded.peak_current_increase,56);assert.equal(decoded.voltage_drop,15);assert(decoded.sampled_only);
 assert.throws(()=>decodeSensors(sensor.subarray(0,39)));const wrong=Buffer.from(sensor);wrong.writeUInt32LE(2,4);assert.throws(()=>decodeSensors(wrong));
 console.log('PASS 12k pin timing and sensor summary: signed units, peak delta, voltage drop and ABI guards');
+let alignModes=0;
+for(let pin=8;pin<=12;pin++)alignModes|=((pin===8||pin===11)?2:1)<<(2*pin);
+const align={...pwm,ccr1:1200,ccr2:1200,ccr3:1200,ccr4:0,gpioa_moder:alignModes,gpiof_moder:1};
+const alignData=buffer([[100,110,0,1],[500,510,0x100,1],[1300,1310,0,1],[2000,2010,0x800,1],[1195,1205,0,1]]);
+const alignOk=decodePins(alignData,align);assert.equal(alignOk.analysis.drive_mode,'sixstep_alignment_step6');assert.equal(alignOk.analysis.valid,4);assert.equal(alignOk.analysis.matched,4);assert.equal(alignOk.analysis.excluded,1);
+const lowMissing=Buffer.from(alignData);lowMissing.writeUInt16LE(0,24+12+6);assert.equal(decodePins(lowMissing,align).analysis.mismatched,1);
+assert.equal(decodePins(alignData,{...align,ccr4:600}).analysis.configured,false);
+console.log('PASS six-step pad decoder: A complementary PWM, B commands off, C low on; detects missing low command and excludes transitions');

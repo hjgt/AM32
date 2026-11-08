@@ -3255,6 +3255,18 @@
 #endif
 #define TARGET_FD_SINE_FIXED_12KHZ
 #endif
+#ifndef FD6288_SIXSTEP_ALIGN_CONTROL
+#define FD6288_SIXSTEP_ALIGN_CONTROL 0
+#endif
+#if FD6288_SIXSTEP_ALIGN_CONTROL != 0 && FD6288_SIXSTEP_ALIGN_CONTROL != 1
+#error "Six-step alignment control must be boolean"
+#endif
+#if FD6288_SIXSTEP_ALIGN_CONTROL
+#if !FD6288_SINE_FIXED_PROBE || FD6288_SINE_FIXED_12KHZ
+#error "Six-step control requires fixed100ms mode at the historical24kHz carrier"
+#endif
+#define TARGET_FD_SIXSTEP_ALIGN_CONTROL
+#endif
 #if FD6288_NATIVE_SINE_START != 0 && FD6288_NATIVE_SINE_START != 1
 #error "Native sine switch must be boolean"
 #endif

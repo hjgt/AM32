@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-08",
+  "flashed": false,
+  "mode": "historical_sixstep_alignment_positive_control",
+  "step": 6,
+  "outputs": "A complementary PWM / C LOW / B FLOAT",
+  "carrier_khz": 24,
+  "deadtime_us": 2.3,
+  "duty_units": 360,
+  "duty_scale": 2000,
+  "ccr1_2_3": 1200,
+  "ccr4": 0,
+  "limit_ms": 100,
+  "settings_page_changed": false,
+  "historical_reuse": "second forward ALIGN-PAIR vector and steady duty, not full30+300ms sequence",
+  "not_voltage_or_frequency_matched_to_12k_sine": true,
+  "checks": {
+    "actual_GPIO_phaseout_functions_ASan_UBSan": "PASS",
+    "one_vector_update_while_bridge_off_100ms_stops": "PASS",
+    "cap_timer_clock_zero_disarm_interlocks": "PASS",
+    "sensor_and_pin_capture_frozen_after_stop": "PASS",
+    "sixstep_GPIO_decoder_and_12k_regression": "PASS",
+    "flag_off_HEX_exactly_matches_current12k": "PASS",
+    "forced_full_build_ELF_HEX_BIN_reader_symbols": "PASS"
+  },
+  "hardware_result": null,
+  "files": {
+    "AM32_CUSTOM_FD6288_G431_2.20.bin": "eb40eb6c87604cd5a2b1991ef0b45521fb5b5415cb86fce393fcc0c2e0b7e394",
+    "AM32_CUSTOM_FD6288_G431_2.20.hex": "51931a9629330c16f32c98872c984d228e5a7e93911f5193434d8d0b0cdcc024",
+    "AM32_CUSTOM_FD6288_G431_2.20.elf": "e8f576c35934154cc63b4aca8deb65e00eeda79c63c307dc72d5589a78a21e80"
+  }
+}

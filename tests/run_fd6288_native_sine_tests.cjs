@@ -1,7 +1,7 @@
 // Execute the actual native sine loop, output formula and trial adapter with
 // simulated registers/time. No motor model, SWD or synthetic automatic ZCs.
 const fs=require('fs'),path=require('path'),os=require('os'),cp=require('child_process'),assert=require('assert');
-const fixed12=process.argv.includes('--fixed-12');if(fixed12)process.argv.push('--fixed');
+const fixed12=process.argv.includes('--fixed-12'),sixstep=process.argv.includes('--sixstep-control');if(fixed12||sixstep)process.argv.push('--fixed');
 const root=path.resolve(__dirname,'..'),main=fs.readFileSync(path.join(root,'Src/main.c'),'utf8');
 function block(s,start){const p=s.indexOf(start);assert(p>=0,start);const b=s.indexOf('{',p);let d=0;for(let i=b;i<s.length;i++){if(s[i]==='{')d++;if(s[i]==='}'&&!--d)return s.slice(p,i+1);}throw Error(start);}
 const initAt=main.indexOf('    fdNativeSineClockInit();',main.indexOf('int main(void)'));
@@ -374,6 +374,41 @@ if(fixed12){
  program=program.replace('begin(215);nativeStep();assert(fd_sine_pins.count==0',`begin(215);nativeStep();assert(fd_sine_sensors.updates==0&&fd_sine_sensors.baseline_current==999);eepromBuffer.pwm_frequency=24;assert(fdBenchGuardInput()&&!bridge);eepromBuffer.pwm_frequency=12;
  begin(215);nativeStep();assert(fd_sine_pins.count==0`);
  program=program.replace('PASS fixed-vector100ms:', 'PASS 12k fixed-vector100ms + sensor peaks/freeze and wrong-frequency interlock:');
+}
+
+
+if(sixstep){
+ const outs=fs.readFileSync(path.join(root,'Mcu/g431/Src/phaseouts.c'),'utf8');
+ program=program.replace('#define TARGET_FD_SINE_FIXED_PROBE','#define TARGET_FD_SINE_FIXED_PROBE\n#define TARGET_FD_SIXSTEP_ALIGN_CONTROL');
+ program=program.replace('static unsigned zero_crosses;','static unsigned zero_crosses;\nstatic int16_t actual_current=3;\nstatic uint16_t battery_voltage=820,ADC_raw_current=10;\nstatic unsigned pwm_updates;');
+ program=program.replace('#define LOW_BITREG_OFF BRR','#define LOW_BITREG_OFF BRR\n#define HIGH_BITREG_OFF BRR\n#define LOW_BITREG_ON BSRR');
+ program=program.replace('static void generatePwmTimerEvent(void){}','static void generatePwmTimerEvent(void){assert(!bridge&&TIM1->CCR4==0);pwm_updates++;}');
+ const functions=['phaseAFLOAT','phaseBFLOAT','phaseCFLOAT','phaseALOW','phaseBLOW','phaseCLOW'].map(n=>block(outs,'void '+n+'()')).join('\n');
+ program=program.replace('void phaseAPWM()',functions+'\nvoid phaseAPWM()');
+ program=program.replace('static void comStep(unsigned x){(void)x;}',block(outs,'void comStep(int newStep)'));
+ const i=program.indexOf('int main(void){');program=program.slice(0,i)+`
+int main(void){
+ checkSensorTick();fdNativeSineClockInit();settingsOverride();
+ begin(215);nativeStep();assert(bridge&&fd_native_sine.sine_steps==1&&fd_native_sine.last_step==6&&pwm_updates==1);
+ assert(eepromBuffer.pwm_frequency==24&&ccr[0]==1200&&ccr[1]==1200&&ccr[2]==1200&&TIM1->CCR4==0);
+ for(unsigned pin=8;pin<=12;pin++)assert(((GPIOA->MODER>>(2*pin))&3u)==((pin==8||pin==11)?2u:1u));
+ assert((GPIOF->MODER&3u)==1u&&GPIOF->BSRR==1u);
+ actual_current=53;battery_voltage=805;ADC_raw_current=30;fdSineRecordSensors();assert(fd_sine_sensors.updates==1&&fd_sine_sensors.peak_current==53);
+ for(unsigned n=0;n<256;n++){
+  DWT->CYCCNT=fd_sine_pins.driven_at+160000+n*1600;TIM1->CNT=(n*31)%6666;unsigned t=TIM1->CNT;
+  GPIOA->IDR=(t>=368&&t<1200?1u<<8:0)|(t>=1568?1u<<11:0);GPIOF->IDR=1;nativeStep();
+  assert(fd_sine_pins.count==n+1&&fd_native_sine.sine_steps==1&&pwm_updates==1);
+  assert(TIM1->CCR1==1200&&TIM1->CCR2==1200&&TIM1->CCR3==1200&&TIM1->CCR4==0&&mask==0);
+ }
+ assert(fd_sine_pins.frozen);DWT->CYCCNT=fd_native_sine.started+16000000-1;fdBenchService();assert(bridge);DWT->CYCCNT++;fdBenchService();assert(!bridge&&fd_native_sine.reason==FD_BENCH_WINDOW);
+ actual_current=999;fdSineRecordSensors();assert(fd_sine_sensors.updates==1&&fd_sine_sensors.peak_current==53);assert(fdBenchGuardInput());
+ begin(215);nativeStep();assert(bridge&&fd_sine_sensors.updates==0);zero();assert(!bridge&&fd_sine_pins.frozen);
+ unsigned updates=pwm_updates;cap=100;begin(215);nativeStep();assert(!bridge&&fd_native_sine.reason==FD_BENCH_SAFETY_CAP&&pwm_updates==updates);cap=610;
+ begin(215);TIM1->ARR=13330;nativeStep();assert(!bridge&&fd_native_sine.reason==FD_BENCH_BAD_CONFIG);TIM1->ARR=6665;
+ begin(215);nativeStep();armed=0;fdBenchService();assert(!bridge);armed=1;
+ begin(215);nativeStep();DWT->CTRL&=~1u;fdBenchService();assert(!bridge&&fd_native_sine.reason==15);
+ assert(!commutations);puts("PASS historical step6 control: actual GPIO functions,1200ticks/24k, one apply while off, no ADC trigger,100ms stop, sensor peaks and all inhibit paths");return 0;}
+`;
 }
 
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'fd-native-sine-host-')),c=path.join(dir,'test.c'),exe=path.join(dir,'test');fs.writeFileSync(c,program);
