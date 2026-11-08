@@ -1,0 +1,35 @@
+{
+  "scope": "Ideal timer command comparison only; not measured winding volt-seconds/current. Does not apply a continuous-current deadtime-error law as an exact zero-current model.",
+  "current_24k": {
+    "arr": 6665,
+    "period_ticks": 6666,
+    "carrier_hz": 24002.400240024002,
+    "ccr": [
+      3603,
+      3063,
+      3597
+    ],
+    "AB_command_gap_us": 3.375,
+    "AB_ideal_duty_difference": 0.081008100810081,
+    "deadtime_us": 2.3,
+    "deadtime_fraction": 0.05520552055205521,
+    "AH_BL_command_overlap_us": 1.075
+  },
+  "proposed_12k": {
+    "arr": 13330,
+    "period_ticks": 13331,
+    "carrier_hz": 12002.100367564324,
+    "ccr": [
+      7205,
+      6125,
+      7193
+    ],
+    "AB_command_gap_us": 6.75,
+    "AB_ideal_duty_difference": 0.08101417748105919,
+    "deadtime_us": 2.3,
+    "deadtime_fraction": 0.027604830845397943,
+    "AH_BL_command_overlap_us": 4.45
+  },
+  "photo": "IMG_3469.HEIC, yellow A/blue B,5us/div,5V/div; approximate falling gap1.0..1.2us; leading edge has spike/intermediate plateaus, not a full-rail rectangle",
+  "proposal_status": "not implemented or flashed"
+}
