@@ -33,6 +33,32 @@ volatile struct {
     uint32_t edges, input_at_start, input_at_handoff, last_step;
 } fd_native_sine = { .magic = 0x46534e31u, .abi = 1u };
 _Static_assert(sizeof(fd_native_sine) == 60u, "native sine event ABI");
+#ifdef TARGET_FD_SINE_FIXED_12KHZ
+/* Existing foreground sensor cadence only; not switching-current peaks. */
+volatile struct {
+    uint32_t magic, abi, trial, updates;
+    int32_t baseline_current, peak_current; /* 0.01A, filtered */
+    uint32_t baseline_voltage, minimum_voltage; /* 0.01V, filtered */
+    uint32_t baseline_raw_current, peak_raw_current; /* ADC counts */
+} fd_sine_sensors = { .magic = 0x46535331u, .abi = 1u };
+_Static_assert(sizeof(fd_sine_sensors) == 40u, "sine sensors ABI");
+static void fdSineRecordSensors(void)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    if (fd_power_bench.active_id && !fd_power_bench.inhibit &&
+        fd_native_sine.sine_steps) {
+        fd_sine_sensors.updates++;
+        if (actual_current > fd_sine_sensors.peak_current)
+            fd_sine_sensors.peak_current = actual_current;
+        if (battery_voltage < fd_sine_sensors.minimum_voltage)
+            fd_sine_sensors.minimum_voltage = battery_voltage;
+        if (ADC_raw_current > fd_sine_sensors.peak_raw_current)
+            fd_sine_sensors.peak_raw_current = ADC_raw_current;
+    }
+    __set_PRIMASK(mask);
+}
+#endif
 volatile uint8_t fd_rev_acquiring; /* always zero: no custom acquisition */
 static uint8_t fd_power_starting, fd_native_ready;
 void commutate(void);
@@ -121,7 +147,7 @@ static uint8_t fdBenchConfigOk(void)
         eepromBuffer.sine_mode_power == FD_NATIVE_SINE_POWER &&
         eepromBuffer.advance_level >= 10u && eepromBuffer.advance_level <= 42u &&
         eepromBuffer.auto_advance <= 1u && eepromBuffer.comp_pwm &&
-        !eepromBuffer.variable_pwm && eepromBuffer.pwm_frequency == 24u &&
+        !eepromBuffer.variable_pwm && eepromBuffer.pwm_frequency == FD_NATIVE_SINE_PWM_KHZ &&
         !eepromBuffer.bi_direction && !eepromBuffer.rc_car_reverse &&
         !use_speed_control_loop && minimum_duty_cycle == 210u &&
         min_startup_duty == 360u && startup_max_duty_cycle == 610u;
@@ -219,6 +245,13 @@ static uint8_t fdBenchGuardInput(void)
         fd_native_sine.sixth_edge_at = fd_native_sine.stopped_at = UINT32_MAX;
         fd_native_sine.input_at_start = adjusted_input;
         fd_native_sine.input_at_handoff = fd_native_sine.last_step = 0u;
+#ifdef TARGET_FD_SINE_FIXED_12KHZ
+        fd_sine_sensors.trial = fd_native_sine.trial;
+        fd_sine_sensors.updates = 0u;
+        fd_sine_sensors.baseline_current = fd_sine_sensors.peak_current = actual_current;
+        fd_sine_sensors.baseline_voltage = fd_sine_sensors.minimum_voltage = battery_voltage;
+        fd_sine_sensors.baseline_raw_current = fd_sine_sensors.peak_raw_current = ADC_raw_current;
+#endif
         fdAsyncCancel();
         allOff();
         SET_DUTY_CYCLE_ALL(0u);

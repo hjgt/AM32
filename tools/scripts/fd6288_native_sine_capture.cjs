@@ -6,6 +6,7 @@ const {SIZE:PIN_SIZE,decodePins}=require('./fd6288_sine_pin_decode.cjs');
 const fields=['magic','abi','trial','started','phase','reason','sine_steps','sixstep_at','first_edge_at','sixth_edge_at','stopped_at','edges','input_at_start','input_at_handoff','last_step'];
 const pwmFields=['magic','abi','trial','steps','cr1','psc','arr','ccer','bdtr','ccr1','ccr2','ccr3','ccr4','gpioa_moder','gpiof_moder','gpioa_afrh','gpiof_afrl','phase_a','phase_b','phase_c'];
 function decodePwm(b){assert.equal(b.length,80);const d=Object.fromEntries(pwmFields.map((n,i)=>[n,b.readUInt32LE(i*4)]));assert.equal(d.magic,0x46535031);assert.equal(d.abi,1);return d;}
+function decodeSensors(b){assert.equal(b.length,40);const names=['magic','abi','trial','updates','baseline_current','peak_current','baseline_voltage','minimum_voltage','baseline_raw_current','peak_raw_current'];const d=Object.fromEntries(names.map((n,i)=>[n,(i===4||i===5)?b.readInt32LE(i*4):b.readUInt32LE(i*4)]));assert.equal(d.magic,0x46535331);assert.equal(d.abi,1);d.units={current:'0.01A filtered',voltage:'0.01V filtered',raw_current:'ADC counts'};d.peak_current_increase=d.peak_current-d.baseline_current;d.voltage_drop=d.baseline_voltage-d.minimum_voltage;d.sampled_only=true;return d;}
 function decode(b){assert.equal(b.length,60);const d=Object.fromEntries(fields.map((n,i)=>[n,b.readUInt32LE(i*4)]));assert.equal(d.magic,0x46534e31);assert.equal(d.abi,1);d.phase_name=['idle','sine','sixstep','six_real_edges','stopped'][d.phase];for(const n of ['sixstep_at','first_edge_at','sixth_edge_at','stopped_at'])d[n+'_ms']=d[n]===0xffffffff?null:d[n]/160000;return d;}
 async function dump(elf,out,stopped){
  assert(stopped,'Require --stopped after operator confirmation');assert(!fs.existsSync(out),'Output already exists');
@@ -27,15 +28,17 @@ async function dump(elf,out,stopped){
   if(syms.fd_sine_pwm_snapshot){const s=syms.fd_sine_pwm_snapshot;assert.equal(s.size,80);const b=await mem(s.address,80);assert.deepEqual(await mem(s.address,80),b,'PWM snapshot changed during stopped read');pwm_snapshot=decodePwm(b);assert.equal(pwm_snapshot.trial,decode(a).trial,'PWM snapshot trial mismatch');}
   let pin_trace=null;
   if(syms.fd_sine_pins){const s=syms.fd_sine_pins;assert.equal(s.size,PIN_SIZE);const b=await mem(s.address,PIN_SIZE);assert.deepEqual(await mem(s.address,PIN_SIZE),b,'Pin trace changed during stopped read');assert(pwm_snapshot);pin_trace=decodePins(b,pwm_snapshot);await check();}
+  let sensors=null;
+  if(syms.fd_sine_sensors){const s=syms.fd_sine_sensors;assert.equal(s.size,40);const b=await mem(s.address,40);assert.deepEqual(await mem(s.address,40),b,'Sensor summary changed during stopped read');sensors=decodeSensors(b);assert.equal(sensors.trial,decode(a).trial,'Sensor summary trial mismatch');await check();}
   async function words(address,n){const v=(await c.rpc(`read_memory 0x${address.toString(16)} 32 ${n}`)).trim().split(/\s+/).map(Number);assert.equal(v.length,n);assert(v.every(x=>Number.isInteger(x)&&x>=0&&x<=0xffffffff));return v;}
   const clockA=await words(0xe0001000,2),demcr=(await words(0xe000edfc,1))[0],clockB=await words(0xe0001000,2);
   const clock={ctrl:clockB[0],demcr,cyccnt_first:clockA[1],cyccnt_second:clockB[1],delta:(clockB[1]-clockA[1])>>>0,selftest_ok:syms.fd_native_clock_ok?await scalar('fd_native_clock_ok'):null};
   clock.valid=Boolean((clock.ctrl&1)&&(demcr&0x1000000)&&clock.delta>0&&clock.selftest_ok!==0);
   const summary=decode(a);summary.timing_valid=clock.valid;
   if(!clock.valid)for(const n of ['sixstep_at','first_edge_at','sixth_edge_at','stopped_at'])summary[n+'_ms']=null;
-  const result={read_at:new Date().toISOString(),elf:path.resolve(elf),summary,clock,pwm_snapshot,pin_trace,ram_settings:{sine:settings[19],startup_power:settings[25],motor_kv:settings[26]*40+20,motor_poles:settings[27],advance_raw:settings[23],auto_advance:settings[47],sine_range:settings[40],sine_power:settings[45]},raw_hex:a.toString('hex')};
+  const result={read_at:new Date().toISOString(),elf:path.resolve(elf),summary,clock,pwm_snapshot,pin_trace,sensors,ram_settings:{sine:settings[19],pwm_frequency_khz:settings[24],startup_power:settings[25],motor_kv:settings[26]*40+20,motor_poles:settings[27],advance_raw:settings[23],auto_advance:settings[47],sine_range:settings[40],sine_power:settings[45]},raw_hex:a.toString('hex')};
   fs.writeFileSync(out,JSON.stringify(result,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify({...result,pin_trace:pin_trace?{header:pin_trace.header,analysis:pin_trace.analysis}:null},null,2));return result;
  }finally{c.close();}
 }
 if(require.main===module){const [elf,out,...flags]=process.argv.slice(2);assert(elf&&out,'Usage: node fd6288_native_sine_capture.cjs MATCHING.elf NEW.json --stopped');dump(elf,out,flags.includes('--stopped')).catch(e=>{console.error(e);process.exitCode=1;});}
-module.exports={decode,decodePwm,dump};
+module.exports={decode,decodePwm,decodeSensors,dump};

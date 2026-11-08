@@ -1,6 +1,7 @@
 // Execute the actual native sine loop, output formula and trial adapter with
 // simulated registers/time. No motor model, SWD or synthetic automatic ZCs.
 const fs=require('fs'),path=require('path'),os=require('os'),cp=require('child_process'),assert=require('assert');
+const fixed12=process.argv.includes('--fixed-12');if(fixed12)process.argv.push('--fixed');
 const root=path.resolve(__dirname,'..'),main=fs.readFileSync(path.join(root,'Src/main.c'),'utf8');
 function block(s,start){const p=s.indexOf(start);assert(p>=0,start);const b=s.indexOf('{',p);let d=0;for(let i=b;i<s.length;i++){if(s[i]==='{')d++;if(s[i]==='}'&&!--d)return s.slice(p,i+1);}throw Error(start);}
 const initAt=main.indexOf('    fdNativeSineClockInit();',main.indexOf('int main(void)'));
@@ -348,6 +349,31 @@ int main(void){
  assert(rearmed>=7&&mask==0&&old_routine==1);
  puts("PASS actual native handover -> ADC fresh PRE/POST qualification -> JEOS event -> inherited timing -> async schedule; no hardware comparator dependency");return 0;}
 `;
+}
+
+
+if(fixed12){
+ assert(main.indexOf('fdSineRecordSensors();')>main.indexOf('if (PROCESS_ADC_FLAG == 1)'));
+ assert(main.indexOf('fdSineRecordSensors();')<main.indexOf('PROCESS_ADC_FLAG = 0;',main.indexOf('if (PROCESS_ADC_FLAG == 1)')));
+ program=program.replace('#define TARGET_FD_SINE_FIXED_PROBE','#define TARGET_FD_SINE_FIXED_PROBE\n#define TARGET_FD_SINE_FIXED_12KHZ');
+ program=program.replace('static unsigned zero_crosses;','static unsigned zero_crosses;\nstatic int16_t actual_current=3;\nstatic uint16_t battery_voltage=820,ADC_raw_current=10;');
+ program=program.replace('static void settingsOverride(void)', '#define TIM1_AUTORELOAD 6665u\n#define SET_AUTO_RELOAD_PWM(v) (TIM1->ARR=(v))\nstatic void applyCarrier(void){'+block(main,'if (eepromBuffer.pwm_frequency < 145')+'}\nstatic void settingsOverride(void)');
+ program=program.replace('checkSensorTick();fdNativeSineClockInit();settingsOverride();','checkSensorTick();fdNativeSineClockInit();settingsOverride();\n applyCarrier();tim1_arr=TIMER1_MAX_ARR;assert(TIM1->ARR==13330&&TIMER1_MAX_ARR==13330&&eepromBuffer.pwm_frequency==12);');
+ program=program.replace('begin(215);nativeStep();assert(bridge&&fd_native_sine.sine_steps==1);',`begin(215);fdSineRecordSensors();assert(fd_sine_sensors.updates==0);nativeStep();assert(bridge&&fd_native_sine.sine_steps==1);
+ assert(fd_sine_sensors.baseline_current==3&&fd_sine_sensors.baseline_voltage==820&&fd_sine_sensors.baseline_raw_current==10);
+ unsigned c0=ccr[0],c1=ccr[1],c2=ccr[2];
+ actual_current=53;battery_voltage=805;ADC_raw_current=30;fdSineRecordSensors();
+ actual_current=20;battery_voltage=815;ADC_raw_current=20;fdSineRecordSensors();
+ assert(fd_sine_sensors.updates==2&&fd_sine_sensors.peak_current==53&&fd_sine_sensors.minimum_voltage==805&&fd_sine_sensors.peak_raw_current==30);
+ assert(ccr[0]==c0&&ccr[1]==c1&&ccr[2]==c2&&fd_native_sine.sine_steps==1);`);
+ program=program.replace('ccr[0]==3603&&ccr[1]==3063&&ccr[2]==3597','ccr[0]==7205&&ccr[1]==6125&&ccr[2]==7193');
+ program=program.replace('(n*31)%6666','(n*61)%13331');
+ program=program.replace('assert(fdBenchGuardInput());assert(fd_sine_pins.count==256);',`actual_current=999;battery_voltage=0;ADC_raw_current=999;fdSineRecordSensors();
+ assert(fd_sine_sensors.updates==2&&fd_sine_sensors.peak_current==53&&fd_sine_sensors.minimum_voltage==805);
+ assert(fdBenchGuardInput());assert(fd_sine_pins.count==256);`);
+ program=program.replace('begin(215);nativeStep();assert(fd_sine_pins.count==0',`begin(215);nativeStep();assert(fd_sine_sensors.updates==0&&fd_sine_sensors.baseline_current==999);eepromBuffer.pwm_frequency=24;assert(fdBenchGuardInput()&&!bridge);eepromBuffer.pwm_frequency=12;
+ begin(215);nativeStep();assert(fd_sine_pins.count==0`);
+ program=program.replace('PASS fixed-vector100ms:', 'PASS 12k fixed-vector100ms + sensor peaks/freeze and wrong-frequency interlock:');
 }
 
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'fd-native-sine-host-')),c=path.join(dir,'test.c'),exe=path.join(dir,'test');fs.writeFileSync(c,program);

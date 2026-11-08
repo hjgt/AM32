@@ -3243,6 +3243,18 @@
 #endif
 #define TARGET_FD_SINE_FIXED_PROBE
 #endif
+#ifndef FD6288_SINE_FIXED_12KHZ
+#define FD6288_SINE_FIXED_12KHZ 0
+#endif
+#if FD6288_SINE_FIXED_12KHZ != 0 && FD6288_SINE_FIXED_12KHZ != 1
+#error "Fixed sine carrier comparison must be boolean"
+#endif
+#if FD6288_SINE_FIXED_12KHZ
+#if !FD6288_SINE_FIXED_PROBE
+#error "12kHz carrier comparison requires the bounded fixed-vector probe"
+#endif
+#define TARGET_FD_SINE_FIXED_12KHZ
+#endif
 #if FD6288_NATIVE_SINE_START != 0 && FD6288_NATIVE_SINE_START != 1
 #error "Native sine switch must be boolean"
 #endif

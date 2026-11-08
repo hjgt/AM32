@@ -10,3 +10,11 @@ assert.equal(decodePins(b,{...pwm,bdtr:70}).analysis.verdict,'unsupported_timer_
 assert.throws(()=>decodePins(b.subarray(0,SIZE-1),pwm));assert.throws(()=>decodePins(b,{...pwm,trial:4}));
 for(const [off,val] of [[0,0],[4,2],[12,257],[16,0]]){const x=Buffer.from(b);x.writeUInt32LE(val,off);assert.throws(()=>decodePins(x,pwm));}
 console.log('PASS pin decoder: manually specified high/low levels, phase differences, mismatch, boundary/wrap exclusions, insufficient coverage and ABI guards');
+const pwm12={...pwm,arr:13330,ccr1:7205,ccr2:6125,ccr3:7193};
+const ok12=decodePins(buffer([[1000,1010,0x700,0],[6300,6310,0x500,0],[6700,6710,0x1500,0],[7400,7410,0x1000,0],[7600,7610,0x1800,1],[6120,6130,0,0]]),pwm12);
+assert.equal(ok12.analysis.valid,5);assert.equal(ok12.analysis.excluded,1);assert.equal(ok12.analysis.matched,5);assert.equal(ok12.analysis.expected_ab_different,2);
+const {decodeSensors}=require('../tools/scripts/fd6288_native_sine_capture.cjs');
+const sensor=Buffer.alloc(40);[0x46535331,1,3,95,0,53,820,805,10,30].forEach((v,i)=>sensor.writeUInt32LE(v,i*4));sensor.writeInt32LE(-3,16);
+const decoded=decodeSensors(sensor);assert.equal(decoded.updates,95);assert.equal(decoded.baseline_current,-3);assert.equal(decoded.peak_current_increase,56);assert.equal(decoded.voltage_drop,15);assert(decoded.sampled_only);
+assert.throws(()=>decodeSensors(sensor.subarray(0,39)));const wrong=Buffer.from(sensor);wrong.writeUInt32LE(2,4);assert.throws(()=>decodeSensors(wrong));
+console.log('PASS 12k pin timing and sensor summary: signed units, peak delta, voltage drop and ABI guards');

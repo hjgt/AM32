@@ -1,0 +1,42 @@
+{
+  "date": "2026-11-08",
+  "flashed": false,
+  "mode": "12kHz_carrier_comparison_fixed_vector100ms",
+  "base": "SINE-FIXED-PROBE24kHz",
+  "pwm_frequency_khz": 12,
+  "sine_power": 6,
+  "deadtime_us": 2.3,
+  "time_limit_ms": 100,
+  "fixed_angles": [
+    150,
+    269,
+    29
+  ],
+  "arr": 13330,
+  "ccr": [
+    7205,
+    6125,
+    7193
+  ],
+  "AB_command_gap_us": 6.75,
+  "ideal_AB_duty_difference": 0.08101417748105919,
+  "eeprom_page_written": false,
+  "runtime_frequency_override_only": true,
+  "sensor_summary_bytes": 40,
+  "sensor_peak_scope": "maximum of existing approx1.05ms foreground updates; not instantaneous switching peak",
+  "checks": {
+    "actual_C_carrier_formula_and_12k_configuration_interlock": "PASS",
+    "fixed_CCRs_single_command_100ms_and_fault_stops_ASan_UBSan": "PASS",
+    "sampled_current_peak_voltage_minimum_freeze_reset_no_PWM_writes": "PASS",
+    "pin_and_sensor_decoders_ABI_signed_units_12k_timing": "PASS",
+    "24k_fixed_and_ADC_regressions_ASan_UBSan": "PASS",
+    "12k_flag_off_HEX_exactly_equals_flashed24k_fixed": "PASS",
+    "ELF_HEX_BIN_consistency_and_reader_symbols": "PASS"
+  },
+  "hardware_result": null,
+  "files": {
+    "AM32_CUSTOM_FD6288_G431_2.20.bin": "f188019ea3e8a54f62aed650e73ab6493212d6f8648b1b6d3e676ca4c92f5ca9",
+    "AM32_CUSTOM_FD6288_G431_2.20.hex": "071926e60a7f080b79e8de7580547010caeb06d4bd2aceee441edfea8228227e",
+    "AM32_CUSTOM_FD6288_G431_2.20.elf": "0f68c8a3ff5770bef75fde20d46af2cec5e2bd804d292115aa0e05daa59117cf"
+  }
+}

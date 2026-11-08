@@ -1710,7 +1710,7 @@ void loadEEpromSettings()
     eepromBuffer.sine_mode_power = FD_NATIVE_SINE_POWER;
     eepromBuffer.comp_pwm = 1u;
     eepromBuffer.variable_pwm = 0u;
-    eepromBuffer.pwm_frequency = 24u;
+    eepromBuffer.pwm_frequency = FD_NATIVE_SINE_PWM_KHZ;
     eepromBuffer.minimum_duty_cycle = 1u;
     eepromBuffer.bi_direction = 0u;
     eepromBuffer.rc_car_reverse = 0u;
@@ -3957,7 +3957,10 @@ if(zero_crosses < 5){
             actual_current = ((smoothed_raw_current * 3300 / 41) - (CURRENT_OFFSET * 100)) / (MILLIVOLT_PER_AMP);
             if (actual_current < 0) {
                 actual_current = 0;
-            }             
+            }
+#ifdef TARGET_FD_SINE_FIXED_12KHZ
+            fdSineRecordSensors();
+#endif
             if (eepromBuffer.low_voltage_cut_off == 1) {  
                 if (battery_voltage < (cell_count * low_cell_volt_cutoff)) {
                   low_voltage_count++;
