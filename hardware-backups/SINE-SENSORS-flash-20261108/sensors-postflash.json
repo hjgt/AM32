@@ -1,0 +1,16 @@
+{
+  "read_at": "2026-11-08T06:09:27.221Z",
+  "read_only": true,
+  "elf": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-SINE-SENSORS-20261108/AM32_CUSTOM_FD6288_G431_2.20.elf",
+  "input": 0,
+  "adjusted_input": 0,
+  "running": 0,
+  "stepper_sine": 1,
+  "one_khz_loop_counter": 20,
+  "PROCESS_ADC_FLAG": 0,
+  "battery_voltage": 819,
+  "actual_current": 3,
+  "ADC_raw_volts": 1682,
+  "ADC_raw_current": 10,
+  "counter_second": 18
+}
