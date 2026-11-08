@@ -1,0 +1,28 @@
+{
+  "scope": "Timer command timing only; not winding voltage/current or motor simulation. Opposing-main/complement overlap is not total winding voltage volt-seconds. Gate driver delays and diode/freewheel/current dynamics excluded.",
+  "period_ticks": 6666,
+  "deadtime_ticks": 368,
+  "clock_MHz": 160,
+  "span_ticks_range": [
+    540,
+    626
+  ],
+  "span_us_range": [
+    3.375,
+    3.9125
+  ],
+  "opposing_gate_command_overlap_us_range": [
+    1.075,
+    1.6125
+  ],
+  "fixed_angle": {
+    "angle": 150,
+    "ccr": [
+      3603,
+      3063,
+      3597
+    ],
+    "span_ticks": 540,
+    "opposing_main_complement_overlap_ticks": 172
+  }
+}

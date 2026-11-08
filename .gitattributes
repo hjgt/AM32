@@ -36,3 +36,8 @@ test-firmware/fd6288-SINE-CENTERED-20261108/*.bin -text
 test-firmware/fd6288-SINE-SENSORS-20261108/*.hex -text
 test-firmware/fd6288-SINE-SENSORS-20261108/*.elf -text
 test-firmware/fd6288-SINE-SENSORS-20261108/*.bin -text
+
+# Fixed-vector PWM pad diagnostic archive.
+test-firmware/fd6288-SINE-FIXED-PROBE-20261108/*.hex -text
+test-firmware/fd6288-SINE-FIXED-PROBE-20261108/*.elf -text
+test-firmware/fd6288-SINE-FIXED-PROBE-20261108/*.bin -text

@@ -3340,6 +3340,7 @@ void advanceincrement()
     }
     fd_native_sine.sine_steps++;
 #endif
+#ifndef TARGET_FD_SINE_FIXED_PROBE
     if (!forward) {
         phase_A_position++;
         if (phase_A_position > 359) {
@@ -3367,6 +3368,7 @@ void advanceincrement()
             phase_C_position = 359;
         }
     }
+#endif
 #ifdef GIMBAL_MODE
     setPWMCompare1(((2 * pwmSin[phase_A_position]) + gate_drive_offset) * TIMER1_MAX_ARR / 2000);
     setPWMCompare2(((2 * pwmSin[phase_B_position]) + gate_drive_offset) * TIMER1_MAX_ARR / 2000);
@@ -4139,13 +4141,23 @@ if(zero_crosses < 5){
                     SET_DUTY_CYCLE_ALL(0);
                     allpwm();
                     do_once_sinemode = 0;
+#ifdef TARGET_FD_SINE_FIXED_PROBE
+                    advanceincrement();
+                    fd_sine_pins.driven_at = DWT->CYCCNT;
+#endif
                 }
+#ifdef TARGET_FD_SINE_FIXED_PROBE
+                if (!fdNativeSineBridgeAllowed()) { e_rpm = 0u; continue; }
+                fdSineFixedSample();
+                e_rpm = 0u; /* fixed vector, no commanded rotation */
+#else
                 advanceincrement();
                 if (!fdNativeSineBridgeAllowed()) { e_rpm = 0u; continue; }
                 step_delay = map(input, 48, 120, 7000 / eepromBuffer.motor_poles,
                     810 / eepromBuffer.motor_poles);
                 delayMicros(step_delay);
                 e_rpm = 600 / step_delay;
+#endif
             } else {
                 do_once_sinemode = 1;
                 SET_DUTY_CYCLE_ALL(0u);

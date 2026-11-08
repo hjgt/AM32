@@ -6,6 +6,22 @@
  */
 #include "fd6288_async.h"
 #include "fd6288_native_sine_config.h"
+#ifdef TARGET_FD_SINE_FIXED_PROBE
+#define FD_NATIVE_SINE_LIMIT_CYCLES (100000u * 160u)
+typedef struct {
+    uint16_t before, after, gpioa, gpiof;
+    uint32_t at;
+} FdSinePinSample;
+/* Foreground-only bounded observation. Never writes GPIO, PWM or ADC. */
+volatile struct {
+    uint32_t magic, abi, trial, count, frozen, driven_at;
+    FdSinePinSample samples[256];
+} fd_sine_pins = { .magic = 0x46504931u, .abi = 1u };
+_Static_assert(sizeof(FdSinePinSample) == 12u, "sine pin sample ABI");
+_Static_assert(sizeof(fd_sine_pins) == 3096u, "sine pin buffer ABI");
+#else
+#define FD_NATIVE_SINE_LIMIT_CYCLES (3000000u * 160u)
+#endif
 
 volatile FdPowerDiagnostics fd_power_bench = {
     .magic = FD_POWER_BENCH_MAGIC, .abi = 1u
@@ -72,6 +88,31 @@ uint8_t fdNativeSineBridgeAllowed(void)
         adjusted_input && !stuck_rotor_inhibit && !drive_safety_limit_inhibit;
 }
 
+#ifdef TARGET_FD_SINE_FIXED_PROBE
+static void fdSineFixedSample(void)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    /* Wait by returning to the normal loop, never by polling the timer.
+     * After 1ms the fixed preload has crossed many carrier updates. */
+    if (fdNativeSineBridgeAllowed() && !fd_sine_pins.frozen &&
+        fd_native_sine.sine_steps && fd_sine_pins.count < 256u &&
+        (uint32_t)(DWT->CYCCNT - fd_sine_pins.driven_at) >= 1000u * 160u) {
+        FdSinePinSample s;
+        s.before = (uint16_t)TIM1->CNT;
+        s.gpioa = (uint16_t)(GPIOA->IDR & 0x1f00u);
+        s.gpiof = (uint16_t)(GPIOF->IDR & 1u);
+        s.after = (uint16_t)TIM1->CNT;
+        s.at = DWT->CYCCNT - fd_native_sine.started;
+        uint32_t i = fd_sine_pins.count;
+        fd_sine_pins.samples[i] = s;
+        fd_sine_pins.count = i + 1u;
+        if (i + 1u == 256u) fd_sine_pins.frozen = 1u;
+    }
+    __set_PRIMASK(mask);
+}
+#endif
+
 static uint8_t fdBenchConfigOk(void)
 {
     return eepromBuffer.use_sine_start == 1u && eepromBuffer.startup_power == FD_NATIVE_SINE_STARTUP_POWER &&
@@ -93,6 +134,9 @@ static void fdBenchStop(uint8_t reason)
     fd_power_bench.inhibit = 1u;
     fd_native_ready = 0u;
     if (fd_power_bench.active_id) {
+#ifdef TARGET_FD_SINE_FIXED_PROBE
+        fd_sine_pins.frozen = 1u;
+#endif
 #ifdef TARGET_FD_SINE_CENTERED_PWM
         fd_sine_pwm_snapshot.trial = fd_native_sine.trial;
         fd_sine_pwm_snapshot.steps = fd_native_sine.sine_steps;
@@ -146,7 +190,7 @@ static void fdBenchService(void)
             fdBenchStop(FD_NATIVE_SINE_CLOCK_FAULT);
         else if (!armed || stuck_rotor_inhibit || drive_safety_limit_inhibit)
             fdBenchStop(FD_BENCH_SAFETY_CAP);
-        else if (age >= 3000000u * 160u || (fd_native_sine.edges >= 6u &&
+        else if (age >= FD_NATIVE_SINE_LIMIT_CYCLES || (fd_native_sine.edges >= 6u &&
             age - fd_native_sine.sixth_edge_at >= 1000000u * 160u))
             fdBenchStop(FD_BENCH_WINDOW);
         else if (fd_native_sine.phase >= 2u && !running)
@@ -183,9 +227,17 @@ static uint8_t fdBenchGuardInput(void)
         running = 0;
         stepper_sine = 1;
         do_once_sinemode = 1;
+#ifdef TARGET_FD_SINE_FIXED_PROBE
+        fd_sine_pins.trial = fd_native_sine.trial;
+        fd_sine_pins.count = fd_sine_pins.frozen = fd_sine_pins.driven_at = 0u;
+        phase_A_position = 150;
+        phase_B_position = 269;
+        phase_C_position = 29;
+#else
         phase_A_position = 180;
         phase_B_position = 299;
         phase_C_position = 59;
+#endif
         step_delay = 100u;
     }
     uint8_t blocked = fd_power_bench.inhibit ||
@@ -283,5 +335,5 @@ static void fdNativeSineEdge(void)
 static uint8_t fdBenchDeadlineExpired(void)
 {
     return fd_power_bench.inhibit || (fd_power_bench.active_id &&
-        (uint32_t)(DWT->CYCCNT - fd_native_sine.started) >= 3000000u * 160u);
+        (uint32_t)(DWT->CYCCNT - fd_native_sine.started) >= FD_NATIVE_SINE_LIMIT_CYCLES);
 }

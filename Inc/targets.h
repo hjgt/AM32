@@ -3231,6 +3231,18 @@
 #endif
 #define TARGET_FD_SINE_CENTERED_PWM
 #endif
+#ifndef FD6288_SINE_FIXED_PROBE
+#define FD6288_SINE_FIXED_PROBE 0
+#endif
+#if FD6288_SINE_FIXED_PROBE != 0 && FD6288_SINE_FIXED_PROBE != 1
+#error "Fixed sine probe must be boolean"
+#endif
+#if FD6288_SINE_FIXED_PROBE
+#if !FD6288_SINE_CENTERED_PWM || !FD6288_NATIVE_SINE_ONLY
+#error "Fixed sine probe requires the centered sine-only diagnostic"
+#endif
+#define TARGET_FD_SINE_FIXED_PROBE
+#endif
 #if FD6288_NATIVE_SINE_START != 0 && FD6288_NATIVE_SINE_START != 1
 #error "Native sine switch must be boolean"
 #endif

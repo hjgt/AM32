@@ -155,7 +155,7 @@ int main(void){
 `;
 
 
-if(process.argv.includes('--sine-only')||process.argv.includes('--centered')){
+if(process.argv.includes('--sine-only')||process.argv.includes('--centered')||process.argv.includes('--fixed')){
  assert(!process.argv.includes('--adc'),'Select one test mode');
  program=program.replace('#define TARGET_FD_NATIVE_SINE','#define TARGET_FD_NATIVE_SINE\n#define TARGET_FD_NATIVE_SINE_ONLY');
  const i=program.indexOf('int main(void){');program=program.slice(0,i)+`
@@ -177,7 +177,7 @@ int main(void){
 }
 
 
-if(process.argv.includes('--centered')){
+if(process.argv.includes('--centered')||process.argv.includes('--fixed')){
  program=program.replace('#define TARGET_FD_NATIVE_SINE_ONLY','#define TARGET_FD_NATIVE_SINE_ONLY\n#define TARGET_FD_SINE_CENTERED_PWM');
  const regs=`
 #define TIM_CR1_CKD_Msk 0x300u
@@ -185,9 +185,9 @@ if(process.argv.includes('--centered')){
 #define TIM_BDTR_DTG_Msk 255u
 #define TARGET_FIXED_DEAD_TIME_CODE 0xceu
 #define ZCD_SAMPLE_FLOOR 460u
-static struct {uint32_t CR1,PSC,ARR,CCER,BDTR,CCR1,CCR2,CCR3,CCR4;} fake_tim={.CR1=0x81,.ARR=6665,.CCER=0x1555,.BDTR=0x200a0ce};
+static struct {uint32_t CR1,PSC,ARR,CCER,BDTR,CCR1,CCR2,CCR3,CCR4,CNT;} fake_tim={.CR1=0x81,.ARR=6665,.CCER=0x1555,.BDTR=0x200a0ce};
 #define TIM1 (&fake_tim)
-static struct {uint32_t MODER,AFR[2],BRR,BSRR;} fake_pa={.AFR={0,0x66666}},fake_pf={.AFR={6,0}};
+static struct {uint32_t MODER,AFR[2],BRR,BSRR,IDR;} fake_pa={.AFR={0,0x66666}},fake_pf={.AFR={6,0}};
 #define GPIOA (&fake_pa)
 #define GPIOF (&fake_pf)
 #define PHASE_A_GPIO_HIGH (1u<<8)
@@ -242,6 +242,39 @@ int main(void){
  begin(215);TIM1->CR1|=2;nativeStep();assert(!bridge);TIM1->CR1=0x81;
  printf("PASS actual GPIO/PWM mapping: all360angles/bothdirections, all pair differences preserved, native clipped137/360, centered range%u..%u, live-state frozen before off, invalid timer refused\\n",min_out,max_out);
  return 0;}
+`;
+}
+
+
+if(process.argv.includes('--fixed')){
+ program=program.replace('#define TARGET_FD_SINE_CENTERED_PWM','#define TARGET_FD_SINE_CENTERED_PWM\n#define TARGET_FD_SINE_FIXED_PROBE');
+ const i=program.indexOf('int main(void){');program=program.slice(0,i)+`
+int main(void){
+ checkSensorTick();fdNativeSineClockInit();settingsOverride();
+ begin(215);nativeStep();assert(bridge&&fd_native_sine.sine_steps==1);
+ assert(phase_A_position==150&&phase_B_position==269&&phase_C_position==29);
+ assert(ccr[0]==3603&&ccr[1]==3063&&ccr[2]==3597);
+ assert(fd_sine_pins.count==0&&!fd_sine_pins.frozen);
+ unsigned prior[3]={ccr[0],ccr[1],ccr[2]};
+ DWT->CYCCNT=fd_sine_pins.driven_at+159999;nativeStep();assert(fd_sine_pins.count==0);
+ for(unsigned n=0;n<256;n++){
+  DWT->CYCCNT=fd_sine_pins.driven_at+160000+n*1600;
+  TIM1->CNT=(n*31)%6666;unsigned t=TIM1->CNT,a=0,f=0;
+  for(unsigned c=0;c<3;c++){if(t>=368&&t<prior[c])a|=1u<<(8+c);if(t>=prior[c]+368){if(c<2)a|=1u<<(11+c);else f|=1;}}
+  GPIOA->IDR=a;GPIOF->IDR=f;nativeStep();
+  assert(fd_sine_pins.count==n+1&&fd_sine_pins.samples[n].before==t&&fd_sine_pins.samples[n].after==t);
+  assert(fd_sine_pins.samples[n].gpioa==a&&fd_sine_pins.samples[n].gpiof==f);
+  assert(fd_native_sine.sine_steps==1&&mask==0&&TIM1->CR1==0x81);
+  for(unsigned c=0;c<3;c++)assert(ccr[c]==prior[c]);
+ }
+ assert(fd_sine_pins.frozen);nativeStep();assert(fd_sine_pins.count==256);
+ DWT->CYCCNT=fd_native_sine.started+100000*160u-1;fdBenchService();assert(bridge);
+ DWT->CYCCNT++;fdBenchService();assert(!bridge&&fd_native_sine.reason==FD_BENCH_WINDOW&&fd_sine_pins.frozen);
+ assert(fdBenchGuardInput());assert(fd_sine_pins.count==256); // no restart while held
+ begin(215);nativeStep();assert(fd_sine_pins.count==0&&!fd_sine_pins.frozen);zero();assert(!bridge&&fd_sine_pins.frozen);
+ begin(215);nativeStep();armed=0;fdBenchService();assert(!bridge&&fd_sine_pins.frozen);armed=1;
+ begin(215);nativeStep();DWT->CTRL&=~1u;fdBenchService();assert(!bridge&&fd_sine_pins.frozen);
+ assert(!commutations);puts("PASS fixed-vector100ms: exact CCRs, single command, passive pad sampling,1ms preload wait, capacity freeze, no held-input restart, zero/disarm/clock stop");return 0;}
 `;
 }
 

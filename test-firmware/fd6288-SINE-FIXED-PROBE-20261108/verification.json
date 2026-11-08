@@ -1,0 +1,38 @@
+{
+  "flashed": false,
+  "date": "2026-11-08",
+  "mode": "fixed_native_sine_vector_and_passive_GPIO_pad_capture",
+  "phase_angles": [
+    150,
+    269,
+    29
+  ],
+  "ccr": [
+    3603,
+    3063,
+    3597
+  ],
+  "AB_command_edge_gap_us": 3.375,
+  "sine_power": 6,
+  "time_limit_ms": 100,
+  "pin_buffer_bytes": 3096,
+  "pin_samples_max": 256,
+  "preload_wait_before_sampling_us": 1000,
+  "settings_changed": false,
+  "hardware_result": null,
+  "checks": {
+    "fixed_actual_C_ASan_UBSan": "PASS",
+    "fixed_CCRs_single_command_and100ms_cutoff": "PASS",
+    "passive_pin_capture_capacity_freeze_and_no_PWM_writes": "PASS",
+    "zero_disarm_clock_fault_and_no_held_restart": "PASS",
+    "pin_decoder_manually_specified_levels_AB_difference_boundary_mismatch_ABI": "PASS",
+    "sine_centered_sine_only_and_ADC_regressions": "PASS",
+    "disabled_flag_HEX_exactly_equals_SINE_SENSORS": "PASS",
+    "ELF_HEX_BIN_consistency": "PASS"
+  },
+  "files": {
+    "AM32_CUSTOM_FD6288_G431_2.20.bin": "a3554e99879aa7b2529e926d3ea861dbdc101b9e848afd3d82543df9a46fb874",
+    "AM32_CUSTOM_FD6288_G431_2.20.hex": "5ce35620c428ad450b9b265dc114c9af0dbf281aa96b8bf07541ed8640032b3f",
+    "AM32_CUSTOM_FD6288_G431_2.20.elf": "a9d3eb20837617a3eb4a59f64f1d124271d36b78033a50110d56c329ab4f0d1c"
+  }
+}
