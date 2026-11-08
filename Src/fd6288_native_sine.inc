@@ -175,6 +175,7 @@ static void fdBenchWritePwm(uint16_t ticks)
     __set_PRIMASK(mask);
 }
 
+#ifndef TARGET_FD_NATIVE_SINE_ONLY
 static uint8_t fdNativeSineHandoff(void)
 {
     uint32_t mask = __get_PRIMASK();
@@ -222,6 +223,8 @@ static uint8_t fdNativeSineHandoff(void)
     __set_PRIMASK(mask);
     return !fd_power_bench.inhibit;
 }
+#endif
+
 
 static void fdNativeSineEdge(void)
 {

@@ -1,0 +1,27 @@
+{
+  "date": "2026-11-08",
+  "flashed": false,
+  "branch": "codex/fd6288-native-sine-20261108",
+  "mode": "sine_only_no_sixstep_handover",
+  "settings_unchanged": true,
+  "sine_power": 6,
+  "total_limit_ms": 3000,
+  "native_degree_delay_us": [
+    500,
+    57
+  ],
+  "mechanical_speed_is_not_measured": true,
+  "checks": {
+    "sine_only_actual_C_all_throttles_both_directions_ASan_UBSan": "PASS",
+    "no_handover_at_high_throttle": "PASS",
+    "zero_disarm_clock_fault_and_3s_deadline": "PASS",
+    "normal_native_and_ADC_paths_ASan_UBSan": "PASS",
+    "main_bin_hex_consistency": "PASS",
+    "disabled_sine_only_hex_equals_CLOCKFIX": "PASS"
+  },
+  "files": {
+    "AM32_CUSTOM_FD6288_G431_2.20.bin": "b365241747bde5bf150fb6862e7315314eb70d780d15a5bfdfdf1f26ea50db65",
+    "AM32_CUSTOM_FD6288_G431_2.20.hex": "f007af9d214a5fd91824d98d1b1805c5454caac40dab30541afe570634fb20b4",
+    "AM32_CUSTOM_FD6288_G431_2.20.elf": "bc578bc0a35b43e9a694429cd53a8979da31151b16d4617c750fb9e20654c866"
+  }
+}

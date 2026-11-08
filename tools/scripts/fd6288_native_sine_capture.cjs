@@ -17,7 +17,7 @@ async function dump(elf,out,stopped){
   async function check(){assert.equal((await c.rpc('[target current] curstate')).trim(),'running');assert.equal((await mem(0xe000ed08,4)).readUInt32LE(),0x08001000);for(const n of ['input','adjusted_input','newinput','running','duty_cycle','heli_coast_active'])assert.equal(await scalar(n),0,n);assert.equal((await mem(0x48000010,4)).readUInt32LE()&0x1f00,0);assert.equal((await mem(0x48001410,4)).readUInt32LE()&1,0);for(let i=0;i<4;i++)assert.equal((await mem(0x40012c34+4*i,4)).readUInt32LE(),0);}
   await check();
   // Selected code identity, not a full-flash readback.
-  for(const name of ['advanceincrement','loadEEpromSettings','fdBenchService','fdBenchStop','fdNativeSineBridgeAllowed']){const s=syms[name];assert(s&&s.size>0&&s.size<2048,name);const b=await mem(s.address,s.size);for(let i=0;i<b.length;i++)assert.equal(b[i],hex.get(s.address+i),'Code identity: '+name);}
+  for(const name of ['advanceincrement','loadEEpromSettings','fdBenchService','fdBenchStop','fdNativeSineBridgeAllowed','main']){const s=syms[name];assert(s&&s.size>0&&s.size<8192,name);const b=await mem(s.address,s.size);for(let i=0;i<b.length;i++)assert.equal(b[i],hex.get(s.address+i),'Code identity: '+name);}
   const address=syms.fd_native_sine.address,a=await mem(address,60),settings=await mem(syms.eepromBuffer.address,48);
   await check();assert.deepEqual(await mem(address,60),a,'Summary changed during stopped read');
   async function words(address,n){const v=(await c.rpc(`read_memory 0x${address.toString(16)} 32 ${n}`)).trim().split(/\s+/).map(Number);assert.equal(v.length,n);assert(v.every(x=>Number.isInteger(x)&&x>=0&&x<=0xffffffff));return v;}

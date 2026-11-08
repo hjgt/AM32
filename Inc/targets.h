@@ -3207,6 +3207,18 @@
 #ifndef FD6288_NATIVE_SINE_START
 #define FD6288_NATIVE_SINE_START 0
 #endif
+#ifndef FD6288_NATIVE_SINE_ONLY
+#define FD6288_NATIVE_SINE_ONLY 0
+#endif
+#if FD6288_NATIVE_SINE_ONLY != 0 && FD6288_NATIVE_SINE_ONLY != 1
+#error "Sine-only switch must be boolean"
+#endif
+#if FD6288_NATIVE_SINE_ONLY
+#if !FD6288_NATIVE_SINE_START
+#error "Sine-only observation requires the native sine trial"
+#endif
+#define TARGET_FD_NATIVE_SINE_ONLY
+#endif
 #if FD6288_NATIVE_SINE_START != 0 && FD6288_NATIVE_SINE_START != 1
 #error "Native sine switch must be boolean"
 #endif

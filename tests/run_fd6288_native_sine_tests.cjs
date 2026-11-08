@@ -9,7 +9,7 @@ const settingStart=main.indexOf('    /* Trial-only RAM overrides;');
 assert(settingStart>=0);
 const settings=main.slice(settingStart,main.indexOf('#endif',settingStart));
 const table=main.slice(main.indexOf('int16_t pwmSin[] = {'),main.indexOf('};',main.indexOf('int16_t pwmSin[] = {'))+2);
-const sine=main.slice(main.indexOf('            if (input > 48 && armed) {',main.indexOf('} else { // stepper sine')),main.indexOf('\n#endif // gimbal mode',main.indexOf('} else { // stepper sine')));
+const sine=main.slice(main.indexOf('#ifdef TARGET_FD_NATIVE_SINE_ONLY',main.indexOf('} else { // stepper sine')),main.indexOf('\n#endif // gimbal mode',main.indexOf('} else { // stepper sine')));
 const reasons=fs.readFileSync(path.join(root,'Inc/fd6288_startup_power.h'),'utf8').match(/enum \{[\s\S]*?\};/)[0];
 const src=`
 #include <stdint.h>
@@ -84,7 +84,9 @@ ${table}
 ${block(main,'void advanceincrement()')}
 static void settingsOverride(void){${settings}}
 static void mapInput(void){${block(main,'if (eepromBuffer.use_sine_start) {')}}
-static void nativeStep(void){for(unsigned once=0;once<1;once++){${sine}}}
+static void nativeStep(void){for(unsigned once=0;once<1;once++){
+${sine}
+}}
 static void zero(void){adjusted_input=0;fdBenchGuardInput();assert(!bridge&&!fd_power_bench.inhibit);}
 static void begin(unsigned throttle){zero();adjusted_input=throttle;assert(!fdBenchGuardInput());mapInput();assert(fd_native_sine.phase==1);}
 int main(void){
@@ -125,6 +127,27 @@ int main(void){
  (void)fdBenchBegin;fdBenchWritePwm(1200);assert(!bridge);
  puts("PASS native sine ramp/handover, fresh feedback count, zero/disarm races, cap priority, bounded stop and restart latch");return 0;}
 `;
+
+
+if(process.argv.includes('--sine-only')){
+ assert(!process.argv.includes('--adc'),'Select one test mode');
+ program=program.replace('#define TARGET_FD_NATIVE_SINE','#define TARGET_FD_NATIVE_SINE\n#define TARGET_FD_NATIVE_SINE_ONLY');
+ const i=program.indexOf('int main(void){');program=program.slice(0,i)+`
+int main(void){
+ fdNativeSineClockInit();settingsOverride();assert(fdNativeSineClockReady());
+ for(unsigned dir=0;dir<2;dir++)for(unsigned th=48;th<=2047;th=th==48?100:th==100?215:th==215?256:th==256?400:th==400?2047:2048){
+  forward=dir;begin(th);unsigned n=fd_native_sine.sine_steps;
+  for(unsigned i=0;i<720;i++){nativeStep();assert(stepper_sine&&bridge==1);assert(fd_native_sine.phase==1&&fd_native_sine.edges==0);assert(fd_native_sine.sixstep_at==0xffffffffu);assert(commutations==0);assert(step_delay>=57&&step_delay<=500);}
+  assert(fd_native_sine.sine_steps==n+720);if(th>=215)assert(step_delay==57);zero();
+ }
+ // Deadline, operator zero and clock failures also stop the isolated path.
+ begin(2047);nativeStep();DWT->CYCCNT=fd_native_sine.started+3000000u*160u;nativeStep();assert(!bridge&&fd_native_sine.reason==FD_BENCH_WINDOW&&stepper_sine);assert(commutations==0);assert(fd_native_sine.sixstep_at==0xffffffffu);
+ assert(fdBenchGuardInput());begin(400);nativeStep();adjusted_input=0;nativeStep();fdBenchService();assert(!bridge);
+ begin(400);nativeStep();armed=0;nativeStep();fdBenchService();assert(!bridge);armed=1;
+ begin(400);nativeStep();DWT->CTRL&=~1u;nativeStep();assert(!bridge&&fd_native_sine.reason==15&&commutations==0);
+ puts("PASS sine-only: low-to-full throttle in both directions, no six-step/feedback handover, native speed cap, 3s cutoff and zero/fault stop");return 0;}
+`;
+}
 
 if(process.argv.includes('--adc')){
  const adc=fs.readFileSync(path.join(root,'Mcu/g431/Src/comparator.c'),'utf8');

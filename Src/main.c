@@ -4102,6 +4102,31 @@ if(zero_crosses < 5){
             }
 #else
 
+#ifdef TARGET_FD_NATIVE_SINE_ONLY
+            /* Same native sine output and input->speed mapping. The map
+             * saturates at input120: fastest degree delay810/poles, even if
+             * throttle passes the former six-step changeover threshold. */
+            if (input > 48 && armed) {
+                if (do_once_sinemode) {
+                    DISABLE_COM_TIMER_INT();
+                    maskPhaseInterrupts();
+                    SET_DUTY_CYCLE_ALL(0);
+                    allpwm();
+                    do_once_sinemode = 0;
+                }
+                advanceincrement();
+                if (!fdNativeSineBridgeAllowed()) { e_rpm = 0u; continue; }
+                step_delay = map(input, 48, 120, 7000 / eepromBuffer.motor_poles,
+                    810 / eepromBuffer.motor_poles);
+                delayMicros(step_delay);
+                e_rpm = 600 / step_delay;
+            } else {
+                do_once_sinemode = 1;
+                SET_DUTY_CYCLE_ALL(0u);
+                allOff();
+                e_rpm = 0u;
+            }
+#else
             if (input > 48 && armed) {
 
                 if (input > 48 && input < 137) { // sine wave stepper
@@ -4177,6 +4202,8 @@ if(zero_crosses < 5){
                 }
                 e_rpm = 0;
             }
+
+#endif // native sine only
 
 #endif // gimbal mode
         } // stepper/sine mode end

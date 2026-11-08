@@ -21,3 +21,8 @@ hardware-backups/NATIVE-SINE-parameters-before-20261108/*.hex -text
 test-firmware/fd6288-NATIVE-SINE-CLOCKFIX-20261108/*.hex -text
 test-firmware/fd6288-NATIVE-SINE-CLOCKFIX-20261108/*.bin -text
 test-firmware/fd6288-NATIVE-SINE-CLOCKFIX-20261108/*.elf -text
+
+# Sine-only diagnostic firmware.
+test-firmware/fd6288-SINE-ONLY-20261108/*.hex -text
+test-firmware/fd6288-SINE-ONLY-20261108/*.bin -text
+test-firmware/fd6288-SINE-ONLY-20261108/*.elf -text
