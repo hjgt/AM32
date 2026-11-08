@@ -3267,6 +3267,18 @@
 #endif
 #define TARGET_FD_SIXSTEP_ALIGN_CONTROL
 #endif
+#ifndef FD6288_SIXSTEP_AB_CONTROL
+#define FD6288_SIXSTEP_AB_CONTROL 0
+#endif
+#if FD6288_SIXSTEP_AB_CONTROL != 0 && FD6288_SIXSTEP_AB_CONTROL != 1
+#error "A-to-B positioning control must be boolean"
+#endif
+#if FD6288_SIXSTEP_AB_CONTROL
+#if !FD6288_SIXSTEP_ALIGN_CONTROL
+#error "A-to-B requires the bounded six-step positioning control"
+#endif
+#define TARGET_FD_SIXSTEP_AB_CONTROL
+#endif
 #if FD6288_NATIVE_SINE_START != 0 && FD6288_NATIVE_SINE_START != 1
 #error "Native sine switch must be boolean"
 #endif

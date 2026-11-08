@@ -1,6 +1,6 @@
 const assert = require('assert/strict');
 const SIZE = 3096;
-function decodePins(b, pwm) {
+function decodePins(b, pwm, stepHint=6) {
   assert.equal(b.length, SIZE);
   const header = Object.fromEntries(['magic','abi','trial','count','frozen','driven_at'].map((n,i)=>[n,b.readUInt32LE(i*4)]));
   assert.equal(header.magic, 0x46504931); assert.equal(header.abi, 1);
@@ -20,15 +20,15 @@ function decodePins(b, pwm) {
   const af=pin=>(pwm.gpioa_afrh>>>((pin-8)*4))&15;
   for(let pin=8;pin<=12;pin++)configured &&= mode(pin)===2 && af(pin)===6;
   configured &&= (pwm.gpiof_moder&3)===2 && (pwm.gpiof_afrl&15)===6;
-  const sixstep=timerOk && period===6666 && ccr.every(v=>v===1200) && pwm.ccr4===0 && mode(8)===2 && af(8)===6 && mode(11)===2 && af(11)===6 && [9,10,12].every(pin=>mode(pin)===1) && (pwm.gpiof_moder&3)===1;
+  const sixstep=[1,6].includes(stepHint) && timerOk && period===6666 && ccr.every(v=>v===1200) && pwm.ccr4===0 && mode(8)===2 && af(8)===6 && mode(11)===2 && af(11)===6 && [9,10,12].every(pin=>mode(pin)===1) && (pwm.gpiof_moder&3)===1;
   configured ||= sixstep;
-  const analysis={configured,drive_mode:sixstep?'sixstep_alignment_step6':configured?'three_phase_sine_pwm':'unrecognized_configuration',model:sixstep?'A complementary PWM, B commands off, C low command on; DT368; MCU digital pads only':'PWM1 edge aligned, active-high main/complement, DT368; GPIO digital pad samples, not winding voltage/current',valid:0,excluded:0,matched:0,mismatched:0,expected_mixed_high:0,actual_mixed_high:0,expected_ab_different:0,actual_ab_different:0,mismatch_examples:[]};
+  const analysis={configured,drive_mode:sixstep?'sixstep_alignment_step'+stepHint:configured?'three_phase_sine_pwm':'unrecognized_configuration',model:sixstep?(stepHint===1?'A complementary PWM, B low on, C commands off':'A complementary PWM, B commands off, C low on')+'; DT368; MCU digital pads only':'PWM1 edge aligned, active-high main/complement, DT368; GPIO digital pad samples, not winding voltage/current',valid:0,excluded:0,matched:0,mismatched:0,expected_mixed_high:0,actual_mixed_high:0,expected_ab_different:0,actual_ab_different:0,mismatch_examples:[]};
   if(configured)for(let i=0;i<samples.length;i++) {
     const s=samples[i],lo=s.before-16,hi=s.after+16;
     // Reject rollover, wide reads and any sample crossing/near a transition.
     if(s.after<s.before || s.after-s.before>128 || lo<0 || hi>=period ||
        [dt,...ccr,...ccr.map(v=>v+dt)].some(t=>t>=lo&&t<=hi)) {analysis.excluded++;continue;}
-    let expected=sixstep?32:0;
+    let expected=sixstep?(stepHint===1?16:32):0;
     for(let c=0;c<(sixstep?1:3);c++) {
       if(s.before>=dt && s.before<ccr[c])expected|=1<<c;
       if(s.before>=ccr[c]+dt)expected|=1<<(c+3);

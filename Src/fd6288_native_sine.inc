@@ -154,6 +154,11 @@ static uint8_t fdBenchConfigOk(void)
 }
 
 #ifdef TARGET_FD_SIXSTEP_ALIGN_CONTROL
+#ifdef TARGET_FD_SIXSTEP_AB_CONTROL
+#define FD_SIXSTEP_ALIGN_VECTOR 1
+#else
+#define FD_SIXSTEP_ALIGN_VECTOR 6
+#endif
 static void fdBenchStop(uint8_t reason);
 void comStep(int newStep);
 __attribute__((noinline)) static void fdSixStepAlignApply(void)
@@ -169,15 +174,15 @@ __attribute__((noinline)) static void fdSixStepAlignApply(void)
     } else if (driveEffectiveDutyLimit() < 360u) {
         fdBenchStop(FD_BENCH_SAFETY_CAP);
     } else {
-        /* Historical second alignment: step6=A PWM/C LOW/B FLOAT,
-         * duty360/2000 -> compare1200 at24kHz. Apply once with bridge off. */
+        /* Step6=A PWM/C LOW/B FLOAT, or step1=A PWM/B LOW/C FLOAT.
+         * Duty360/2000 -> compare1200 at24kHz; apply once with bridge off. */
         allOff();
         SET_DUTY_CYCLE_ALL((360u * tim1_arr) / 2000u + 1u);
         TIM1->CCR4 = 0u; /* no injected ZC trigger or feedback commutation */
         generatePwmTimerEvent();
-        comStep(6);
+        comStep(FD_SIXSTEP_ALIGN_VECTOR);
         fd_native_sine.sine_steps = 1u; /* legacy ABI: one vector command */
-        fd_native_sine.last_step = 6u;
+        fd_native_sine.last_step = FD_SIXSTEP_ALIGN_VECTOR;
         fd_sine_pins.driven_at = DWT->CYCCNT;
     }
     __set_PRIMASK(mask);

@@ -1,0 +1,30 @@
+{
+  "flashed": false,
+  "date": "2026-11-08",
+  "mode": "A_to_B_sixstep_path_control",
+  "step": 1,
+  "outputs": "A complementary PWM / B LOW / C FLOAT",
+  "carrier_khz": 24,
+  "duty": 360,
+  "duty_scale": 2000,
+  "compare_ticks": 1200,
+  "limit_ms": 100,
+  "deadtime_us": 2.3,
+  "settings_changed": false,
+  "changed_from_AC_control": "step6 -> step1, low return C -> B only",
+  "checks": {
+    "actual_comStep1_GPIO_and100ms_limits_ASan_UBSan": "PASS",
+    "cap_clock_disarm_zero_bad_timer_interlocks": "PASS",
+    "sensor_summary_and_pin_capture": "PASS",
+    "step1_step6_decoder_and_missing_B_low_detection": "PASS",
+    "step6_regression": "PASS",
+    "flag_off_HEX_exactly_matches_current_AC_control": "PASS",
+    "ELF_HEX_BIN_and_reader_symbols": "PASS"
+  },
+  "hardware_result": null,
+  "files": {
+    "AM32_CUSTOM_FD6288_G431_2.20.bin": "038ea1640ff12fad8ce0c273dc571caa592c82299c9bafaa2a4bd9c2b9a68282",
+    "AM32_CUSTOM_FD6288_G431_2.20.hex": "cb6b8cb108d6236d7b6fc8fd6a0aab004a421b1546d8842d136280eb80805f42",
+    "AM32_CUSTOM_FD6288_G431_2.20.elf": "7cf66df81fcb6a537b02e2e8cfd926389b07199d4edd664d64caf7881cc3de7c"
+  }
+}

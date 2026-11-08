@@ -26,3 +26,8 @@ const alignOk=decodePins(alignData,align);assert.equal(alignOk.analysis.drive_mo
 const lowMissing=Buffer.from(alignData);lowMissing.writeUInt16LE(0,24+12+6);assert.equal(decodePins(lowMissing,align).analysis.mismatched,1);
 assert.equal(decodePins(alignData,{...align,ccr4:600}).analysis.configured,false);
 console.log('PASS six-step pad decoder: A complementary PWM, B commands off, C low on; detects missing low command and excludes transitions');
+const abData=buffer([[100,110,0x1000,0],[500,510,0x1100,0],[1300,1310,0x1000,0],[2000,2010,0x1800,0]]);
+const abOk=decodePins(abData,align,1);assert.equal(abOk.analysis.drive_mode,'sixstep_alignment_step1');assert.equal(abOk.analysis.matched,4);assert.equal(abOk.analysis.mismatched,0);
+assert.equal(decodePins(abData,align,6).analysis.mismatched,4); // never infer the intended vector from measured pads
+const abMissing=Buffer.from(abData);abMissing.writeUInt16LE(0x100,24+12+4);assert.equal(decodePins(abMissing,align,1).analysis.mismatched,1);
+console.log('PASS A-to-B decoder: requires B low on/C off, detects wrong return path and missing low command');

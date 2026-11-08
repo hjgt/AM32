@@ -28,7 +28,7 @@ async function dump(elf,out,stopped){
   let pwm_snapshot=null;
   if(syms.fd_sine_pwm_snapshot){const s=syms.fd_sine_pwm_snapshot;assert.equal(s.size,80);const b=await mem(s.address,80);assert.deepEqual(await mem(s.address,80),b,'PWM snapshot changed during stopped read');pwm_snapshot=decodePwm(b);assert.equal(pwm_snapshot.trial,decode(a).trial,'PWM snapshot trial mismatch');}
   let pin_trace=null;
-  if(syms.fd_sine_pins){const s=syms.fd_sine_pins;assert.equal(s.size,PIN_SIZE);const b=await mem(s.address,PIN_SIZE);assert.deepEqual(await mem(s.address,PIN_SIZE),b,'Pin trace changed during stopped read');assert(pwm_snapshot);pin_trace=decodePins(b,pwm_snapshot);await check();}
+  if(syms.fd_sine_pins){const s=syms.fd_sine_pins;assert.equal(s.size,PIN_SIZE);const b=await mem(s.address,PIN_SIZE);assert.deepEqual(await mem(s.address,PIN_SIZE),b,'Pin trace changed during stopped read');assert(pwm_snapshot);pin_trace=decodePins(b,pwm_snapshot,decode(a).last_step);await check();}
   let sensors=null;
   if(syms.fd_sine_sensors){const s=syms.fd_sine_sensors;assert.equal(s.size,40);const b=await mem(s.address,40);assert.deepEqual(await mem(s.address,40),b,'Sensor summary changed during stopped read');sensors=decodeSensors(b);assert.equal(sensors.trial,decode(a).trial,'Sensor summary trial mismatch');await check();}
   async function words(address,n){const v=(await c.rpc(`read_memory 0x${address.toString(16)} 32 ${n}`)).trim().split(/\s+/).map(Number);assert.equal(v.length,n);assert(v.every(x=>Number.isInteger(x)&&x>=0&&x<=0xffffffff));return v;}

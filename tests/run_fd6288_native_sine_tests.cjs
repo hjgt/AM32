@@ -1,6 +1,7 @@
 // Execute the actual native sine loop, output formula and trial adapter with
 // simulated registers/time. No motor model, SWD or synthetic automatic ZCs.
 const fs=require('fs'),path=require('path'),os=require('os'),cp=require('child_process'),assert=require('assert');
+const ab=process.argv.includes('--sixstep-ab');if(ab)process.argv.push('--sixstep-control');
 const fixed12=process.argv.includes('--fixed-12'),sixstep=process.argv.includes('--sixstep-control');if(fixed12||sixstep)process.argv.push('--fixed');
 const root=path.resolve(__dirname,'..'),main=fs.readFileSync(path.join(root,'Src/main.c'),'utf8');
 function block(s,start){const p=s.indexOf(start);assert(p>=0,start);const b=s.indexOf('{',p);let d=0;for(let i=b;i<s.length;i++){if(s[i]==='{')d++;if(s[i]==='}'&&!--d)return s.slice(p,i+1);}throw Error(start);}
@@ -409,6 +410,15 @@ int main(void){
  begin(215);nativeStep();DWT->CTRL&=~1u;fdBenchService();assert(!bridge&&fd_native_sine.reason==15);
  assert(!commutations);puts("PASS historical step6 control: actual GPIO functions,1200ticks/24k, one apply while off, no ADC trigger,100ms stop, sensor peaks and all inhibit paths");return 0;}
 `;
+}
+
+
+if(ab){
+ program=program.replace('#define TARGET_FD_SIXSTEP_ALIGN_CONTROL','#define TARGET_FD_SIXSTEP_ALIGN_CONTROL\n#define TARGET_FD_SIXSTEP_AB_CONTROL');
+ program=program.replace('fd_native_sine.last_step==6','fd_native_sine.last_step==1');
+ program=program.replace('(GPIOF->MODER&3u)==1u&&GPIOF->BSRR==1u','(GPIOF->MODER&3u)==1u&&GPIOF->BRR==1u&&GPIOA->BSRR==(1u<<12)');
+ program=program.replace('GPIOA->IDR=(t>=368&&t<1200?1u<<8:0)|(t>=1568?1u<<11:0);GPIOF->IDR=1;', 'GPIOA->IDR=(t>=368&&t<1200?1u<<8:0)|(t>=1568?1u<<11:0)|(1u<<12);GPIOF->IDR=0;');
+ program=program.replace('PASS historical step6 control:', 'PASS A-to-B step1 control:');
 }
 
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'fd-native-sine-host-')),c=path.join(dir,'test.c'),exe=path.join(dir,'test');fs.writeFileSync(c,program);
