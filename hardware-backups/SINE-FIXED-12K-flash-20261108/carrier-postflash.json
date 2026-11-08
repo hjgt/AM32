@@ -1,0 +1,12 @@
+{
+  "read_at": "2026-11-08T14:46:51.936Z",
+  "read_only": true,
+  "ram_pwm_frequency_khz": 12,
+  "tim1_arr": 13330,
+  "ccr": [
+    0,
+    0,
+    0,
+    0
+  ]
+}

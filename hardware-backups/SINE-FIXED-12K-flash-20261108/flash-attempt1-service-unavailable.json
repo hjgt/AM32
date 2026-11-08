@@ -1,0 +1,14 @@
+[
+  {
+    "authorization": "User explicitly requested flashing the prepared SINE-FIXED-12K carrier diagnostic; fixed angle150/269/29, power6,100ms maximum, passive GPIO pad sampling; preserve already-installed settings, skip firmware readback verification; confirm running control clock before motor test",
+    "image": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-SINE-FIXED-12K-20261108/AM32_CUSTOM_FD6288_G431_2.20.hex",
+    "preflash_elf": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-SINE-FIXED-PROBE-20261108/AM32_CUSTOM_FD6288_G431_2.20.elf",
+    "postflash_elf": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-SINE-FIXED-12K-20261108/AM32_CUSTOM_FD6288_G431_2.20.elf",
+    "settings_written": false,
+    "throttle_sent": false
+  },
+  {
+    "status": "not_written",
+    "blocking": "Local OpenOCD service absent; starting a normal100kHz session failed twice with Error: open failed. Target not connected, no reset or flash command issued. User asked to reconnect ST-Link USB and keep target powered/throttle zero."
+  }
+]
