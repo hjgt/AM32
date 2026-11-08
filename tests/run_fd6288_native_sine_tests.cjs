@@ -43,6 +43,9 @@ static unsigned armed=1,adjusted_input,input,running,stepper_sine,do_once_sinemo
 static unsigned stuck_rotor_inhibit,drive_safety_limit_inhibit,heli_coast_restart_inhibit,heli_coast_active;
 static unsigned minimum_duty_cycle=210,min_startup_duty=360,startup_max_duty_cycle=610,use_speed_control_loop;
 static unsigned duty_cycle_setpoint,duty_cycle,last_duty_cycle,prop_brake_active,old_routine;
+static uint16_t one_khz_loop_counter;
+static uint8_t PROCESS_ADC_FLAG;
+#define PID_LOOP_DIVIDER 20u
 static unsigned average_interval,last_average_interval,commutation_interval,commutation_intervals[6];
 static unsigned step=1,changeover_step=5,step_delay=100,adjusted_duty_cycle,tim1_arr=6665,TIMER1_MAX_ARR=6665,gate_drive_offset=70;
 static unsigned prop_brake_duty_cycle,e_rpm,forward=1;
@@ -67,6 +70,9 @@ static void generatePwmTimerEvent(void){}
 void commutate(void){assert(!bridge);assert(ccr[0]==ccr[1]&&ccr[1]==ccr[2]);assert(ccr[3]);step=step==6?1:step+1;commutations++;bridge=2;}
 `;
 const prefix=src;
+const tickSource=block(main,'void tenKhzRoutine()');
+assert(tickSource.indexOf('fdNativeSineSensorTick();')>tickSource.indexOf('one_khz_loop_counter++;'));
+assert(tickSource.indexOf('fdNativeSineSensorTick();')<tickSource.indexOf('if (!stepper_sine) {'));
 let program=prefix+`\n#include "${path.join(root,'Src/fd6288_native_sine.inc')}"\n`+`
 static void phaseAPWM(void){bridge=1;}
 static void phaseBPWM(void){bridge=1;}
@@ -82,6 +88,25 @@ static void delayMicros(unsigned x){DWT->CYCCNT+=x*160u;}
 ${block(fs.readFileSync(path.join(root,'Src/functions.c'),'utf8'),'long map(long x, long in_min, long in_max, long out_min, long out_max)\n{')}
 ${table}
 ${block(main,'void advanceincrement()')}
+static void checkSensorTick(void){
+ unsigned old_sine=stepper_sine,old_flag=PROCESS_ADC_FLAG,old_counter=one_khz_loop_counter;
+ unsigned old_pwm[4]={ccr[0],ccr[1],ccr[2],ccr[3]},old_bridge=bridge;
+ stepper_sine=1;PROCESS_ADC_FLAG=0;one_khz_loop_counter=0;
+ unsigned requests=0;
+ for(unsigned tick=1;tick<=60000;tick++){
+  one_khz_loop_counter++;fdNativeSineSensorTick();
+  if(PROCESS_ADC_FLAG){requests++;PROCESS_ADC_FLAG=0;}
+ }
+ assert(requests==60000/21);
+ // An outstanding foreground request remains pending, including while idle.
+ one_khz_loop_counter=20;PROCESS_ADC_FLAG=1;fdNativeSineSensorTick();assert(PROCESS_ADC_FLAG==1&&one_khz_loop_counter==20);
+ one_khz_loop_counter=21;fdNativeSineSensorTick();assert(PROCESS_ADC_FLAG==1&&one_khz_loop_counter==0);
+ // Six-step continues to own its existing PID/sensor schedule.
+ stepper_sine=0;PROCESS_ADC_FLAG=0;one_khz_loop_counter=21;fdNativeSineSensorTick();assert(!PROCESS_ADC_FLAG&&one_khz_loop_counter==21);
+ for(unsigned i=0;i<4;i++)assert(ccr[i]==old_pwm[i]);assert(bridge==old_bridge);
+ stepper_sine=old_sine;PROCESS_ADC_FLAG=old_flag;one_khz_loop_counter=old_counter;
+ puts("PASS sine sensor service requests across 3s, pending work retained, six-step schedule and PWM unchanged");
+}
 static void settingsOverride(void){${settings}}
 static void mapInput(void){${block(main,'if (eepromBuffer.use_sine_start) {')}}
 static void nativeStep(void){for(unsigned once=0;once<1;once++){
@@ -90,6 +115,7 @@ ${sine}
 static void zero(void){adjusted_input=0;fdBenchGuardInput();assert(!bridge&&!fd_power_bench.inhibit);}
 static void begin(unsigned throttle){zero();adjusted_input=throttle;assert(!fdBenchGuardInput());mapInput();assert(fd_native_sine.phase==1);}
 int main(void){
+ checkSensorTick();
  eepromBuffer.use_sine_start=0;eepromBuffer.advance_level=34;eepromBuffer.auto_advance=1;
  settingsOverride();assert(fdBenchConfigOk());assert(eepromBuffer.minimum_duty_cycle==1);
  assert(eepromBuffer.advance_level==34&&eepromBuffer.auto_advance==1);
@@ -134,6 +160,7 @@ if(process.argv.includes('--sine-only')||process.argv.includes('--centered')){
  program=program.replace('#define TARGET_FD_NATIVE_SINE','#define TARGET_FD_NATIVE_SINE\n#define TARGET_FD_NATIVE_SINE_ONLY');
  const i=program.indexOf('int main(void){');program=program.slice(0,i)+`
 int main(void){
+ checkSensorTick();
  fdNativeSineClockInit();settingsOverride();assert(fdNativeSineClockReady());
  for(unsigned dir=0;dir<2;dir++)for(unsigned th=48;th<=2047;th=th==48?100:th==100?215:th==215?256:th==256?400:th==400?2047:2048){
   forward=dir;begin(th);unsigned n=fd_native_sine.sine_steps;
@@ -191,6 +218,7 @@ void phaseAPWM()`);
  const raw=block(main,'void advanceincrement()').replace('void advanceincrement()','static void rawAdvanceincrement()');
  program=program.slice(0,i)+'\n#undef TARGET_FD_SINE_CENTERED_PWM\n'+raw+'\n#define TARGET_FD_SINE_CENTERED_PWM\n'+`
 int main(void){
+ checkSensorTick();
  fdNativeSineClockInit();settingsOverride();assert(fdNativeSineClockReady());
  unsigned clipped=0,min_out=65535,max_out=0;
  for(unsigned dir=0;dir<2;dir++){
@@ -270,6 +298,7 @@ static void sample(unsigned b,unsigned ticks){samples[0]=1600;samples[1]=b;sampl
 `;
  const i=program.indexOf('int main(void){');program=program.slice(0,i)+real+`
 int main(void){
+ checkSensorTick();
  fdNativeSineClockInit();assert(fdNativeSineClockReady());
  begin(150);nativeStep();assert(stepper_sine&&bridge==1);
  sample(400,100);assert(!fresh&&read_count==0&&schedules==0); // no ZC-driven commutation in sine

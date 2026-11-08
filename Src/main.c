@@ -3090,6 +3090,9 @@ void tenKhzRoutine()
 
 #ifndef BRUSHED_MODE
 
+#ifdef TARGET_FD_NATIVE_SINE
+    fdNativeSineSensorTick();
+#endif
     if (!stepper_sine) {
 #ifndef CUSTOM_RAMP
 #ifndef TARGET_FD_ADC_JEOS

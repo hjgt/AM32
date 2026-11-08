@@ -1,0 +1,23 @@
+{
+  "flashed": false,
+  "date": "2026-11-08",
+  "base_firmware": "SINE-CENTERED",
+  "change": "request existing foreground ADC sensor processing during sine mode, without enabling six-step PID/PWM path",
+  "sensor_request_every_control_ticks": 21,
+  "nominal_control_frequency_hz": 20000,
+  "sine_power": 6,
+  "total_trial_limit_ms": 3000,
+  "settings_changed": false,
+  "hardware_test": null,
+  "checks": {
+    "sensor_request_cadence_3s_pending_request_sixstep_noop_and_PWM_unchanged": "PASS",
+    "all_sine_angles_both_directions_gpio_and_shutdown_ASan_UBSan": "PASS",
+    "sine_only_and_ADC_regressions_ASan_UBSan": "PASS",
+    "ELF_HEX_BIN_consistency": "PASS"
+  },
+  "files": {
+    "AM32_CUSTOM_FD6288_G431_2.20.bin": "bc0e4a9d5bd350316310fcb100543faf8f6bebb8dd806c320d2a98e90542d4cd",
+    "AM32_CUSTOM_FD6288_G431_2.20.hex": "8039cc2cf9a10b315a8e528ef5f80c4d39dfed09d5785289992abd70b7380e39",
+    "AM32_CUSTOM_FD6288_G431_2.20.elf": "3c7de252d0182c2770f1e2508fd54dcb34b38964ff025c52eec2481b44ce7bc6"
+  }
+}

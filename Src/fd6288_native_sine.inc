@@ -55,6 +55,17 @@ static uint8_t fdNativeSineClockReady(void)
         (DWT->CTRL & DWT_CTRL_CYCCNTENA_Msk);
 }
 
+/* The legacy sensor request sits inside !stepper_sine. Keep voltage/current
+ * and temperature conversion/telemetry alive while the sine bridge owns PWM.
+ * Only request the normal foreground work; never sample or write PWM here. */
+static void fdNativeSineSensorTick(void)
+{
+    if (stepper_sine && one_khz_loop_counter > PID_LOOP_DIVIDER) {
+        PROCESS_ADC_FLAG = 1u;
+        one_khz_loop_counter = 0u;
+    }
+}
+
 uint8_t fdNativeSineBridgeAllowed(void)
 {
     return fdNativeSineClockReady() && fd_power_bench.active_id && !fd_power_bench.inhibit && armed &&
