@@ -1,5 +1,7 @@
 # SINE-FIXED-12K已烧录（2026-11-08）
 
+最新实测：[trial7结果](RESULT-no-change-trial7-20261108.md)。12K与相线约4～5us差窗生效，249个可用引脚样本全部吻合；93次传感器更新，过滤电流0.04→最高0.10A，母线最低7.86V，无明显机械改善。本次只读，板上保持本版。以下为此前烧录记录。
+
 用户已明确授权烧录，随后回复“已接好，再试烧录”。此前无法打开ST-Link的尝试未触碰目标，保留flash-attempt1-service-unavailable.json。重新连接100kHz ST-Link成功，目标约3.259V，确认旧24K固定版输入/运行/PWM/GPIO均零后，12K主程序写入34936B、reset run成功。
 
 HEX SHA256 071926e60a7f080b79e8de7580547010caeb06d4bd2aceee441edfea8228227e。保留原EEPROM页、跳过固件读回校验、未发送油门。启动后确认输出关闭，DWT_CTRL=0x40000001、CYCCNT推进370657、自检1。

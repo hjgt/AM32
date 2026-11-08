@@ -1,0 +1,1908 @@
+{
+  "read_at": "2026-11-08T14:55:55.843Z",
+  "elf": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-SINE-FIXED-12K-20261108/AM32_CUSTOM_FD6288_G431_2.20.elf",
+  "summary": {
+    "magic": 1179864625,
+    "abi": 1,
+    "trial": 7,
+    "started": 169719344,
+    "phase": 4,
+    "reason": 1,
+    "sine_steps": 1,
+    "sixstep_at": 4294967295,
+    "first_edge_at": 4294967295,
+    "sixth_edge_at": 4294967295,
+    "stopped_at": 16000308,
+    "edges": 0,
+    "input_at_start": 48,
+    "input_at_handoff": 0,
+    "last_step": 0,
+    "phase_name": "stopped",
+    "sixstep_at_ms": null,
+    "first_edge_at_ms": null,
+    "sixth_edge_at_ms": null,
+    "stopped_at_ms": 100.001925,
+    "timing_valid": true
+  },
+  "clock": {
+    "ctrl": 1073741825,
+    "demcr": 16777216,
+    "cyccnt_first": 868898646,
+    "cyccnt_second": 869243234,
+    "delta": 344588,
+    "selftest_ok": 1,
+    "valid": true
+  },
+  "pwm_snapshot": {
+    "magic": 1179865137,
+    "abi": 1,
+    "trial": 7,
+    "steps": 1,
+    "cr1": 129,
+    "psc": 0,
+    "arr": 13330,
+    "ccer": 5461,
+    "bdtr": 33595598,
+    "ccr1": 7205,
+    "ccr2": 6125,
+    "ccr3": 7193,
+    "ccr4": 0,
+    "gpioa_moder": 2863333375,
+    "gpiof_moder": 3932222,
+    "gpioa_afrh": 419430,
+    "gpiof_afrl": 6,
+    "phase_a": 150,
+    "phase_b": 269,
+    "phase_c": 29
+  },
+  "pin_trace": {
+    "header": {
+      "magic": 1179666737,
+      "abi": 1,
+      "trial": 7,
+      "count": 256,
+      "frozen": 1,
+      "driven_at": 169721821
+    },
+    "analysis": {
+      "configured": true,
+      "model": "PWM1 edge aligned, active-high main/complement, DT368; GPIO digital pad samples, not winding voltage/current",
+      "valid": 249,
+      "excluded": 7,
+      "matched": 249,
+      "mismatched": 0,
+      "expected_mixed_high": 14,
+      "actual_mixed_high": 14,
+      "expected_ab_different": 14,
+      "actual_ab_different": 14,
+      "mismatch_examples": [],
+      "verdict": "matches_at_sampled_times"
+    },
+    "samples": [
+      {
+        "before": 3461,
+        "after": 3471,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 162550
+      },
+      {
+        "before": 3855,
+        "after": 3865,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 162944
+      },
+      {
+        "before": 4244,
+        "after": 4254,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 163333
+      },
+      {
+        "before": 4633,
+        "after": 4643,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 163722
+      },
+      {
+        "before": 5022,
+        "after": 5032,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 164111
+      },
+      {
+        "before": 5759,
+        "after": 5769,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 164848
+      },
+      {
+        "before": 6302,
+        "after": 6312,
+        "gpioa": 1280,
+        "gpiof": 0,
+        "at": 165391
+      },
+      {
+        "before": 6693,
+        "after": 6703,
+        "gpioa": 5376,
+        "gpiof": 0,
+        "at": 165782
+      },
+      {
+        "before": 7082,
+        "after": 7092,
+        "gpioa": 5376,
+        "gpiof": 0,
+        "at": 166171
+      },
+      {
+        "before": 7472,
+        "after": 7482,
+        "gpioa": 4096,
+        "gpiof": 0,
+        "at": 166561
+      },
+      {
+        "before": 7862,
+        "after": 7872,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 166951
+      },
+      {
+        "before": 8251,
+        "after": 8262,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 167341
+      },
+      {
+        "before": 8640,
+        "after": 8650,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 167729
+      },
+      {
+        "before": 9029,
+        "after": 9039,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 168118
+      },
+      {
+        "before": 9419,
+        "after": 9429,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 168508
+      },
+      {
+        "before": 9808,
+        "after": 9818,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 168897
+      },
+      {
+        "before": 10198,
+        "after": 10208,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 169287
+      },
+      {
+        "before": 10588,
+        "after": 10598,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 169677
+      },
+      {
+        "before": 10978,
+        "after": 10988,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 170067
+      },
+      {
+        "before": 11368,
+        "after": 11378,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 170457
+      },
+      {
+        "before": 11758,
+        "after": 11768,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 170847
+      },
+      {
+        "before": 12147,
+        "after": 12157,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 171236
+      },
+      {
+        "before": 12536,
+        "after": 12546,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 171625
+      },
+      {
+        "before": 12926,
+        "after": 12936,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 172015
+      },
+      {
+        "before": 13315,
+        "after": 13325,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 172404
+      },
+      {
+        "before": 730,
+        "after": 740,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 173150
+      },
+      {
+        "before": 1984,
+        "after": 1994,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 174404
+      },
+      {
+        "before": 2504,
+        "after": 2514,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 174924
+      },
+      {
+        "before": 2894,
+        "after": 2904,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 175314
+      },
+      {
+        "before": 3283,
+        "after": 3293,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 175703
+      },
+      {
+        "before": 3672,
+        "after": 3682,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 176092
+      },
+      {
+        "before": 4061,
+        "after": 4071,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 176481
+      },
+      {
+        "before": 4450,
+        "after": 4460,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 176870
+      },
+      {
+        "before": 4839,
+        "after": 4849,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 177259
+      },
+      {
+        "before": 5228,
+        "after": 5238,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 177648
+      },
+      {
+        "before": 5617,
+        "after": 5627,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 178037
+      },
+      {
+        "before": 6006,
+        "after": 6016,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 178426
+      },
+      {
+        "before": 6395,
+        "after": 6405,
+        "gpioa": 1280,
+        "gpiof": 0,
+        "at": 178815
+      },
+      {
+        "before": 6784,
+        "after": 6794,
+        "gpioa": 5376,
+        "gpiof": 0,
+        "at": 179204
+      },
+      {
+        "before": 7173,
+        "after": 7183,
+        "gpioa": 5376,
+        "gpiof": 0,
+        "at": 179593
+      },
+      {
+        "before": 7562,
+        "after": 7572,
+        "gpioa": 4096,
+        "gpiof": 1,
+        "at": 179982
+      },
+      {
+        "before": 7951,
+        "after": 7961,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 180371
+      },
+      {
+        "before": 8340,
+        "after": 8350,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 180760
+      },
+      {
+        "before": 9212,
+        "after": 9222,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 181632
+      },
+      {
+        "before": 9607,
+        "after": 9617,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 182027
+      },
+      {
+        "before": 9996,
+        "after": 10006,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 182416
+      },
+      {
+        "before": 10385,
+        "after": 10395,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 182805
+      },
+      {
+        "before": 10774,
+        "after": 10784,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 183194
+      },
+      {
+        "before": 11163,
+        "after": 11173,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 183583
+      },
+      {
+        "before": 11552,
+        "after": 11562,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 183972
+      },
+      {
+        "before": 11941,
+        "after": 11951,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 184361
+      },
+      {
+        "before": 12330,
+        "after": 12340,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 184750
+      },
+      {
+        "before": 12719,
+        "after": 12729,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 185139
+      },
+      {
+        "before": 13108,
+        "after": 13118,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 185528
+      },
+      {
+        "before": 166,
+        "after": 176,
+        "gpioa": 0,
+        "gpiof": 0,
+        "at": 185917
+      },
+      {
+        "before": 555,
+        "after": 565,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 186306
+      },
+      {
+        "before": 944,
+        "after": 954,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 186695
+      },
+      {
+        "before": 1333,
+        "after": 1343,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 187084
+      },
+      {
+        "before": 1722,
+        "after": 1732,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 187473
+      },
+      {
+        "before": 2111,
+        "after": 2121,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 187862
+      },
+      {
+        "before": 2500,
+        "after": 2510,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 188251
+      },
+      {
+        "before": 2889,
+        "after": 2899,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 188640
+      },
+      {
+        "before": 3617,
+        "after": 3627,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 189368
+      },
+      {
+        "before": 4125,
+        "after": 4135,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 189876
+      },
+      {
+        "before": 4515,
+        "after": 4525,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 190266
+      },
+      {
+        "before": 4904,
+        "after": 4914,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 190655
+      },
+      {
+        "before": 5293,
+        "after": 5303,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 191044
+      },
+      {
+        "before": 5682,
+        "after": 5692,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 191433
+      },
+      {
+        "before": 6071,
+        "after": 6081,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 191822
+      },
+      {
+        "before": 6460,
+        "after": 6470,
+        "gpioa": 1280,
+        "gpiof": 0,
+        "at": 192211
+      },
+      {
+        "before": 6849,
+        "after": 6859,
+        "gpioa": 5376,
+        "gpiof": 0,
+        "at": 192600
+      },
+      {
+        "before": 7238,
+        "after": 7248,
+        "gpioa": 4096,
+        "gpiof": 0,
+        "at": 192989
+      },
+      {
+        "before": 7627,
+        "after": 7637,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 193378
+      },
+      {
+        "before": 8016,
+        "after": 8026,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 193767
+      },
+      {
+        "before": 8405,
+        "after": 8415,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 194156
+      },
+      {
+        "before": 8794,
+        "after": 8804,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 194545
+      },
+      {
+        "before": 9183,
+        "after": 9193,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 194934
+      },
+      {
+        "before": 9572,
+        "after": 9582,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 195323
+      },
+      {
+        "before": 9961,
+        "after": 9971,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 195712
+      },
+      {
+        "before": 10350,
+        "after": 10360,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 196101
+      },
+      {
+        "before": 10739,
+        "after": 10749,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 196490
+      },
+      {
+        "before": 11128,
+        "after": 11138,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 196879
+      },
+      {
+        "before": 11867,
+        "after": 11877,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 197618
+      },
+      {
+        "before": 12351,
+        "after": 12361,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 198102
+      },
+      {
+        "before": 12741,
+        "after": 12751,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 198492
+      },
+      {
+        "before": 13130,
+        "after": 13140,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 198881
+      },
+      {
+        "before": 188,
+        "after": 198,
+        "gpioa": 0,
+        "gpiof": 0,
+        "at": 199270
+      },
+      {
+        "before": 577,
+        "after": 587,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 199659
+      },
+      {
+        "before": 966,
+        "after": 976,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 200048
+      },
+      {
+        "before": 1355,
+        "after": 1365,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 200437
+      },
+      {
+        "before": 1744,
+        "after": 1754,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 200826
+      },
+      {
+        "before": 2133,
+        "after": 2143,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 201215
+      },
+      {
+        "before": 2522,
+        "after": 2532,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 201604
+      },
+      {
+        "before": 2911,
+        "after": 2921,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 201993
+      },
+      {
+        "before": 3300,
+        "after": 3310,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 202382
+      },
+      {
+        "before": 3689,
+        "after": 3699,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 202771
+      },
+      {
+        "before": 4078,
+        "after": 4088,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 203160
+      },
+      {
+        "before": 4467,
+        "after": 4477,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 203549
+      },
+      {
+        "before": 4856,
+        "after": 4866,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 203938
+      },
+      {
+        "before": 5245,
+        "after": 5255,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 204327
+      },
+      {
+        "before": 5634,
+        "after": 5644,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 204716
+      },
+      {
+        "before": 6023,
+        "after": 6033,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 205105
+      },
+      {
+        "before": 6805,
+        "after": 6815,
+        "gpioa": 5376,
+        "gpiof": 0,
+        "at": 205887
+      },
+      {
+        "before": 7236,
+        "after": 7246,
+        "gpioa": 4096,
+        "gpiof": 0,
+        "at": 206318
+      },
+      {
+        "before": 7625,
+        "after": 7635,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 206707
+      },
+      {
+        "before": 8014,
+        "after": 8024,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 207096
+      },
+      {
+        "before": 8403,
+        "after": 8413,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 207485
+      },
+      {
+        "before": 8792,
+        "after": 8802,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 207874
+      },
+      {
+        "before": 9181,
+        "after": 9191,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 208263
+      },
+      {
+        "before": 9570,
+        "after": 9580,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 208652
+      },
+      {
+        "before": 9959,
+        "after": 9969,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 209041
+      },
+      {
+        "before": 10348,
+        "after": 10358,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 209430
+      },
+      {
+        "before": 10737,
+        "after": 10747,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 209819
+      },
+      {
+        "before": 11126,
+        "after": 11136,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 210208
+      },
+      {
+        "before": 11515,
+        "after": 11525,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 210597
+      },
+      {
+        "before": 11904,
+        "after": 11914,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 210986
+      },
+      {
+        "before": 12293,
+        "after": 12303,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 211375
+      },
+      {
+        "before": 12682,
+        "after": 12692,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 211764
+      },
+      {
+        "before": 13071,
+        "after": 13081,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 212153
+      },
+      {
+        "before": 129,
+        "after": 139,
+        "gpioa": 0,
+        "gpiof": 0,
+        "at": 212542
+      },
+      {
+        "before": 518,
+        "after": 528,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 212931
+      },
+      {
+        "before": 907,
+        "after": 917,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 213320
+      },
+      {
+        "before": 1763,
+        "after": 1773,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 214176
+      },
+      {
+        "before": 2158,
+        "after": 2168,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 214571
+      },
+      {
+        "before": 2547,
+        "after": 2557,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 214960
+      },
+      {
+        "before": 2936,
+        "after": 2946,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 215349
+      },
+      {
+        "before": 3325,
+        "after": 3335,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 215738
+      },
+      {
+        "before": 3714,
+        "after": 3724,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 216127
+      },
+      {
+        "before": 4103,
+        "after": 4113,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 216516
+      },
+      {
+        "before": 4492,
+        "after": 4502,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 216905
+      },
+      {
+        "before": 4881,
+        "after": 4891,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 217294
+      },
+      {
+        "before": 5270,
+        "after": 5280,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 217683
+      },
+      {
+        "before": 5659,
+        "after": 5669,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 218072
+      },
+      {
+        "before": 6048,
+        "after": 6058,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 218461
+      },
+      {
+        "before": 6437,
+        "after": 6447,
+        "gpioa": 1280,
+        "gpiof": 0,
+        "at": 218850
+      },
+      {
+        "before": 6826,
+        "after": 6836,
+        "gpioa": 5376,
+        "gpiof": 0,
+        "at": 219239
+      },
+      {
+        "before": 7215,
+        "after": 7225,
+        "gpioa": 4096,
+        "gpiof": 0,
+        "at": 219628
+      },
+      {
+        "before": 7604,
+        "after": 7614,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 220017
+      },
+      {
+        "before": 7993,
+        "after": 8003,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 220406
+      },
+      {
+        "before": 8382,
+        "after": 8392,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 220795
+      },
+      {
+        "before": 8771,
+        "after": 8781,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 221184
+      },
+      {
+        "before": 9160,
+        "after": 9170,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 221573
+      },
+      {
+        "before": 10016,
+        "after": 10026,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 222429
+      },
+      {
+        "before": 10411,
+        "after": 10421,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 222824
+      },
+      {
+        "before": 10800,
+        "after": 10810,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 223213
+      },
+      {
+        "before": 11189,
+        "after": 11199,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 223602
+      },
+      {
+        "before": 11578,
+        "after": 11588,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 223991
+      },
+      {
+        "before": 11967,
+        "after": 11977,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 224380
+      },
+      {
+        "before": 12356,
+        "after": 12366,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 224769
+      },
+      {
+        "before": 12745,
+        "after": 12755,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 225158
+      },
+      {
+        "before": 13134,
+        "after": 13144,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 225547
+      },
+      {
+        "before": 192,
+        "after": 202,
+        "gpioa": 0,
+        "gpiof": 0,
+        "at": 225936
+      },
+      {
+        "before": 581,
+        "after": 591,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 226325
+      },
+      {
+        "before": 970,
+        "after": 980,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 226714
+      },
+      {
+        "before": 1359,
+        "after": 1369,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 227103
+      },
+      {
+        "before": 1748,
+        "after": 1758,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 227492
+      },
+      {
+        "before": 2137,
+        "after": 2147,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 227881
+      },
+      {
+        "before": 2526,
+        "after": 2536,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 228270
+      },
+      {
+        "before": 2915,
+        "after": 2925,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 228659
+      },
+      {
+        "before": 3304,
+        "after": 3314,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 229048
+      },
+      {
+        "before": 3693,
+        "after": 3703,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 229437
+      },
+      {
+        "before": 4425,
+        "after": 4435,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 230169
+      },
+      {
+        "before": 4933,
+        "after": 4943,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 230677
+      },
+      {
+        "before": 5323,
+        "after": 5333,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 231067
+      },
+      {
+        "before": 5712,
+        "after": 5722,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 231456
+      },
+      {
+        "before": 6101,
+        "after": 6111,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 231845
+      },
+      {
+        "before": 6490,
+        "after": 6500,
+        "gpioa": 1280,
+        "gpiof": 0,
+        "at": 232234
+      },
+      {
+        "before": 6879,
+        "after": 6889,
+        "gpioa": 5376,
+        "gpiof": 0,
+        "at": 232623
+      },
+      {
+        "before": 7268,
+        "after": 7278,
+        "gpioa": 4096,
+        "gpiof": 0,
+        "at": 233012
+      },
+      {
+        "before": 7657,
+        "after": 7667,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 233401
+      },
+      {
+        "before": 8046,
+        "after": 8056,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 233790
+      },
+      {
+        "before": 8435,
+        "after": 8445,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 234179
+      },
+      {
+        "before": 8824,
+        "after": 8834,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 234568
+      },
+      {
+        "before": 9213,
+        "after": 9223,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 234957
+      },
+      {
+        "before": 9602,
+        "after": 9612,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 235346
+      },
+      {
+        "before": 9991,
+        "after": 10001,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 235735
+      },
+      {
+        "before": 10380,
+        "after": 10390,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 236124
+      },
+      {
+        "before": 10769,
+        "after": 10779,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 236513
+      },
+      {
+        "before": 11158,
+        "after": 11168,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 236902
+      },
+      {
+        "before": 11547,
+        "after": 11557,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 237291
+      },
+      {
+        "before": 11936,
+        "after": 11946,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 237680
+      },
+      {
+        "before": 12680,
+        "after": 12690,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 238424
+      },
+      {
+        "before": 13164,
+        "after": 13174,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 238908
+      },
+      {
+        "before": 223,
+        "after": 233,
+        "gpioa": 0,
+        "gpiof": 0,
+        "at": 239298
+      },
+      {
+        "before": 612,
+        "after": 622,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 239687
+      },
+      {
+        "before": 1001,
+        "after": 1011,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 240076
+      },
+      {
+        "before": 1390,
+        "after": 1400,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 240465
+      },
+      {
+        "before": 1779,
+        "after": 1789,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 240854
+      },
+      {
+        "before": 2168,
+        "after": 2178,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 241243
+      },
+      {
+        "before": 2557,
+        "after": 2567,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 241632
+      },
+      {
+        "before": 2946,
+        "after": 2956,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 242021
+      },
+      {
+        "before": 3335,
+        "after": 3345,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 242410
+      },
+      {
+        "before": 3724,
+        "after": 3734,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 242799
+      },
+      {
+        "before": 4113,
+        "after": 4123,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 243188
+      },
+      {
+        "before": 4502,
+        "after": 4512,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 243577
+      },
+      {
+        "before": 4891,
+        "after": 4901,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 243966
+      },
+      {
+        "before": 5280,
+        "after": 5290,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 244355
+      },
+      {
+        "before": 5669,
+        "after": 5679,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 244744
+      },
+      {
+        "before": 6058,
+        "after": 6068,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 245133
+      },
+      {
+        "before": 6447,
+        "after": 6457,
+        "gpioa": 1280,
+        "gpiof": 0,
+        "at": 245522
+      },
+      {
+        "before": 6836,
+        "after": 6846,
+        "gpioa": 5376,
+        "gpiof": 0,
+        "at": 245911
+      },
+      {
+        "before": 7629,
+        "after": 7639,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 246704
+      },
+      {
+        "before": 8053,
+        "after": 8063,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 247128
+      },
+      {
+        "before": 8442,
+        "after": 8452,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 247517
+      },
+      {
+        "before": 8831,
+        "after": 8841,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 247906
+      },
+      {
+        "before": 9220,
+        "after": 9230,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 248295
+      },
+      {
+        "before": 9609,
+        "after": 9619,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 248684
+      },
+      {
+        "before": 9998,
+        "after": 10008,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 249073
+      },
+      {
+        "before": 10387,
+        "after": 10397,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 249462
+      },
+      {
+        "before": 10776,
+        "after": 10786,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 249851
+      },
+      {
+        "before": 11165,
+        "after": 11175,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 250240
+      },
+      {
+        "before": 11554,
+        "after": 11564,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 250629
+      },
+      {
+        "before": 11943,
+        "after": 11953,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 251018
+      },
+      {
+        "before": 12332,
+        "after": 12342,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 251407
+      },
+      {
+        "before": 12721,
+        "after": 12731,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 251796
+      },
+      {
+        "before": 13110,
+        "after": 13120,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 252185
+      },
+      {
+        "before": 168,
+        "after": 178,
+        "gpioa": 0,
+        "gpiof": 0,
+        "at": 252574
+      },
+      {
+        "before": 557,
+        "after": 567,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 252963
+      },
+      {
+        "before": 946,
+        "after": 956,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 253352
+      },
+      {
+        "before": 1335,
+        "after": 1345,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 253741
+      },
+      {
+        "before": 1724,
+        "after": 1734,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 254130
+      },
+      {
+        "before": 2580,
+        "after": 2590,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 254986
+      },
+      {
+        "before": 2975,
+        "after": 2985,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 255381
+      },
+      {
+        "before": 3364,
+        "after": 3374,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 255770
+      },
+      {
+        "before": 3753,
+        "after": 3763,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 256159
+      },
+      {
+        "before": 4142,
+        "after": 4152,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 256548
+      },
+      {
+        "before": 4531,
+        "after": 4541,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 256937
+      },
+      {
+        "before": 4920,
+        "after": 4930,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 257326
+      },
+      {
+        "before": 5309,
+        "after": 5319,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 257715
+      },
+      {
+        "before": 5698,
+        "after": 5708,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 258104
+      },
+      {
+        "before": 6087,
+        "after": 6097,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 258493
+      },
+      {
+        "before": 6476,
+        "after": 6486,
+        "gpioa": 1280,
+        "gpiof": 0,
+        "at": 258882
+      },
+      {
+        "before": 6865,
+        "after": 6875,
+        "gpioa": 5376,
+        "gpiof": 0,
+        "at": 259271
+      },
+      {
+        "before": 7254,
+        "after": 7264,
+        "gpioa": 4096,
+        "gpiof": 0,
+        "at": 259660
+      },
+      {
+        "before": 7643,
+        "after": 7653,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 260049
+      },
+      {
+        "before": 8032,
+        "after": 8042,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 260438
+      },
+      {
+        "before": 8421,
+        "after": 8431,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 260827
+      },
+      {
+        "before": 8810,
+        "after": 8820,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 261216
+      },
+      {
+        "before": 9199,
+        "after": 9209,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 261605
+      },
+      {
+        "before": 9588,
+        "after": 9598,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 261994
+      },
+      {
+        "before": 9977,
+        "after": 9987,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 262383
+      },
+      {
+        "before": 10833,
+        "after": 10843,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 263239
+      },
+      {
+        "before": 11228,
+        "after": 11238,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 263634
+      },
+      {
+        "before": 11617,
+        "after": 11627,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 264023
+      },
+      {
+        "before": 12006,
+        "after": 12016,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 264412
+      },
+      {
+        "before": 12395,
+        "after": 12405,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 264801
+      },
+      {
+        "before": 12784,
+        "after": 12794,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 265190
+      },
+      {
+        "before": 13173,
+        "after": 13183,
+        "gpioa": 6144,
+        "gpiof": 1,
+        "at": 265579
+      },
+      {
+        "before": 231,
+        "after": 241,
+        "gpioa": 0,
+        "gpiof": 0,
+        "at": 265968
+      },
+      {
+        "before": 620,
+        "after": 630,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 266357
+      },
+      {
+        "before": 1009,
+        "after": 1019,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 266746
+      },
+      {
+        "before": 1398,
+        "after": 1408,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 267135
+      },
+      {
+        "before": 1787,
+        "after": 1797,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 267524
+      },
+      {
+        "before": 2176,
+        "after": 2186,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 267913
+      },
+      {
+        "before": 2565,
+        "after": 2575,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 268302
+      },
+      {
+        "before": 2954,
+        "after": 2964,
+        "gpioa": 1792,
+        "gpiof": 0,
+        "at": 268691
+      }
+    ]
+  },
+  "sensors": {
+    "magic": 1179865905,
+    "abi": 1,
+    "trial": 7,
+    "updates": 93,
+    "baseline_current": 4,
+    "peak_current": 10,
+    "baseline_voltage": 786,
+    "minimum_voltage": 786,
+    "baseline_raw_current": 10,
+    "peak_raw_current": 26,
+    "units": {
+      "current": "0.01A filtered",
+      "voltage": "0.01V filtered",
+      "raw_current": "ADC counts"
+    },
+    "peak_current_increase": 6,
+    "voltage_drop": 0,
+    "sampled_only": true
+  },
+  "ram_settings": {
+    "sine": 1,
+    "pwm_frequency_khz": 12,
+    "startup_power": 150,
+    "motor_kv": 900,
+    "motor_poles": 14,
+    "advance_raw": 18,
+    "auto_advance": 0,
+    "sine_range": 15,
+    "sine_power": 6
+  },
+  "raw_hex": "314e5346010000000700000030b61d0a040000000100000001000000ffffffffffffffffffffffff3425f40000000000300000000000000000000000"
+}
