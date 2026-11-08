@@ -1,0 +1,149 @@
+[
+  {
+    "authorization": "User requested the A-to-B six-step return-path control; step1,A PWM/B LOW/C FLOAT,duty360/2000,24kHz,100ms maximum with unchanged sensor/pad capture; preserve already-installed settings, skip firmware readback verification; confirm running control clock before motor test",
+    "image": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-SIXSTEP-AB-CONTROL-20261108/AM32_CUSTOM_FD6288_G431_2.20.hex",
+    "preflash_elf": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-SIXSTEP-ALIGN-CONTROL-20261108/AM32_CUSTOM_FD6288_G431_2.20.elf",
+    "postflash_elf": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-SIXSTEP-AB-CONTROL-20261108/AM32_CUSTOM_FD6288_G431_2.20.elf",
+    "settings_written": false,
+    "throttle_sent": false
+  },
+  {
+    "command": "[target current] curstate",
+    "result": "OK:running"
+  },
+  {
+    "command": "read_memory 0xe000ed08 32 1",
+    "result": "OK:0x8001000"
+  },
+  {
+    "command": "read_memory 0x20001278 8 2",
+    "result": "OK:0x0 0x0"
+  },
+  {
+    "command": "read_memory 0x2000127a 8 2",
+    "result": "OK:0x0 0x0"
+  },
+  {
+    "command": "read_memory 0x200013d4 8 2",
+    "result": "OK:0x0 0x0"
+  },
+  {
+    "command": "read_memory 0x20001258 8 1",
+    "result": "OK:0x0"
+  },
+  {
+    "command": "read_memory 0x2000125c 8 2",
+    "result": "OK:0x0 0x0"
+  },
+  {
+    "command": "read_memory 0x20001275 8 1",
+    "result": "OK:0x0"
+  },
+  {
+    "command": "read_memory 0x48000010 32 1",
+    "result": "OK:0xc000"
+  },
+  {
+    "command": "read_memory 0x48001410 32 1",
+    "result": "OK:0x0"
+  },
+  {
+    "command": "read_memory 0x40012c34 32 4",
+    "result": "OK:0x0 0x0 0x0 0x0"
+  },
+  {
+    "command": "read_memory 0x800f800 8 48",
+    "result": "OK:0x1 0x3 0x11 0x2 0x14 0xa0 0x1 0x0 0xa 0x64 0x0 0x64 0x0 0xff 0xff 0xff 0xff 0x0 0x0 0x1 0x1 0x0 0x0 0x12 0x18 0x96 0x16 0xe 0x0 0x0 0x5 0x1 0xaf 0x4b 0x7e 0x32 0x0 0x50 0x0 0x0 0xf 0xa 0x1 0xff 0x0 0x6 0x1 0x0"
+  },
+  {
+    "command": "reset init",
+    "result": "OK:"
+  },
+  {
+    "command": "flash write_image erase {/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-SIXSTEP-AB-CONTROL-20261108/AM32_CUSTOM_FD6288_G431_2.20.hex}",
+    "result": "OK:auto erase enabled\nwrote 34656 bytes from file /Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-SIXSTEP-AB-CONTROL-20261108/AM32_CUSTOM_FD6288_G431_2.20.hex in 1.068133s (31.685 KiB/s)\n"
+  },
+  {
+    "command": "reset run",
+    "result": "OK:"
+  },
+  {
+    "flash_write_complete": true,
+    "readback_verification": "skipped as requested"
+  },
+  {
+    "command": "[target current] curstate",
+    "result": "OK:running"
+  },
+  {
+    "command": "read_memory 0xe000ed08 32 1",
+    "result": "OK:0x8001000"
+  },
+  {
+    "command": "read_memory 0x20001278 8 2",
+    "result": "OK:0x0 0x0"
+  },
+  {
+    "command": "read_memory 0x2000127a 8 2",
+    "result": "OK:0x0 0x0"
+  },
+  {
+    "command": "read_memory 0x200013d4 8 2",
+    "result": "OK:0x0 0x0"
+  },
+  {
+    "command": "read_memory 0x20001258 8 1",
+    "result": "OK:0x0"
+  },
+  {
+    "command": "read_memory 0x2000125c 8 2",
+    "result": "OK:0x0 0x0"
+  },
+  {
+    "command": "read_memory 0x20001275 8 1",
+    "result": "OK:0x0"
+  },
+  {
+    "command": "read_memory 0x48000010 32 1",
+    "result": "OK:0xc000"
+  },
+  {
+    "command": "read_memory 0x48001410 32 1",
+    "result": "OK:0x0"
+  },
+  {
+    "command": "read_memory 0x40012c34 32 4",
+    "result": "OK:0x0 0x0 0x0 0x0"
+  },
+  {
+    "command": "read_memory 0xe0001000 32 2",
+    "result": "OK:0x40000001 0x4a3022c3"
+  },
+  {
+    "command": "read_memory 0xe000edfc 32 1",
+    "result": "OK:0x1000000"
+  },
+  {
+    "command": "read_memory 0xe0001000 32 2",
+    "result": "OK:0x40000001 0x4a35c3e4"
+  },
+  {
+    "command": "read_memory 0x2000127c 8 1",
+    "result": "OK:0x1"
+  },
+  {
+    "runtime_control_clock": {
+      "dwt_ctrl": 1073741825,
+      "demcr": 16777216,
+      "cyccnt_first": 1244668611,
+      "cyccnt_second": 1245037540,
+      "delta": 368929,
+      "selftest_ok": 1
+    }
+  },
+  {
+    "completed": true,
+    "runtime_clock_valid": true,
+    "throttle_sent": false
+  }
+]
