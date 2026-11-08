@@ -1,0 +1,22 @@
+{
+  "status": "prepared_only_not_executed",
+  "when": "No meaningful benefit -> stop sine branch expansion, return to pre-sine mainline per user instruction",
+  "mainline": "EARLY-REKICK dual-alignment plus feedback startup checkpoint before sine experiments",
+  "requires_main_and_original_settings_restore": true,
+  "mainline_behavior": "full startup/run, not100ms diagnostic; tell operator before restoring, read throttle-zero first",
+  "original_fields": {
+    "sine": 0,
+    "pwm_khz": 24,
+    "startup": 150,
+    "range": 5,
+    "sine_power": 5,
+    "advance": 18,
+    "auto_advance": 0
+  },
+  "files_sha256": {
+    "test-firmware/fd6288-EARLY-REKICK-20261107/AM32_CUSTOM_FD6288_G431_2.20.hex": "7a8a20d7ad3742b744ed19097974cd4a5318c0eccb75273b1e8e90f0981b6207",
+    "test-firmware/fd6288-EARLY-REKICK-20261107/AM32_CUSTOM_FD6288_G431_2.20.elf": "fec193138342d06b5a952647903871ceb0e12c811b974fff024d81e5b871442b",
+    "hardware-backups/NATIVE-SINE-parameters-before-20261108/restore-settings.hex": "2559d6b4daf6e46cffc2ed3ec01a76d5899114bee42385ae06d6658beee20f5c",
+    "hardware-backups/NATIVE-SINE-parameters-before-20261108/settings-page.bin": "4f426d535486cb0d9b9c8b7bc0b74cd390efb56c73e9116e3a64f6c5a7baf7f3"
+  }
+}

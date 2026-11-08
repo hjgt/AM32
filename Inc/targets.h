@@ -3279,6 +3279,18 @@
 #endif
 #define TARGET_FD_SIXSTEP_AB_CONTROL
 #endif
+#ifndef FD6288_SINE_CLAMP_B
+#define FD6288_SINE_CLAMP_B 0
+#endif
+#if FD6288_SINE_CLAMP_B != 0 && FD6288_SINE_CLAMP_B != 1
+#error "Fixed B-clamped PWM test must be boolean"
+#endif
+#if FD6288_SINE_CLAMP_B
+#if !FD6288_SINE_FIXED_12KHZ || !FD6288_SINE_FIXED_PROBE || FD6288_SIXSTEP_ALIGN_CONTROL
+#error "B-clamp comparison requires12k fixed sine, excludes six-step control"
+#endif
+#define TARGET_FD_SINE_CLAMP_B
+#endif
 #if FD6288_NATIVE_SINE_START != 0 && FD6288_NATIVE_SINE_START != 1
 #error "Native sine switch must be boolean"
 #endif

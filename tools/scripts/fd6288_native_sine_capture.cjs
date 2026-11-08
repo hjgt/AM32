@@ -21,7 +21,7 @@ async function dump(elf,out,stopped){
   async function check(){assert.equal((await c.rpc('[target current] curstate')).trim(),'running');assert.equal((await mem(0xe000ed08,4)).readUInt32LE(),0x08001000);for(const n of ['input','adjusted_input','newinput','running','duty_cycle','heli_coast_active'])assert.equal(await scalar(n),0,n);assert.equal((await mem(0x48000010,4)).readUInt32LE()&0x1f00,0);assert.equal((await mem(0x48001410,4)).readUInt32LE()&1,0);for(let i=0;i<4;i++)assert.equal((await mem(0x40012c34+4*i,4)).readUInt32LE(),0);}
   await check();
   // Selected code identity, not a full-flash readback.
-  const outputIdentity=syms.fdSixStepAlignApply?['fdSixStepAlignApply','comStep']:['advanceincrement','fdNativeSineBridgeAllowed'];
+  const outputIdentity=syms.fdSineClampApply?['fdSineClampApply','phaseAPWM','phaseBLOW','phaseCPWM']:syms.fdSixStepAlignApply?['fdSixStepAlignApply','comStep']:['advanceincrement','fdNativeSineBridgeAllowed'];
   for(const name of [...outputIdentity,'loadEEpromSettings','fdBenchService','fdBenchStop','main']){const s=syms[name];assert(s&&s.size>0&&s.size<8192,name);const b=await mem(s.address,s.size);for(let i=0;i<b.length;i++)assert.equal(b[i],hex.get(s.address+i),'Code identity: '+name);}
   const address=syms.fd_native_sine.address,a=await mem(address,60),settings=await mem(syms.eepromBuffer.address,48);
   await check();assert.deepEqual(await mem(address,60),a,'Summary changed during stopped read');

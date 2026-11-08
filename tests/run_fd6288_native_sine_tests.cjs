@@ -1,6 +1,7 @@
 // Execute the actual native sine loop, output formula and trial adapter with
 // simulated registers/time. No motor model, SWD or synthetic automatic ZCs.
 const fs=require('fs'),path=require('path'),os=require('os'),cp=require('child_process'),assert=require('assert');
+const clampB=process.argv.includes('--clamp-b');if(clampB)process.argv.push('--fixed-12');
 const ab=process.argv.includes('--sixstep-ab');if(ab)process.argv.push('--sixstep-control');
 const fixed12=process.argv.includes('--fixed-12'),sixstep=process.argv.includes('--sixstep-control');if(fixed12||sixstep)process.argv.push('--fixed');
 const root=path.resolve(__dirname,'..'),main=fs.readFileSync(path.join(root,'Src/main.c'),'utf8');
@@ -419,6 +420,42 @@ if(ab){
  program=program.replace('(GPIOF->MODER&3u)==1u&&GPIOF->BSRR==1u','(GPIOF->MODER&3u)==1u&&GPIOF->BRR==1u&&GPIOA->BSRR==(1u<<12)');
  program=program.replace('GPIOA->IDR=(t>=368&&t<1200?1u<<8:0)|(t>=1568?1u<<11:0);GPIOF->IDR=1;', 'GPIOA->IDR=(t>=368&&t<1200?1u<<8:0)|(t>=1568?1u<<11:0)|(1u<<12);GPIOF->IDR=0;');
  program=program.replace('PASS historical step6 control:', 'PASS A-to-B step1 control:');
+}
+
+
+if(clampB){
+ const outs=fs.readFileSync(path.join(root,'Mcu/g431/Src/phaseouts.c'),'utf8');
+ program=program.replace('#define TARGET_FD_SINE_FIXED_12KHZ','#define TARGET_FD_SINE_FIXED_12KHZ\n#define TARGET_FD_SINE_CLAMP_B');
+ program=program.replace('#define LOW_BITREG_OFF BRR','#define LOW_BITREG_OFF BRR\n#define HIGH_BITREG_OFF BRR\n#define LOW_BITREG_ON BSRR');
+ program=program.replace('void phaseAPWM()',block(outs,'void phaseBLOW()')+'\nvoid phaseAPWM()');
+ program=program.replace('static unsigned zero_crosses;','static unsigned zero_crosses;\nstatic unsigned pwm_updates;');
+ program=program.replace('static void generatePwmTimerEvent(void){}','static void generatePwmTimerEvent(void){assert(!bridge&&TIM1->CCR4==0);pwm_updates++;}');
+ const i=program.indexOf('int main(void){');program=program.slice(0,i)+`
+int main(void){
+ checkSensorTick();fdNativeSineClockInit();settingsOverride();applyCarrier();tim1_arr=TIMER1_MAX_ARR;
+ begin(215);nativeStep();assert(bridge&&fd_native_sine.sine_steps==1&&pwm_updates==1);
+ assert(TIM1->ARR==13330&&TIM1->CCR1==1080&&TIM1->CCR2==0&&TIM1->CCR3==1068&&TIM1->CCR4==0);
+ unsigned centered[3]={ccr[0],ccr[1],ccr[2]},actual[3]={TIM1->CCR1,TIM1->CCR2,TIM1->CCR3};
+ assert(centered[0]==7205&&centered[1]==6125&&centered[2]==7193);
+ for(unsigned a=0;a<3;a++)for(unsigned b=0;b<3;b++)assert((int)centered[a]-(int)centered[b]==(int)actual[a]-(int)actual[b]);
+ for(unsigned pin=8;pin<=12;pin++)assert(((GPIOA->MODER>>(2*pin))&3u)==((pin==9||pin==12)?1u:2u));
+ assert((GPIOF->MODER&3u)==2u&&GPIOA->BSRR==(1u<<12));
+ actual_current=53;battery_voltage=805;ADC_raw_current=30;fdSineRecordSensors();assert(fd_sine_sensors.updates==1&&fd_sine_sensors.peak_current==53);
+ for(unsigned n=0;n<256;n++){
+  DWT->CYCCNT=fd_sine_pins.driven_at+160000+n*1600;TIM1->CNT=(n*61)%13331;unsigned t=TIM1->CNT;
+  GPIOA->IDR=(1u<<12)|(t>=368&&t<1080?1u<<8:0)|(t>=1448?1u<<11:0)|(t>=368&&t<1068?1u<<10:0);GPIOF->IDR=t>=1436;nativeStep();
+  assert(fd_sine_pins.count==n+1&&fd_native_sine.sine_steps==1&&pwm_updates==1);
+  assert(TIM1->CCR1==1080&&TIM1->CCR2==0&&TIM1->CCR3==1068&&TIM1->CCR4==0&&mask==0);
+ }
+ assert(fd_sine_pins.frozen);DWT->CYCCNT=fd_native_sine.started+16000000-1;fdBenchService();assert(bridge);DWT->CYCCNT++;fdBenchService();assert(!bridge&&fd_native_sine.reason==FD_BENCH_WINDOW);
+ actual_current=999;fdSineRecordSensors();assert(fd_sine_sensors.updates==1&&fd_sine_sensors.peak_current==53);assert(fdBenchGuardInput());
+ begin(215);nativeStep();zero();assert(!bridge&&fd_sine_pins.frozen);
+ unsigned updates=pwm_updates;cap=100;begin(215);nativeStep();assert(!bridge&&fd_native_sine.reason==FD_BENCH_SAFETY_CAP&&pwm_updates==updates);cap=610;
+ begin(215);TIM1->ARR=6665;nativeStep();assert(!bridge&&fd_native_sine.reason==FD_BENCH_BAD_CONFIG);TIM1->ARR=13330;
+ begin(215);nativeStep();armed=0;fdBenchService();assert(!bridge);armed=1;
+ begin(215);nativeStep();DWT->CTRL&=~1u;fdBenchService();assert(!bridge&&fd_native_sine.reason==15);
+ assert(!commutations);puts("PASS fixed B-clamp: exact all-pair differences preserved, actual A/C PWM and B low, one off-state update,100ms and fault stops, passive records");return 0;}
+`;
 }
 
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'fd-native-sine-host-')),c=path.join(dir,'test.c'),exe=path.join(dir,'test');fs.writeFileSync(c,program);

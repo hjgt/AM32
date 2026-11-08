@@ -31,3 +31,11 @@ const abOk=decodePins(abData,align,1);assert.equal(abOk.analysis.drive_mode,'six
 assert.equal(decodePins(abData,align,6).analysis.mismatched,4); // never infer the intended vector from measured pads
 const abMissing=Buffer.from(abData);abMissing.writeUInt16LE(0x100,24+12+4);assert.equal(decodePins(abMissing,align,1).analysis.mismatched,1);
 console.log('PASS A-to-B decoder: requires B low on/C off, detects wrong return path and missing low command');
+let clampModes=0;
+for(let pin=8;pin<=12;pin++)clampModes|=((pin===9||pin===12)?1:2)<<(2*pin);
+const clamp={...pwm12,ccr1:1080,ccr2:0,ccr3:1068,ccr4:0,gpioa_moder:clampModes,gpiof_moder:2};
+const clampData=buffer([[100,110,0x1000,0],[500,510,0x1500,0],[1200,1210,0x1000,0],[1600,1610,0x1800,1],[1070,1080,0x1000,0]]);
+const clampOk=decodePins(clampData,clamp,0);assert.equal(clampOk.analysis.drive_mode,'fixed_sine_B_clamped');assert.equal(clampOk.analysis.matched,4);assert.equal(clampOk.analysis.excluded,1);
+const clampMissing=Buffer.from(clampData);clampMissing.writeUInt16LE(0x500,24+12+4);assert.equal(decodePins(clampMissing,clamp,0).analysis.mismatched,1);
+assert.equal(decodePins(clampData,{...clamp,ccr3:1080},0).analysis.configured,false);
+console.log('PASS B-clamp decoder: A/C complementary PWM and continuous B low; transition exclusion, missing return and altered comparison rejected');

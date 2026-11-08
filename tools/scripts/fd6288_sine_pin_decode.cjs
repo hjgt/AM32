@@ -12,24 +12,27 @@ function decodePins(b, pwm, stepHint=6) {
     samples.push({before:b.readUInt16LE(p),after:b.readUInt16LE(p+2),gpioa:b.readUInt16LE(p+4),gpiof:b.readUInt16LE(p+6),at:b.readUInt32LE(p+8)});
   }
   const ccr=[pwm.ccr1,pwm.ccr2,pwm.ccr3], period=pwm.arr+1, dt=368;
-  const timerOk = pwm.psc===0 && !(pwm.cr1&0x302) && (pwm.bdtr&255)===0xce &&
+  const timerBase = pwm.psc===0 && !(pwm.cr1&0x302) && (pwm.bdtr&255)===0xce &&
     (pwm.bdtr&0x8000)!==0 && (pwm.ccer&0xfff)===0x555 &&
-    period>0 && period<65536 && ccr.every(v=>v>dt && v+dt<period);
+    period>0 && period<65536;
+  const timerOk=timerBase && ccr.every(v=>v>dt && v+dt<period);
   let configured=timerOk;
   const mode=pin=>(pwm.gpioa_moder>>>(pin*2))&3;
   const af=pin=>(pwm.gpioa_afrh>>>((pin-8)*4))&15;
   for(let pin=8;pin<=12;pin++)configured &&= mode(pin)===2 && af(pin)===6;
   configured &&= (pwm.gpiof_moder&3)===2 && (pwm.gpiof_afrl&15)===6;
   const sixstep=[1,6].includes(stepHint) && timerOk && period===6666 && ccr.every(v=>v===1200) && pwm.ccr4===0 && mode(8)===2 && af(8)===6 && mode(11)===2 && af(11)===6 && [9,10,12].every(pin=>mode(pin)===1) && (pwm.gpiof_moder&3)===1;
-  configured ||= sixstep;
-  const analysis={configured,drive_mode:sixstep?'sixstep_alignment_step'+stepHint:configured?'three_phase_sine_pwm':'unrecognized_configuration',model:sixstep?(stepHint===1?'A complementary PWM, B low on, C commands off':'A complementary PWM, B commands off, C low on')+'; DT368; MCU digital pads only':'PWM1 edge aligned, active-high main/complement, DT368; GPIO digital pad samples, not winding voltage/current',valid:0,excluded:0,matched:0,mismatched:0,expected_mixed_high:0,actual_mixed_high:0,expected_ab_different:0,actual_ab_different:0,mismatch_examples:[]};
+  const clamp=timerBase && period===13331 && ccr[0]===1080 && ccr[1]===0 && ccr[2]===1068 && pwm.ccr4===0 && [8,10,11].every(pin=>mode(pin)===2&&af(pin)===6) && [9,12].every(pin=>mode(pin)===1) && (pwm.gpiof_moder&3)===2 && (pwm.gpiof_afrl&15)===6;
+  configured ||= sixstep || clamp;
+  const analysis={configured,drive_mode:clamp?'fixed_sine_B_clamped':sixstep?'sixstep_alignment_step'+stepHint:configured?'three_phase_sine_pwm':'unrecognized_configuration',model:clamp?'A/C complementary PWM, B low on; same ideal pair differences as fixed12k sine; DT368; MCU pads only':sixstep?(stepHint===1?'A complementary PWM, B low on, C commands off':'A complementary PWM, B commands off, C low on')+'; DT368; MCU digital pads only':'PWM1 edge aligned, active-high main/complement, DT368; GPIO digital pad samples, not winding voltage/current',valid:0,excluded:0,matched:0,mismatched:0,expected_mixed_high:0,actual_mixed_high:0,expected_ab_different:0,actual_ab_different:0,mismatch_examples:[]};
   if(configured)for(let i=0;i<samples.length;i++) {
     const s=samples[i],lo=s.before-16,hi=s.after+16;
     // Reject rollover, wide reads and any sample crossing/near a transition.
     if(s.after<s.before || s.after-s.before>128 || lo<0 || hi>=period ||
        [dt,...ccr,...ccr.map(v=>v+dt)].some(t=>t>=lo&&t<=hi)) {analysis.excluded++;continue;}
-    let expected=sixstep?(stepHint===1?16:32):0;
+    let expected=clamp?16:sixstep?(stepHint===1?16:32):0;
     for(let c=0;c<(sixstep?1:3);c++) {
+      if(clamp&&c===1)continue;
       if(s.before>=dt && s.before<ccr[c])expected|=1<<c;
       if(s.before>=ccr[c]+dt)expected|=1<<(c+3);
     }

@@ -189,6 +189,51 @@ __attribute__((noinline)) static void fdSixStepAlignApply(void)
 }
 #endif
 
+#ifdef TARGET_FD_SINE_CLAMP_B
+static void fdBenchStop(uint8_t reason);
+void advanceincrement(void);
+void phaseAPWM(void);
+void phaseBLOW(void);
+void phaseCPWM(void);
+__attribute__((noinline)) static void fdSineClampApply(void)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    fdBenchService();
+    if (!fdNativeSineBridgeAllowed()) { __set_PRIMASK(mask); return; }
+    if (TIM1->ARR != 13330u || TIM1->PSC != 0u ||
+        (TIM1->CR1 & (TIM_CR1_CKD_Msk | TIM_CR1_UDIS)) ||
+        (TIM1->BDTR & TIM_BDTR_DTG_Msk) != TARGET_FIXED_DEAD_TIME_CODE) {
+        fdBenchStop(FD_BENCH_BAD_CONFIG);
+        __set_PRIMASK(mask); return;
+    }
+    allOff();
+    /* Reuse the actual fixed-sine formula while all six commands are off.
+     * Subtract B from ALL three compares; every pair difference is exact. */
+    advanceincrement();
+    if (!fdNativeSineBridgeAllowed()) { __set_PRIMASK(mask); return; }
+    uint32_t a = TIM1->CCR1, b = TIM1->CCR2, c = TIM1->CCR3;
+    if (b > a || b > c || a - b <= ZCD_SAMPLE_FLOOR || c - b <= ZCD_SAMPLE_FLOOR) {
+        fdBenchStop(FD_BENCH_BAD_CONFIG);
+    } else if ((a - b) * 2000u > (uint32_t)driveEffectiveDutyLimit() * (TIM1->ARR + 1u) ||
+               (c - b) * 2000u > (uint32_t)driveEffectiveDutyLimit() * (TIM1->ARR + 1u)) {
+        fdBenchStop(FD_BENCH_SAFETY_CAP);
+    } else {
+        TIM1->CCR1 = a - b;
+        TIM1->CCR2 = 0u;
+        TIM1->CCR3 = c - b;
+        TIM1->CCR4 = 0u;
+        generatePwmTimerEvent(); /* transfer the complete set while off */
+        phaseAPWM();
+        phaseBLOW();
+        phaseCPWM();
+        fd_native_sine.last_step = 0u; /* three-phase fixed vector, not step1 */
+        fd_sine_pins.driven_at = DWT->CYCCNT;
+    }
+    __set_PRIMASK(mask);
+}
+#endif
+
 static void fdBenchStop(uint8_t reason)
 {
     uint32_t mask = __get_PRIMASK();

@@ -56,3 +56,8 @@ test-firmware/fd6288-SIXSTEP-ALIGN-CONTROL-20261108/*.bin -text
 test-firmware/fd6288-SIXSTEP-AB-CONTROL-20261108/*.hex -text
 test-firmware/fd6288-SIXSTEP-AB-CONTROL-20261108/*.elf -text
 test-firmware/fd6288-SIXSTEP-AB-CONTROL-20261108/*.bin -text
+
+# Equal ideal line voltage fixed B-clamp diagnostic.
+test-firmware/fd6288-SINE-CLAMP-B-20261109/*.hex -text
+test-firmware/fd6288-SINE-CLAMP-B-20261109/*.elf -text
+test-firmware/fd6288-SINE-CLAMP-B-20261109/*.bin -text

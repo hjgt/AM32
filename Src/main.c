@@ -4144,11 +4144,13 @@ if(zero_crosses < 5){
                     SET_DUTY_CYCLE_ALL(0);
 #ifdef TARGET_FD_SIXSTEP_ALIGN_CONTROL
                     fdSixStepAlignApply();
+#elif defined(TARGET_FD_SINE_CLAMP_B)
+                    fdSineClampApply();
 #else
                     allpwm();
 #endif
                     do_once_sinemode = 0;
-#if defined(TARGET_FD_SINE_FIXED_PROBE) && !defined(TARGET_FD_SIXSTEP_ALIGN_CONTROL)
+#if defined(TARGET_FD_SINE_FIXED_PROBE) && !defined(TARGET_FD_SIXSTEP_ALIGN_CONTROL) && !defined(TARGET_FD_SINE_CLAMP_B)
                     advanceincrement();
                     fd_sine_pins.driven_at = DWT->CYCCNT;
 #endif

@@ -1,0 +1,39 @@
+{
+  "date": "2026-11-09",
+  "flashed": false,
+  "mode": "fixed12k_sine_equal_ideal_line_voltage_B_clamped",
+  "comparison_base": "fd6288-SINE-FIXED-12K-20261108 trial7",
+  "base_ccr": [
+    7205,
+    6125,
+    7193
+  ],
+  "clamped_ccr": [
+    1080,
+    0,
+    1068
+  ],
+  "all_pair_differences_exactly_preserved": true,
+  "carrier_khz": 12,
+  "power": 6,
+  "limit_ms": 100,
+  "deadtime_us": 2.3,
+  "outputs": "A/C complementary PWM, B low continuously",
+  "settings_changed": false,
+  "checks": {
+    "actual_sine_formula_and_all_pair_differences_ASan_UBSan": "PASS",
+    "actual_GPIO_modes_and_single_preload_transfer_while_off": "PASS",
+    "100ms_zero_clock_disarm_cap_bad_timer_stops": "PASS",
+    "sensor_and_pin_capture_freeze": "PASS",
+    "clamped_parser_missing_return_transition_exclusions": "PASS",
+    "old12k_and_AB_control_regressions": "PASS",
+    "feature_off_HEX_exactly_equals_original12k_fixed": "PASS",
+    "forced_full_build_ELF_HEX_BIN_reader_symbols": "PASS"
+  },
+  "hardware_result": null,
+  "files": {
+    "AM32_CUSTOM_FD6288_G431_2.20.bin": "e1397dbea120286ede65ec56d1e4ecafda6d2e4831de31892a4ab3b03b56fe10",
+    "AM32_CUSTOM_FD6288_G431_2.20.hex": "b1edefeac00abe00d2491e46460dcd949dd85738f90320ebe695bc82d7544a69",
+    "AM32_CUSTOM_FD6288_G431_2.20.elf": "d4b6eeb1e447184e067cf4d5e52d0ec62ee768c2b550700d9b2e6a4326e269be"
+  }
+}
