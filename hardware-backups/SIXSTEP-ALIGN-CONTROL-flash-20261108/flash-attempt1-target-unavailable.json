@@ -1,0 +1,25 @@
+[
+  {
+    "authorization": "User requested trying the historical six-step alignment positive control; step6,A PWM/C LOW/B FLOAT,duty360/2000,24kHz,100ms maximum with existing sensor/pad capture; preserve already-installed settings, skip firmware readback verification; confirm running control clock before motor test",
+    "image": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-SIXSTEP-ALIGN-CONTROL-20261108/AM32_CUSTOM_FD6288_G431_2.20.hex",
+    "preflash_elf": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-SINE-FIXED-12K-20261108/AM32_CUSTOM_FD6288_G431_2.20.elf",
+    "postflash_elf": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-SIXSTEP-ALIGN-CONTROL-20261108/AM32_CUSTOM_FD6288_G431_2.20.elf",
+    "settings_written": false,
+    "throttle_sent": false
+  },
+  {
+    "written": false,
+    "target_connected": false,
+    "attempts": [
+      "Local OpenOCD port6666 absent",
+      "Normal100kHz ST-Link detected3.254642V, target connection failed",
+      "Normal50kHz ST-Link detected3.238727V, target connection failed"
+    ],
+    "commands_not_issued": [
+      "reset",
+      "flash write_image",
+      "throttle"
+    ],
+    "waiting_for": "operator to reconnect target supply/SWDIO/SWCLK/GND with throttle zero"
+  }
+]
