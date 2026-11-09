@@ -27,7 +27,9 @@
 #define TARGET_FD_START_RETRY
 #define TARGET_FD_NATIVE_EARLY
 #define TARGET_FD_FIRST_EDGE_500US
+#ifndef FD6288_SECOND_ALIGN_MS
 #define FD6288_SECOND_ALIGN_MS 300
+#endif
 #include "fd6288_startup_sequence.h"
 /* ACTUAL_REASONS */
 static struct { uint32_t CYCCNT; } dwt;
@@ -127,7 +129,7 @@ static void position(void)
     fdRevTick(); assert(commutations == before && fd_rev.align_left == 2);
     DWT->CYCCNT++; fdRevTick();
     assert(step == (forward ? 6u : 2u) && fd_rev.align_left == 1);
-    DWT->CYCCNT = fd_rev.sector_at + 300000u*160u - 1;
+    DWT->CYCCNT = fd_rev.sector_at + FD_REV_SECOND_ALIGN_TICKS - 1;
     fdRevTick(); assert(fd_rev.stage == FD_REV_ALIGN);
     DWT->CYCCNT++; fdRevTick();
     assert(fd_rev.stage == FD_REV_OPEN && step == (forward ? 2u : 6u));
@@ -171,14 +173,23 @@ static void restart(void)
 }
 int main(void)
 {
-    assert(FD_SR_TOTAL_TICKS == 2090000u*160u);
+    if(FD6288_SECOND_ALIGN_MS == 100 && FD6288_START_RETRIES == 5) {
+        assert(FD_SR_MAX_ATTEMPTS == 6u);
+        assert(FD_SR_ATTEMPT_TICKS == 430000u*160u);
+        assert(FD_SR_TOTAL_TICKS == 3080000u*160u);
+        assert(sizeof(FdStartRetryDiagnostics) == 288u);
+    } else {
+        assert(FD_SR_MAX_ATTEMPTS == 3u);
+        assert(FD_SR_TOTAL_TICKS == 2090000u*160u);
+        assert(sizeof(FdStartRetryDiagnostics) == 168u);
+    }
     for (unsigned wrap=0; wrap<2; wrap++) for (unsigned dir=0; dir<2; dir++) {
         uint32_t start = wrap ? UINT32_MAX-1000u : 1000u;
         /* Missing first or any subsequent startup edge gets full recovery,
          * not a blind commutation, rotated seed, or same-vector re-kick. */
         for (unsigned accepted=0; accepted<6; accepted++) {
             begin(start,dir);
-            for (unsigned attempt=1; attempt<=3; attempt++) {
+            for (unsigned attempt=1; attempt<=FD_SR_MAX_ATTEMPTS; attempt++) {
                 position();
                 for (unsigned n=0;n<accepted;n++) edge(8000);
                 fail_sector();
@@ -186,18 +197,18 @@ int main(void)
                 assert(bemf_timeout_happened == attempt && detector_timeouts == attempt);
                 assert(fd_start_retry_diag.rows[attempt-1].qualified_edges == accepted);
                 assert(fd_start_retry_diag.rows[attempt-1].failure_kind == FD_SR_FAIL_SECTOR);
-                if (attempt<3) restart();
+                if (attempt<FD_SR_MAX_ATTEMPTS) restart();
             }
             assert(fd_power_bench.inhibit && !running && !outputs && !scheduled);
-            assert(last_reason == FD_BENCH_NO_LOCK && fd_rev.sr_attempts == 3);
+            assert(last_reason == FD_BENCH_NO_LOCK && fd_rev.sr_attempts == FD_SR_MAX_ATTEMPTS);
             fdBenchWritePwm(999); assert(!outputs && fdBenchGuardInput());
             unsigned before = commutations;
             DWT->CYCCNT += 2000000u*160u; fdRevTick();
-            assert(commutations == before && fd_rev.sr_attempts == 3);
+            assert(commutations == before && fd_rev.sr_attempts == FD_SR_MAX_ATTEMPTS);
             adjusted_input=0; assert(!fdBenchGuardInput());
         }
         /* Six real feedback events on any attempt reach normal operation. */
-        for (unsigned success=1; success<=3; success++) {
+        for (unsigned success=1; success<=FD_SR_MAX_ATTEMPTS; success++) {
             begin(start,dir);
             for(unsigned attempt=1; attempt<success; attempt++) {
                 position(); edge(8000); fail_sector(); restart();
@@ -266,23 +277,23 @@ int main(void)
     const char *record_path = getenv("FD_SR_TEST_RECORD");
     if (record_path) {
         FILE *f = fopen(record_path,"wb"); assert(f);
-        for (unsigned success=1;success<=4;success++) {
-            /* Write first-attempt success, third-attempt success, all failures. */
-            if(success==2)continue;
+        for (unsigned which=0;which<3;which++) {
+            /* First/last attempt success and all attempts failed. */
+            unsigned success=which==0?1u:which==1?FD_SR_MAX_ATTEMPTS:FD_SR_MAX_ATTEMPTS+1u;
             begin(0,1);
-            for(unsigned attempt=1;attempt<=3;attempt++) {
+            for(unsigned attempt=1;attempt<=FD_SR_MAX_ATTEMPTS;attempt++) {
                 position();
                 if(attempt==success) {
                     for(unsigned n=0;n<6;n++)edge(8000);
                     fdBenchFinish(FD_BENCH_OPERATOR_ZERO);
                     break;
                 }
-                fail_sector();if(attempt<3)restart();
+                fail_sector();if(attempt<FD_SR_MAX_ATTEMPTS)restart();
             }
             FdStartRetryDiagnostics record=fd_start_retry_diag;
             assert(fwrite(&record,sizeof(record),1,f)==1);
         }
         assert(fclose(f)==0);
     }
-    puts("PASS ALIGN_RETRY actual policy/tick/event/PWM/stop: normal500us and six-edge handoff, no forced first step; full30+300ms restart after100ms off;3 attempts/native timeout count; first/later-sector failures; fixed630ms/2.09s caps; held-throttle latch; faults/zero/disarm; directions/wrap");
+    puts("PASS ALIGN_RETRY actual policy/tick/event/PWM/stop: normal500us and six-edge handoff, no forced first step; profile-specific positioning after100ms off; bounded attempts/native timeout count; first/later-sector failures; per-attempt/whole-trial caps; held-throttle latch; faults/zero/disarm; directions/wrap");
 }

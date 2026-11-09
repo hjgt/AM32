@@ -22,23 +22,25 @@ const source=fs.readFileSync(path.join(__dirname,'fd6288_start_retry_adapter_tes
  'while ((uint32_t)(DWT->CYCCNT - off_at) < 5u * FD_REV_US) {DWT->CYCCNT++;}');
 // Peripheral simulation only: DWT advances while actual code polls5us bridge gap.
 
+const shortFive=process.argv.includes('--short-five'),maxAttempts=shortFive?6:3,size=48+40*maxAttempts;
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'fd-launch-hold-')),exe=path.join(dir,'test');
-for(const [cmd,args,input] of [[process.env.CC||'cc',[...(process.argv.includes('--two')?['-DTARGET_FD_LAUNCH_TWO']:[]),'-std=c11','-O1','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-I'+path.join(root,'Inc'),'-x','c','-','-o',exe],source],[exe,[],undefined]]){
+for(const [cmd,args,input] of [[process.env.CC||'cc',[...(shortFive?['-DFD6288_SECOND_ALIGN_MS=100','-DFD6288_START_RETRIES=5']:[]),'-std=c11','-O1','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-I'+path.join(root,'Inc'),'-x','c','-','-o',exe],source],[exe,[],undefined]]){
  const r=spawnSync(cmd,args,{input,env:{...process.env,FD_SR_TEST_RECORD:path.join(dir,'records.bin')},encoding:'utf8'});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');assert.equal(r.status,0);
 }
 
-const {decode,SIZE}=require('../tools/scripts/fd6288_start_retry_decode.cjs');
+const {decode}=require('../tools/scripts/fd6288_start_retry_decode.cjs');
+const SIZE=size;
 const records=fs.readFileSync(path.join(dir,'records.bin'));assert.equal(records.length,SIZE*3);
 const decoded=[0,1,2].map(i=>decode(records.subarray(i*SIZE,(i+1)*SIZE)));
-assert.deepEqual(decoded.map(d=>d.successful_attempt),[1,3,null]);
-assert.deepEqual(decoded.map(d=>d.failed_attempts),[0,2,3]);
-assert.deepEqual(decoded.map(d=>d.attempts_started),[1,3,3]);
+assert.deepEqual(decoded.map(d=>d.successful_attempt),[1,maxAttempts,null]);
+assert.deepEqual(decoded.map(d=>d.failed_attempts),[0,maxAttempts-1,maxAttempts]);
+assert.deepEqual(decoded.map(d=>d.attempts_started),[1,maxAttempts,maxAttempts]);
 for(const d of decoded)for(let i=1;i<d.attempts.length;i++){
  assert(d.attempts[i].begin_ms-d.attempts[i-1].off_ms>=100);
- assert(d.attempts[i].launch_ms-d.attempts[i].begin_ms>=330);
+ assert(d.attempts[i].launch_ms-d.attempts[i].begin_ms>=(shortFive?130:330));
 }
 for(const offset of [0,4,12,16,32,40,44,48,64,80]){
  const bad=Buffer.from(records.subarray(0,SIZE));bad.writeUInt32LE(0xffffffff,offset);assert.throws(()=>decode(bad));
 }
 assert.throws(()=>decode(Buffer.alloc(SIZE-1)));
-console.log('PASS actual C summary -> JS: first/third attempt success and3 failures, repeated positioning/off times, corrupt ABI/counters/timestamps rejected');
+console.log('PASS actual C summary -> JS: first/last attempt success and maximum failures, repeated positioning/off times, corrupt ABI/counters/timestamps rejected');

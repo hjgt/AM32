@@ -910,7 +910,7 @@ static uint8_t fd_power_starting;
 static FdRevPolicy fd_rev;
 #ifdef TARGET_FD_START_RETRY
 #include "fd6288_start_retry_diag.h"
-volatile FdStartRetryDiagnostics fd_start_retry_diag = { .magic = 0x46535231u, .abi = 1u };
+volatile FdStartRetryDiagnostics fd_start_retry_diag = { .magic = 0x46535231u, .abi = FD_SR_DIAG_ABI };
 static void fdStartRetryRecord(uint32_t now, uint8_t action)
 {
     unsigned i = fd_rev.sr_attempts - 1u;
@@ -935,7 +935,7 @@ static void fdStartRetryRecord(uint32_t now, uint8_t action)
 static void fdStartRetryBegin(uint32_t now)
 {
     fd_start_retry_diag = (FdStartRetryDiagnostics){
-        .magic = 0x46535231u, .abi = 1u, .trial = fd_power_bench.active_id,
+        .magic = 0x46535231u, .abi = FD_SR_DIAG_ABI, .trial = fd_power_bench.active_id,
         .max_attempts = FD_SR_MAX_ATTEMPTS, .total_limit = FD_SR_TOTAL_TICKS,
         .finished_at = UINT32_MAX };
     for (unsigned i = 0; i < FD_SR_MAX_ATTEMPTS; i++) {

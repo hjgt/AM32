@@ -66,3 +66,8 @@ test-firmware/fd6288-SINE-CLAMP-B-20261109/*.bin -text
 test-firmware/fd6288-ALIGN-RETRY-20261109/*.hex -text
 test-firmware/fd6288-ALIGN-RETRY-20261109/*.elf -text
 test-firmware/fd6288-ALIGN-RETRY-20261109/*.bin -text
+
+#100ms second alignment, five additional retries checkpoint.
+test-firmware/fd6288-ALIGN-RETRY100-R5-20261109/*.hex -text
+test-firmware/fd6288-ALIGN-RETRY100-R5-20261109/*.elf -text
+test-firmware/fd6288-ALIGN-RETRY100-R5-20261109/*.bin -text

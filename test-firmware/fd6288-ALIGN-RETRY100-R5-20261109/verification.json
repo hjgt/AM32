@@ -1,0 +1,18 @@
+{
+  "status": "offline_passed_not_flashed",
+  "legacy300_hex_exact": true,
+  "legacy300_hex_sha256": "6629c95009f48f5ab1e1608850113f449dda9b8589df1155dd1550bb020b3284",
+  "elf_hex_bin_match": true,
+  "main_only": true,
+  "summary_bytes": 288,
+  "summary_abi": 2,
+  "first_alignment_ms": 30,
+  "second_alignment_ms": 100,
+  "max_additional_retries": 5,
+  "max_attempts": 6,
+  "between_attempts_off_ms": 100,
+  "attempt_limit_ms": 430,
+  "total_limit_ms": 3080,
+  "ram_bytes": 20536,
+  "flash_code_bytes": 40740
+}

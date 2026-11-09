@@ -1,12 +1,12 @@
 // Read-only latest startup/retry episode. No halt/reset/RAM writes/flash/throttle.
 const fs=require('fs'),path=require('path'),cp=require('child_process'),assert=require('assert/strict');
 const {connect,parseHex}=require('./fd6288_startup_capture.cjs');
-const {SIZE,decode}=require('./fd6288_start_retry_decode.cjs');
+const {decode}=require('./fd6288_start_retry_decode.cjs');
 async function dump(elf,out,stopped){
  assert(stopped,'Require --stopped after operator confirmation');assert(!fs.existsSync(out),'Output already exists');
  const nm=cp.execFileSync('arm-none-eabi-nm',['-S','--defined-only',elf],{encoding:'utf8'}),syms={};
  for(const row of nm.split('\n')){const m=row.match(/^([0-9a-f]+) ([0-9a-f]+) \w (.+)$/);if(m)syms[m[3]]={address:parseInt(m[1],16),size:parseInt(m[2],16)};}
- assert.equal(syms.fd_start_retry_diag?.size,SIZE,'Matching ALIGN_RETRY ELF required');
+ const SIZE=syms.fd_start_retry_diag?.size;assert([168,288].includes(SIZE),'Matching ALIGN_RETRY ELF required');
  const hex=parseHex(fs.readFileSync(elf.replace(/\.elf$/,'.hex'),'utf8'));
  const c=await connect();
  try{
