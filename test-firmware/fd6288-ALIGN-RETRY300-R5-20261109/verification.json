@@ -1,0 +1,16 @@
+{
+  "status": "offline_passed_not_flashed",
+  "elf_hex_bin_match": true,
+  "main_only": true,
+  "summary_bytes": 288,
+  "summary_abi": 2,
+  "first_alignment_ms": 30,
+  "second_alignment_ms": 300,
+  "max_additional_retries": 5,
+  "max_attempts": 6,
+  "between_attempts_off_ms": 100,
+  "attempt_limit_ms": 630,
+  "total_limit_ms": 4280,
+  "ram_bytes": 20536,
+  "flash_code_bytes": 40740
+}

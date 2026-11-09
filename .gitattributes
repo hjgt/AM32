@@ -71,3 +71,8 @@ test-firmware/fd6288-ALIGN-RETRY-20261109/*.bin -text
 test-firmware/fd6288-ALIGN-RETRY100-R5-20261109/*.hex -text
 test-firmware/fd6288-ALIGN-RETRY100-R5-20261109/*.elf -text
 test-firmware/fd6288-ALIGN-RETRY100-R5-20261109/*.bin -text
+
+#300ms restored positioning with five additional retries.
+test-firmware/fd6288-ALIGN-RETRY300-R5-20261109/*.hex -text
+test-firmware/fd6288-ALIGN-RETRY300-R5-20261109/*.elf -text
+test-firmware/fd6288-ALIGN-RETRY300-R5-20261109/*.bin -text

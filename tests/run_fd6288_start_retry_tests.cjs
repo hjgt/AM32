@@ -22,9 +22,9 @@ const source=fs.readFileSync(path.join(__dirname,'fd6288_start_retry_adapter_tes
  'while ((uint32_t)(DWT->CYCCNT - off_at) < 5u * FD_REV_US) {DWT->CYCCNT++;}');
 // Peripheral simulation only: DWT advances while actual code polls5us bridge gap.
 
-const shortFive=process.argv.includes('--short-five'),maxAttempts=shortFive?6:3,size=48+40*maxAttempts;
+const shortFive=process.argv.includes('--short-five'),longFive=process.argv.includes('--long-five'),maxAttempts=(shortFive||longFive)?6:3,size=48+40*maxAttempts;
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'fd-launch-hold-')),exe=path.join(dir,'test');
-for(const [cmd,args,input] of [[process.env.CC||'cc',[...(shortFive?['-DFD6288_SECOND_ALIGN_MS=100','-DFD6288_START_RETRIES=5']:[]),'-std=c11','-O1','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-I'+path.join(root,'Inc'),'-x','c','-','-o',exe],source],[exe,[],undefined]]){
+for(const [cmd,args,input] of [[process.env.CC||'cc',[...((shortFive||longFive)?['-DFD6288_SECOND_ALIGN_MS='+(shortFive?100:300),'-DFD6288_START_RETRIES=5']:[]),'-std=c11','-O1','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-I'+path.join(root,'Inc'),'-x','c','-','-o',exe],source],[exe,[],undefined]]){
  const r=spawnSync(cmd,args,{input,env:{...process.env,FD_SR_TEST_RECORD:path.join(dir,'records.bin')},encoding:'utf8'});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');assert.equal(r.status,0);
 }
 

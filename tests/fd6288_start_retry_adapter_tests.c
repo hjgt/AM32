@@ -173,10 +173,10 @@ static void restart(void)
 }
 int main(void)
 {
-    if(FD6288_SECOND_ALIGN_MS == 100 && FD6288_START_RETRIES == 5) {
+    if(FD6288_START_RETRIES == 5) {
         assert(FD_SR_MAX_ATTEMPTS == 6u);
-        assert(FD_SR_ATTEMPT_TICKS == 430000u*160u);
-        assert(FD_SR_TOTAL_TICKS == 3080000u*160u);
+        assert(FD_SR_ATTEMPT_TICKS == (FD6288_SECOND_ALIGN_MS==100?430000u:630000u)*160u);
+        assert(FD_SR_TOTAL_TICKS == (FD6288_SECOND_ALIGN_MS==100?3080000u:4280000u)*160u);
         assert(sizeof(FdStartRetryDiagnostics) == 288u);
     } else {
         assert(FD_SR_MAX_ATTEMPTS == 3u);
