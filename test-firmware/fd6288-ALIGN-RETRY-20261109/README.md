@@ -1,6 +1,6 @@
 # ALIGN-RETRY：ALIGN—PAIR正常启动＋有限完整重启
 
-2026-11-09：代码、离线测试、强制构建和镜像检查完成，**未烧录、未做本版电机实测**。板上仍SINE-CLAMP-B固定100ms版。用户决定暂停正弦支路，将下周前的工作集中到已能起转的ALIGN—PAIR主线。
+2026-11-09：代码、离线测试、强制构建和镜像检查完成，**已按用户指令烧录主程序及原参数页，尚无本版电机实测**。当前板上为本版完整启动运行程序；输出关闭、运行参数与DWT检查通过，未发送油门。烧录日志hardware-backups/ALIGN-RETRY-flash-20261109/attempt2/flash.json。用户决定暂停正弦支路，将下周前的工作集中到已能起转的ALIGN—PAIR主线。
 
 ## 本版行为
 
@@ -29,7 +29,7 @@
 
 必须同时写新主程序和本目录restore-settings.hex：这是进入正弦分支之前完整原参数页，sine=0、PWM24K、startup150%、KV900、14极、advance18/auto0，原range5/power5；完整页原始备份settings-page.bin SHA256 4f426d535486cb0d9b9c8b7bc0b74cd390efb56c73e9116e3a64f6c5a7baf7f3。不能只刷主程序而保留板上sine=1的试验参数。bootloader不写。
 
-flash.py已准备，尚未执行。用户通知烧录后，先明确恢复完整启动行为，使用当前SINE-CLAMP-B匹配ELF只读确认归零/输出关闭，备份当前参数，再写主程序及原参数页，reset run。遵从用户要求跳过固件读回校验；只检查停态、运行参数和DWT时钟，不发送油门。
+flash.py已执行成功；下列为从CLAMP回本版的一次性刷入流程记录。用户通知烧录后，先明确恢复完整启动行为，使用当前SINE-CLAMP-B匹配ELF只读确认归零/输出关闭，备份当前参数，再写主程序及原参数页，reset run。遵从用户要求跳过固件读回校验；只检查停态、运行参数和DWT时钟，不发送油门。
 
 ```sh
 python3 test-firmware/fd6288-ALIGN-RETRY-20261109/flash.py --execute
