@@ -908,6 +908,81 @@ static uint32_t fd_power_accepted_start, fd_power_timeouts_start;
 static uint8_t fd_power_starting;
 #ifdef TARGET_STARTUP_SEQUENCE
 static FdRevPolicy fd_rev;
+#ifdef TARGET_FD_START_RETRY
+#include "fd6288_start_retry_diag.h"
+volatile FdStartRetryDiagnostics fd_start_retry_diag = { .magic = 0x46535231u, .abi = 1u };
+static void fdStartRetryRecord(uint32_t now, uint8_t action)
+{
+    unsigned i = fd_rev.sr_attempts - 1u;
+    if (i >= FD_SR_MAX_ATTEMPTS) return;
+    uint32_t age = now - fd_power_policy.started;
+    fd_start_retry_diag.attempts = fd_rev.sr_attempts;
+    fd_start_retry_diag.failures = fd_rev.sr_failures;
+    fd_start_retry_diag.stage = fd_rev.stage;
+    fd_start_retry_diag.confidence = fd_rev.confidence;
+    volatile FdStartRetryRow *r = &fd_start_retry_diag.rows[i];
+    if (action == FD_REV_START_RESTART) r->begin_at = age;
+    if (action == FD_REV_LAUNCH) r->launch_at = age;
+    if (action == FD_REV_RELEASE || action == FD_REV_START_STOP) {
+        r->fail_at = age;
+        r->failure_kind = fd_rev.sr_failure_kind;
+    }
+    if (action == FD_REV_HANDOFF) {
+        r->handoff_at = age;
+        fd_start_retry_diag.successful_attempt = fd_rev.sr_attempts;
+    }
+}
+static void fdStartRetryBegin(uint32_t now)
+{
+    fd_start_retry_diag = (FdStartRetryDiagnostics){
+        .magic = 0x46535231u, .abi = 1u, .trial = fd_power_bench.active_id,
+        .max_attempts = FD_SR_MAX_ATTEMPTS, .total_limit = FD_SR_TOTAL_TICKS,
+        .finished_at = UINT32_MAX };
+    for (unsigned i = 0; i < FD_SR_MAX_ATTEMPTS; i++) {
+        volatile FdStartRetryRow *r = &fd_start_retry_diag.rows[i];
+        *r = (FdStartRetryRow){ .begin_at = UINT32_MAX, .launch_at = UINT32_MAX,
+            .first_edge_at = UINT32_MAX, .last_edge_at = UINT32_MAX,
+            .fail_at = UINT32_MAX, .off_at = UINT32_MAX, .end_at = UINT32_MAX,
+            .handoff_at = UINT32_MAX };
+    }
+    fd_start_retry_diag.rows[0].begin_at = now - fd_power_policy.started;
+    fdStartRetryRecord(now, FD_REV_NONE);
+}
+static void fdStartRetryEdgeRecord(uint32_t now)
+{
+    unsigned i = fd_rev.sr_attempts - 1u;
+    if (i >= FD_SR_MAX_ATTEMPTS) return;
+    volatile FdStartRetryRow *r = &fd_start_retry_diag.rows[i];
+    uint32_t age = now - fd_power_policy.started;
+    if (!r->qualified_edges) r->first_edge_at = age;
+    r->last_edge_at = age;
+    r->qualified_edges++;
+    fd_start_retry_diag.confidence = fd_rev.confidence;
+    fd_start_retry_diag.stage = fd_rev.stage;
+}
+static void fdStartRetryFinish(uint32_t now, uint8_t reason)
+{
+    fdStartRetryRecord(now, FD_REV_NONE);
+    fd_start_retry_diag.stop_reason = reason;
+    /* Freeze elapsed after the successful handoff; an eventual long run
+     * must not turn wrapped DWT ages into startup timing observations. */
+    if (fd_start_retry_diag.successful_attempt) return;
+    uint32_t age = now - fd_power_policy.started;
+    fd_start_retry_diag.finished_at = age;
+    unsigned i = fd_rev.sr_attempts - 1u;
+    if (i < FD_SR_MAX_ATTEMPTS) {
+        volatile FdStartRetryRow *r = &fd_start_retry_diag.rows[i];
+        r->end_at = age;
+        if (reason == FD_BENCH_WINDOW || reason == FD_BENCH_NO_LOCK) {
+            if (r->failure_kind == FD_SR_FAIL_NONE) {
+                r->failure_kind = FD_SR_FAIL_TOTAL;
+                r->fail_at = age;
+                fd_start_retry_diag.failures++;
+            }
+        }
+    }
+}
+#endif
 #ifdef TARGET_FD_EARLY_REKICK
 /* Header8 words, four pulse rows8 words; no waveform control reads. */
 volatile uint32_t fd_rk_diag[40]={0x46524b31u,1u};
@@ -987,6 +1062,9 @@ static void fdBenchFinish(uint8_t reason)
 {
     if (!fd_power_bench.active_id) return;
     fdEdgeFinish(DWT->CYCCNT);
+#ifdef TARGET_FD_START_RETRY
+    fdStartRetryFinish(DWT->CYCCNT, reason);
+#endif
 #ifdef TARGET_FD_EARLY_REKICK
     fd_rk_diag[4]=fd_rev.stage;fd_rk_diag[5]=fd_rev.confidence;fd_rk_diag[6]=reason;
     if(fd_rk_diag[3]<=3u)fd_rk_diag[8u+8u*fd_rk_diag[3]+5u]=DWT->CYCCNT-fd_power_policy.started;
@@ -1257,6 +1335,9 @@ static uint8_t fdBenchBegin(void)
 #endif
 #ifdef TARGET_STARTUP_SEQUENCE
     fdRevBeginPolicy(&fd_rev, DWT->CYCCNT);
+#ifdef TARGET_FD_START_RETRY
+    fdStartRetryBegin(DWT->CYCCNT);
+#endif
 #ifdef TARGET_FD_EARLY_REKICK
     fd_rk_diag[2]=fd_power_bench.active_id;fd_rk_diag[3]=0u;fd_rk_diag[4]=FD_REV_ALIGN;
     fd_rk_diag[5]=fd_rk_diag[6]=fd_rk_diag[7]=0u;
@@ -1332,6 +1413,19 @@ static void fdRevTick(void)
     uint8_t was_align = fd_rev.stage == FD_REV_ALIGN;
 #endif
     uint8_t action = fdRevAdvancePolicy(&fd_rev, now);
+#ifdef TARGET_FD_START_RETRY
+    if (action != FD_REV_NONE) fdStartRetryRecord(now, action);
+    if (action == FD_REV_START_STOP) {
+        allOff();
+        fd_start_retry_diag.rows[fd_rev.sr_attempts - 1u].off_at = DWT->CYCCNT - fd_power_policy.started;
+        bemf_timeout_happened++;
+        adcZcdResetAcquisition(ADC_ZCD_RESET_TIMEOUT);
+        if (stuckRotorGuardInput()) fdBenchService();
+        fdBenchStop(FD_BENCH_NO_LOCK);
+        __set_PRIMASK(mask);
+        return;
+    }
+#endif
 #ifdef TARGET_FD_EARLY_REKICK
     if(action==FD_REV_RK_STOP) {fdBenchStop(FD_BENCH_NO_LOCK);__set_PRIMASK(mask);return;}
 #endif
@@ -1400,6 +1494,10 @@ static void fdRevTick(void)
 #endif
         fdLightHandoff(now);
         fd_rev_acquiring = 0u;
+#ifdef TARGET_FD_START_RETRY
+        fd_start_retry_diag.rows[fd_rev.sr_attempts - 1u].end_at = now - fd_power_policy.started;
+        fd_start_retry_diag.finished_at = now - fd_power_policy.started;
+#endif
         commutation_interval = fd_rev.measured / 80u; /* TIM2: 0.5 us/tick */
         thiszctime = commutation_interval;
         zero_crosses = FD_REV_REQUIRED_EDGES; /* only observed qualified edges */
@@ -1429,6 +1527,17 @@ static void fdRevTick(void)
         zero_crosses = 0u;
         adcZcdResetAcquisition(ADC_ZCD_RESET_COUNT);
         fd_rev.sector_at = DWT->CYCCNT; /* dwell starts AFTER bridge release */
+#ifdef TARGET_FD_START_RETRY
+        fd_power_bench.floor = 0u;
+        unsigned i = fd_rev.sr_attempts - 1u;
+        fd_start_retry_diag.rows[i].off_at = fd_rev.sector_at - fd_power_policy.started;
+        fd_start_retry_diag.rows[i].end_at = fd_start_retry_diag.rows[i].off_at;
+        /* Count genuine missing-feedback attempts, never positioning or an
+         * accepted event; retain native counters/latches across restarts. */
+        bemf_timeout_happened++;
+        adcZcdResetAcquisition(ADC_ZCD_RESET_TIMEOUT);
+        if (stuckRotorGuardInput()) fdBenchService();
+#endif
 #ifdef TARGET_FD_EARLY_REKICK
         fdRkRecord(fd_rev.sector_at,action);
 #endif
@@ -1441,7 +1550,20 @@ static void fdRevTick(void)
 #ifdef TARGET_FD_BLUE_START
         || action == FD_REV_BLUE_RESTART || action == FD_REV_BLUE_FORCED
 #endif
+#ifdef TARGET_FD_START_RETRY
+        || action == FD_REV_START_RESTART
+#endif
     ) {
+#ifdef TARGET_FD_START_RETRY
+        if (action == FD_REV_START_RESTART) {
+            step = fdDoubleAlignSeed(forward);
+            commutation_interval = 10000u;
+            zero_crosses = 0u;
+            bemfcounter = bad_count = 0u;
+            adcZcdResetAcquisition(ADC_ZCD_RESET_COUNT);
+            SET_INTERVAL_TIMER_COUNT(0u);
+        }
+#endif
 #ifdef TARGET_FD_BLUE_START
         if(action==FD_REV_BLUE_RESTART) {
             /* Full release was100ms. Repeat original positioning, no rotated retry seed. */
@@ -1535,6 +1657,15 @@ static void fdRevTick(void)
             fd_rev.sector_at=DWT->CYCCNT;fdRkRecord(fd_rev.sector_at,action);
         }
 #endif
+#ifdef TARGET_FD_START_RETRY
+        if (action == FD_REV_START_RESTART || action == FD_REV_LAUNCH) {
+            fd_rev.sector_at = DWT->CYCCNT;
+            if (action == FD_REV_START_RESTART) {
+                fd_rev.sr_attempt_at = fd_rev.sector_at;
+                fdStartRetryRecord(fd_rev.sector_at, action);
+            } else fdStartRetryRecord(fd_rev.sector_at, action);
+        }
+#endif
         bad_count = 0u;
     }
     __set_PRIMASK(mask);
@@ -1545,6 +1676,16 @@ static void fdRevObserveEdge(void)
     uint32_t mask = __get_PRIMASK();
     __disable_irq();
     if (!fd_power_bench.inhibit && fd_rev_acquiring) {
+#ifdef TARGET_FD_START_RETRY
+        uint32_t sr_at = DWT->CYCCNT;
+        if (fd_rev.stage != FD_REV_OPEN || fd_rev.seen ||
+            (uint32_t)(sr_at - fd_rev.sector_at) >= fdRevRetryTicks(&fd_rev) ||
+            (uint32_t)(sr_at - fd_rev.sr_attempt_at) >= FD_SR_ATTEMPT_TICKS ||
+            fdRevDeadlinePolicy(&fd_rev, sr_at, fd_power_policy.started)) {
+            fdRevTick(); __set_PRIMASK(mask); return;
+        }
+        uint8_t sr_previous = fd_rev.confidence;
+#endif
 #ifdef TARGET_FD_BLUE_START
         if(!fd_rev.blue_first && (fd_rev.stage!=FD_REV_OPEN || fd_rev.seen ||
            (uint32_t)(DWT->CYCCNT-fd_rev.sector_at)>=fdRevRetryTicks(&fd_rev) ||
@@ -1594,6 +1735,10 @@ static void fdRevObserveEdge(void)
         if(fd_rev.rk_pending) {fdRevTick();__set_PRIMASK(mask);return;}
         if(fd_rev.confidence==rk_previous) {__set_PRIMASK(mask);return;}
         fd_rk_diag[rk_idx+6u]++;fd_rk_diag[5]=fd_rev.confidence;
+#endif
+#ifdef TARGET_FD_START_RETRY
+        if (fd_rev.confidence == sr_previous) { __set_PRIMASK(mask); return; }
+        fdStartRetryEdgeRecord(sr_at);
 #endif
 #ifdef TARGET_FD_REPOSITION
         if (fd_rev.reposition_used && fd_rev.observed_once && fd_reposition_diag[4] == UINT32_MAX)

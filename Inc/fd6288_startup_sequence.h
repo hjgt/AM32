@@ -71,6 +71,15 @@ enum { FD_REV_LAUNCH_STOP = 10u, FD_LAUNCH_HOLD_TICKS = 30000u*FD_REV_US,
         FD_LAUNCH_HOLD_TICKS + 1000u*FD_REV_US };
 #endif
 #endif
+#ifdef TARGET_FD_START_RETRY
+enum { FD_SR_RELAX_TICKS = 100000u * FD_REV_US,
+    FD_SR_ATTEMPT_TICKS = FD_REV_ACQUIRE_TICKS, FD_SR_MAX_ATTEMPTS = 3u,
+    FD_SR_TOTAL_TICKS = FD_SR_MAX_ATTEMPTS * FD_SR_ATTEMPT_TICKS +
+        (FD_SR_MAX_ATTEMPTS - 1u) * FD_SR_RELAX_TICKS,
+    FD_REV_START_RESTART = 18u, FD_REV_START_STOP = 19u,
+    FD_SR_FAIL_NONE = 0u, FD_SR_FAIL_SECTOR, FD_SR_FAIL_ATTEMPT,
+    FD_SR_FAIL_TOTAL };
+#endif
 #ifdef TARGET_FD_BLUE_START
 enum { FD_BLUE_FIRST_TICKS=30000u*FD_REV_US, FD_BLUE_RELAX_TICKS=100000u*FD_REV_US,
  FD_BLUE_ATTEMPT_TICKS=FD_REV_ACQUIRE_TICKS, FD_BLUE_MAX_ATTEMPTS=3u,
@@ -83,6 +92,10 @@ enum { FD_RK_EARLY_TICKS=1000u*FD_REV_US, FD_RK_RELAX_TICKS=20000u*FD_REV_US,
  FD_REV_RK_LAUNCH=16u, FD_REV_RK_STOP=17u };
 #endif
 typedef struct {
+#ifdef TARGET_FD_START_RETRY
+    uint32_t sr_attempt_at;
+    uint8_t sr_attempts, sr_failures, sr_failure_kind;
+#endif
 #ifdef TARGET_FD_EARLY_REKICK
     uint8_t rk_count, rk_first, rk_pending;
 #endif
@@ -177,6 +190,10 @@ static inline void fdRevBeginPolicy(FdRevPolicy *s, uint32_t now)
 {
     *s = (FdRevPolicy){ .sector_at = now, .period = FD_REV_RETRY_TICKS,
         .stage = FD_REV_OPEN, .phase_percent = 255u };
+#ifdef TARGET_FD_START_RETRY
+    s->sr_attempt_at = now;
+    s->sr_attempts = 1u;
+#endif
 #ifdef TARGET_FD_EARLY_REKICK
     s->rk_first=1u;
 #endif
@@ -297,6 +314,63 @@ static inline uint8_t fdRevCanReposition(const FdRevPolicy *s, uint32_t now)
 #endif
 }
 #endif
+#ifdef TARGET_FD_START_RETRY
+/* Missing feedback ends this attempt; it never generates a blind step.
+ * A partial streak cannot reset the attempt/failure/whole-trial budget. */
+static inline uint8_t fdStartRetryFail(FdRevPolicy *s, uint32_t now, uint8_t kind)
+{
+    s->sr_failures++;
+    s->sr_failure_kind = kind;
+    s->seen = s->confidence = 0u;
+    s->delay = s->measured = s->last_real_period = 0u;
+    s->sector_at = now;
+    if (s->sr_attempts >= FD_SR_MAX_ATTEMPTS) {
+        s->stage = FD_REV_OFF;
+        return FD_REV_START_STOP;
+    }
+    s->stage = FD_REV_RELAX;
+    return FD_REV_RELEASE;
+}
+static inline uint8_t fdStartRetryAdvance(FdRevPolicy *s, uint32_t now)
+{
+    if (s->stage == FD_REV_OFF || s->stage == FD_REV_CLOSED) return FD_REV_NONE;
+    if (s->stage == FD_REV_RELAX) {
+        if ((uint32_t)(now - s->sector_at) < FD_SR_RELAX_TICKS) return FD_REV_NONE;
+        uint8_t attempts = s->sr_attempts, failures = s->sr_failures;
+        uint32_t started = s->trial_started;
+        fdRevBeginPolicy(s, now);
+        s->sr_attempts = attempts + 1u;
+        s->sr_failures = failures;
+        s->trial_started = started;
+        return FD_REV_START_RESTART;
+    }
+    if ((uint32_t)(now - s->sr_attempt_at) >= FD_SR_ATTEMPT_TICKS)
+        return fdStartRetryFail(s, now, FD_SR_FAIL_ATTEMPT);
+    if (s->stage == FD_REV_ALIGN) {
+        uint32_t dwell = s->align_left == 1u ? FD_REV_SECOND_ALIGN_TICKS : FD_REV_ALIGN_TICKS;
+        if ((uint32_t)(now - s->sector_at) < dwell) return FD_REV_NONE;
+        s->sector_at = now;
+        if (--s->align_left) return FD_REV_STEP;
+        s->stage = FD_REV_OPEN;
+        return FD_REV_LAUNCH;
+    }
+    if (s->stage == FD_REV_PENDING) {
+        if ((uint32_t)(now - s->edge_at) < s->delay) return FD_REV_NONE;
+        if (s->confidence >= FD_REV_REQUIRED_EDGES) {
+            s->stage = FD_REV_CLOSED;
+            s->closed_at = now;
+            return FD_REV_HANDOFF;
+        }
+        s->stage = FD_REV_OPEN;
+        s->sector_at = now;
+        s->seen = 0u;
+        return FD_REV_STEP;
+    }
+    if (s->stage == FD_REV_OPEN && (uint32_t)(now - s->sector_at) >= s->period)
+        return fdStartRetryFail(s, now, FD_SR_FAIL_SECTOR);
+    return FD_REV_NONE;
+}
+#endif
 #ifdef TARGET_FD_BLUE_START
 /* Startup-only recovery. Never turn an observed first-sector level into
  * position/period evidence. Native faults/operator zero remain external. */
@@ -371,6 +445,9 @@ static inline uint8_t fdRkAdvance(FdRevPolicy *s,uint32_t now) {
 #endif
 static inline uint8_t fdRevAdvancePolicy(FdRevPolicy *s, uint32_t now)
 {
+#ifdef TARGET_FD_START_RETRY
+    return fdStartRetryAdvance(s, now);
+#endif
 #ifdef TARGET_FD_EARLY_REKICK
     return fdRkAdvance(s,now);
 #endif
@@ -544,6 +621,10 @@ static inline uint8_t fdRevAdvancePolicy(FdRevPolicy *s, uint32_t now)
 }
 static inline uint8_t fdRevEdgePolicy(FdRevPolicy *s, uint32_t now, uint8_t advance64)
 {
+#ifdef TARGET_FD_START_RETRY
+    if (s->stage != FD_REV_OPEN || s->seen ||
+        (uint32_t)(now - s->sr_attempt_at) >= FD_SR_ATTEMPT_TICKS) return 0u;
+#endif
 #ifdef TARGET_FD_EARLY_REKICK
     if(s->stage!=FD_REV_OPEN || s->seen || s->rk_pending ||
        (uint32_t)(now-s->sector_at)>=s->period)return 0u;
@@ -842,7 +923,9 @@ static inline uint8_t fdRevEdgePolicy(FdRevPolicy *s, uint32_t now, uint8_t adva
 static inline uint8_t fdRevDeadlinePolicy(const FdRevPolicy *s, uint32_t now,
     uint32_t started)
 {
-#ifdef TARGET_FD_EARLY_REKICK
+#ifdef TARGET_FD_START_RETRY
+    return s->stage != FD_REV_CLOSED && (uint32_t)(now - started) >= FD_SR_TOTAL_TICKS;
+#elif defined(TARGET_FD_EARLY_REKICK)
     return s->stage!=FD_REV_CLOSED && (uint32_t)(now-started)>=FD_REV_ACQUIRE_TICKS;
 #elif defined(TARGET_FD_BLUE_START)
     return s->stage!=FD_REV_CLOSED && (uint32_t)(now-started)>=FD_BLUE_TOTAL_TICKS;

@@ -6263,3 +6263,14 @@
 #error "Native sine trial retains coherent ADC, asynchronous commutation and actual deadtime sampling"
 #endif
 #endif
+
+/* Full startup retries keep the normal ALIGN-PAIR feedback path. */
+#if defined(FD6288_START_RETRY) && FD6288_START_RETRY
+#if FD6288_START_RETRY != 1 || !defined(TARGET_STARTUP_FIRST_WAIT) || !defined(TARGET_FD_DOUBLE_ALIGN) || !defined(TARGET_FD_ALIGN_HOLD) || !defined(TARGET_FD_ALIGN_SETTLE) || !defined(TARGET_FD_ALIGN_SAMPLE_PAIR) || !defined(TARGET_FD_REPOSITION) || !defined(TARGET_FD_ADC_COHERENT) || !defined(TARGET_FD_ASYNC_COMM) || !defined(TARGET_FD_FIRST_EDGE_500US) || FD6288_SECOND_ALIGN_MS != 300
+#error "START_RETRY requires normal300ms ALIGN-PAIR, coherent ADC, async and release gates"
+#endif
+#if defined(TARGET_FD_BLUE_START) || defined(TARGET_FD_EARLY_REKICK) || defined(TARGET_FD_HIZ_OBSERVE) || defined(TARGET_FD_LAUNCH_HOLD) || defined(TARGET_FD_ALIGN_ONLY) || defined(TARGET_FD_STARTUP_LEVEL) || defined(TARGET_FD_NATIVE_SINE)
+#error "START_RETRY excludes other startup/recovery experiments"
+#endif
+#define TARGET_FD_START_RETRY
+#endif

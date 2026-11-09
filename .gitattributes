@@ -61,3 +61,8 @@ test-firmware/fd6288-SIXSTEP-AB-CONTROL-20261108/*.bin -text
 test-firmware/fd6288-SINE-CLAMP-B-20261109/*.hex -text
 test-firmware/fd6288-SINE-CLAMP-B-20261109/*.elf -text
 test-firmware/fd6288-SINE-CLAMP-B-20261109/*.bin -text
+
+# ALIGN-PAIR full startup retry firmware and original settings restore.
+test-firmware/fd6288-ALIGN-RETRY-20261109/*.hex -text
+test-firmware/fd6288-ALIGN-RETRY-20261109/*.elf -text
+test-firmware/fd6288-ALIGN-RETRY-20261109/*.bin -text

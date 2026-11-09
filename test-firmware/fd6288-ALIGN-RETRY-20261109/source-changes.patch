@@ -1,0 +1,845 @@
+diff --git a/Inc/fd6288_start_retry_diag.h b/Inc/fd6288_start_retry_diag.h
+new file mode 100644
+index 0000000..32b0cd9
+--- /dev/null
++++ b/Inc/fd6288_start_retry_diag.h
+@@ -0,0 +1,13 @@
++#pragma once
++#include <stdint.h>
++/* Event-only observation: never used for a drive/control decision. */
++typedef struct {
++    uint32_t begin_at, launch_at, first_edge_at, last_edge_at, qualified_edges;
++    uint32_t fail_at, off_at, end_at, failure_kind, handoff_at;
++} FdStartRetryRow;
++typedef struct {
++    uint32_t magic, abi, trial, attempts, failures, stage, confidence;
++    uint32_t stop_reason, successful_attempt, finished_at, max_attempts, total_limit;
++    FdStartRetryRow rows[3];
++} FdStartRetryDiagnostics;
++_Static_assert(sizeof(FdStartRetryDiagnostics) == 168u, "startup retry summary ABI");
+diff --git a/Inc/fd6288_startup_sequence.h b/Inc/fd6288_startup_sequence.h
+index c2edd97..2f1aaa4 100644
+--- a/Inc/fd6288_startup_sequence.h
++++ b/Inc/fd6288_startup_sequence.h
+@@ -71,6 +71,15 @@ enum { FD_REV_LAUNCH_STOP = 10u, FD_LAUNCH_HOLD_TICKS = 30000u*FD_REV_US,
+         FD_LAUNCH_HOLD_TICKS + 1000u*FD_REV_US };
+ #endif
+ #endif
++#ifdef TARGET_FD_START_RETRY
++enum { FD_SR_RELAX_TICKS = 100000u * FD_REV_US,
++    FD_SR_ATTEMPT_TICKS = FD_REV_ACQUIRE_TICKS, FD_SR_MAX_ATTEMPTS = 3u,
++    FD_SR_TOTAL_TICKS = FD_SR_MAX_ATTEMPTS * FD_SR_ATTEMPT_TICKS +
++        (FD_SR_MAX_ATTEMPTS - 1u) * FD_SR_RELAX_TICKS,
++    FD_REV_START_RESTART = 18u, FD_REV_START_STOP = 19u,
++    FD_SR_FAIL_NONE = 0u, FD_SR_FAIL_SECTOR, FD_SR_FAIL_ATTEMPT,
++    FD_SR_FAIL_TOTAL };
++#endif
+ #ifdef TARGET_FD_BLUE_START
+ enum { FD_BLUE_FIRST_TICKS=30000u*FD_REV_US, FD_BLUE_RELAX_TICKS=100000u*FD_REV_US,
+  FD_BLUE_ATTEMPT_TICKS=FD_REV_ACQUIRE_TICKS, FD_BLUE_MAX_ATTEMPTS=3u,
+@@ -83,6 +92,10 @@ enum { FD_RK_EARLY_TICKS=1000u*FD_REV_US, FD_RK_RELAX_TICKS=20000u*FD_REV_US,
+  FD_REV_RK_LAUNCH=16u, FD_REV_RK_STOP=17u };
+ #endif
+ typedef struct {
++#ifdef TARGET_FD_START_RETRY
++    uint32_t sr_attempt_at;
++    uint8_t sr_attempts, sr_failures, sr_failure_kind;
++#endif
+ #ifdef TARGET_FD_EARLY_REKICK
+     uint8_t rk_count, rk_first, rk_pending;
+ #endif
+@@ -177,6 +190,10 @@ static inline void fdRevBeginPolicy(FdRevPolicy *s, uint32_t now)
+ {
+     *s = (FdRevPolicy){ .sector_at = now, .period = FD_REV_RETRY_TICKS,
+         .stage = FD_REV_OPEN, .phase_percent = 255u };
++#ifdef TARGET_FD_START_RETRY
++    s->sr_attempt_at = now;
++    s->sr_attempts = 1u;
++#endif
+ #ifdef TARGET_FD_EARLY_REKICK
+     s->rk_first=1u;
+ #endif
+@@ -297,6 +314,63 @@ static inline uint8_t fdRevCanReposition(const FdRevPolicy *s, uint32_t now)
+ #endif
+ }
+ #endif
++#ifdef TARGET_FD_START_RETRY
++/* Missing feedback ends this attempt; it never generates a blind step.
++ * A partial streak cannot reset the attempt/failure/whole-trial budget. */
++static inline uint8_t fdStartRetryFail(FdRevPolicy *s, uint32_t now, uint8_t kind)
++{
++    s->sr_failures++;
++    s->sr_failure_kind = kind;
++    s->seen = s->confidence = 0u;
++    s->delay = s->measured = s->last_real_period = 0u;
++    s->sector_at = now;
++    if (s->sr_attempts >= FD_SR_MAX_ATTEMPTS) {
++        s->stage = FD_REV_OFF;
++        return FD_REV_START_STOP;
++    }
++    s->stage = FD_REV_RELAX;
++    return FD_REV_RELEASE;
++}
++static inline uint8_t fdStartRetryAdvance(FdRevPolicy *s, uint32_t now)
++{
++    if (s->stage == FD_REV_OFF || s->stage == FD_REV_CLOSED) return FD_REV_NONE;
++    if (s->stage == FD_REV_RELAX) {
++        if ((uint32_t)(now - s->sector_at) < FD_SR_RELAX_TICKS) return FD_REV_NONE;
++        uint8_t attempts = s->sr_attempts, failures = s->sr_failures;
++        uint32_t started = s->trial_started;
++        fdRevBeginPolicy(s, now);
++        s->sr_attempts = attempts + 1u;
++        s->sr_failures = failures;
++        s->trial_started = started;
++        return FD_REV_START_RESTART;
++    }
++    if ((uint32_t)(now - s->sr_attempt_at) >= FD_SR_ATTEMPT_TICKS)
++        return fdStartRetryFail(s, now, FD_SR_FAIL_ATTEMPT);
++    if (s->stage == FD_REV_ALIGN) {
++        uint32_t dwell = s->align_left == 1u ? FD_REV_SECOND_ALIGN_TICKS : FD_REV_ALIGN_TICKS;
++        if ((uint32_t)(now - s->sector_at) < dwell) return FD_REV_NONE;
++        s->sector_at = now;
++        if (--s->align_left) return FD_REV_STEP;
++        s->stage = FD_REV_OPEN;
++        return FD_REV_LAUNCH;
++    }
++    if (s->stage == FD_REV_PENDING) {
++        if ((uint32_t)(now - s->edge_at) < s->delay) return FD_REV_NONE;
++        if (s->confidence >= FD_REV_REQUIRED_EDGES) {
++            s->stage = FD_REV_CLOSED;
++            s->closed_at = now;
++            return FD_REV_HANDOFF;
++        }
++        s->stage = FD_REV_OPEN;
++        s->sector_at = now;
++        s->seen = 0u;
++        return FD_REV_STEP;
++    }
++    if (s->stage == FD_REV_OPEN && (uint32_t)(now - s->sector_at) >= s->period)
++        return fdStartRetryFail(s, now, FD_SR_FAIL_SECTOR);
++    return FD_REV_NONE;
++}
++#endif
+ #ifdef TARGET_FD_BLUE_START
+ /* Startup-only recovery. Never turn an observed first-sector level into
+  * position/period evidence. Native faults/operator zero remain external. */
+@@ -371,6 +445,9 @@ static inline uint8_t fdRkAdvance(FdRevPolicy *s,uint32_t now) {
+ #endif
+ static inline uint8_t fdRevAdvancePolicy(FdRevPolicy *s, uint32_t now)
+ {
++#ifdef TARGET_FD_START_RETRY
++    return fdStartRetryAdvance(s, now);
++#endif
+ #ifdef TARGET_FD_EARLY_REKICK
+     return fdRkAdvance(s,now);
+ #endif
+@@ -544,6 +621,10 @@ static inline uint8_t fdRevAdvancePolicy(FdRevPolicy *s, uint32_t now)
+ }
+ static inline uint8_t fdRevEdgePolicy(FdRevPolicy *s, uint32_t now, uint8_t advance64)
+ {
++#ifdef TARGET_FD_START_RETRY
++    if (s->stage != FD_REV_OPEN || s->seen ||
++        (uint32_t)(now - s->sr_attempt_at) >= FD_SR_ATTEMPT_TICKS) return 0u;
++#endif
+ #ifdef TARGET_FD_EARLY_REKICK
+     if(s->stage!=FD_REV_OPEN || s->seen || s->rk_pending ||
+        (uint32_t)(now-s->sector_at)>=s->period)return 0u;
+@@ -842,7 +923,9 @@ static inline uint8_t fdRevEdgePolicy(FdRevPolicy *s, uint32_t now, uint8_t adva
+ static inline uint8_t fdRevDeadlinePolicy(const FdRevPolicy *s, uint32_t now,
+     uint32_t started)
+ {
+-#ifdef TARGET_FD_EARLY_REKICK
++#ifdef TARGET_FD_START_RETRY
++    return s->stage != FD_REV_CLOSED && (uint32_t)(now - started) >= FD_SR_TOTAL_TICKS;
++#elif defined(TARGET_FD_EARLY_REKICK)
+     return s->stage!=FD_REV_CLOSED && (uint32_t)(now-started)>=FD_REV_ACQUIRE_TICKS;
+ #elif defined(TARGET_FD_BLUE_START)
+     return s->stage!=FD_REV_CLOSED && (uint32_t)(now-started)>=FD_BLUE_TOTAL_TICKS;
+diff --git a/Inc/targets.h b/Inc/targets.h
+index bda5fec..c0ba3b7 100755
+--- a/Inc/targets.h
++++ b/Inc/targets.h
+@@ -6263,3 +6263,14 @@
+ #error "Native sine trial retains coherent ADC, asynchronous commutation and actual deadtime sampling"
+ #endif
+ #endif
++
++/* Full startup retries keep the normal ALIGN-PAIR feedback path. */
++#if defined(FD6288_START_RETRY) && FD6288_START_RETRY
++#if FD6288_START_RETRY != 1 || !defined(TARGET_STARTUP_FIRST_WAIT) || !defined(TARGET_FD_DOUBLE_ALIGN) || !defined(TARGET_FD_ALIGN_HOLD) || !defined(TARGET_FD_ALIGN_SETTLE) || !defined(TARGET_FD_ALIGN_SAMPLE_PAIR) || !defined(TARGET_FD_REPOSITION) || !defined(TARGET_FD_ADC_COHERENT) || !defined(TARGET_FD_ASYNC_COMM) || !defined(TARGET_FD_FIRST_EDGE_500US) || FD6288_SECOND_ALIGN_MS != 300
++#error "START_RETRY requires normal300ms ALIGN-PAIR, coherent ADC, async and release gates"
++#endif
++#if defined(TARGET_FD_BLUE_START) || defined(TARGET_FD_EARLY_REKICK) || defined(TARGET_FD_HIZ_OBSERVE) || defined(TARGET_FD_LAUNCH_HOLD) || defined(TARGET_FD_ALIGN_ONLY) || defined(TARGET_FD_STARTUP_LEVEL) || defined(TARGET_FD_NATIVE_SINE)
++#error "START_RETRY excludes other startup/recovery experiments"
++#endif
++#define TARGET_FD_START_RETRY
++#endif
+diff --git a/Makefile b/Makefile
+index f093575..256f817 100755
+--- a/Makefile
++++ b/Makefile
+@@ -202,6 +202,8 @@ FD6288_LAUNCH_HOLD ?= 0
+ CFLAGS_CUSTOM_FD6288_G431 += -DFD6288_LAUNCH_HOLD=$(FD6288_LAUNCH_HOLD)
+ FD6288_EARLY_REKICK ?= 0
+ CFLAGS_CUSTOM_FD6288_G431 += -DFD6288_EARLY_REKICK=$(FD6288_EARLY_REKICK)
++FD6288_START_RETRY ?= 0
++CFLAGS_CUSTOM_FD6288_G431 += -DFD6288_START_RETRY=$(FD6288_START_RETRY)
+ FD6288_BLUE_START ?= 0
+ CFLAGS_CUSTOM_FD6288_G431 += -DFD6288_BLUE_START=$(FD6288_BLUE_START)
+ FD6288_HIZ_OBSERVE ?= 0
+diff --git a/Src/main.c b/Src/main.c
+index 50af0d9..e4f81c6 100755
+--- a/Src/main.c
++++ b/Src/main.c
+@@ -908,6 +908,81 @@ static uint32_t fd_power_accepted_start, fd_power_timeouts_start;
+ static uint8_t fd_power_starting;
+ #ifdef TARGET_STARTUP_SEQUENCE
+ static FdRevPolicy fd_rev;
++#ifdef TARGET_FD_START_RETRY
++#include "fd6288_start_retry_diag.h"
++volatile FdStartRetryDiagnostics fd_start_retry_diag = { .magic = 0x46535231u, .abi = 1u };
++static void fdStartRetryRecord(uint32_t now, uint8_t action)
++{
++    unsigned i = fd_rev.sr_attempts - 1u;
++    if (i >= FD_SR_MAX_ATTEMPTS) return;
++    uint32_t age = now - fd_power_policy.started;
++    fd_start_retry_diag.attempts = fd_rev.sr_attempts;
++    fd_start_retry_diag.failures = fd_rev.sr_failures;
++    fd_start_retry_diag.stage = fd_rev.stage;
++    fd_start_retry_diag.confidence = fd_rev.confidence;
++    volatile FdStartRetryRow *r = &fd_start_retry_diag.rows[i];
++    if (action == FD_REV_START_RESTART) r->begin_at = age;
++    if (action == FD_REV_LAUNCH) r->launch_at = age;
++    if (action == FD_REV_RELEASE || action == FD_REV_START_STOP) {
++        r->fail_at = age;
++        r->failure_kind = fd_rev.sr_failure_kind;
++    }
++    if (action == FD_REV_HANDOFF) {
++        r->handoff_at = age;
++        fd_start_retry_diag.successful_attempt = fd_rev.sr_attempts;
++    }
++}
++static void fdStartRetryBegin(uint32_t now)
++{
++    fd_start_retry_diag = (FdStartRetryDiagnostics){
++        .magic = 0x46535231u, .abi = 1u, .trial = fd_power_bench.active_id,
++        .max_attempts = FD_SR_MAX_ATTEMPTS, .total_limit = FD_SR_TOTAL_TICKS,
++        .finished_at = UINT32_MAX };
++    for (unsigned i = 0; i < FD_SR_MAX_ATTEMPTS; i++) {
++        volatile FdStartRetryRow *r = &fd_start_retry_diag.rows[i];
++        *r = (FdStartRetryRow){ .begin_at = UINT32_MAX, .launch_at = UINT32_MAX,
++            .first_edge_at = UINT32_MAX, .last_edge_at = UINT32_MAX,
++            .fail_at = UINT32_MAX, .off_at = UINT32_MAX, .end_at = UINT32_MAX,
++            .handoff_at = UINT32_MAX };
++    }
++    fd_start_retry_diag.rows[0].begin_at = now - fd_power_policy.started;
++    fdStartRetryRecord(now, FD_REV_NONE);
++}
++static void fdStartRetryEdgeRecord(uint32_t now)
++{
++    unsigned i = fd_rev.sr_attempts - 1u;
++    if (i >= FD_SR_MAX_ATTEMPTS) return;
++    volatile FdStartRetryRow *r = &fd_start_retry_diag.rows[i];
++    uint32_t age = now - fd_power_policy.started;
++    if (!r->qualified_edges) r->first_edge_at = age;
++    r->last_edge_at = age;
++    r->qualified_edges++;
++    fd_start_retry_diag.confidence = fd_rev.confidence;
++    fd_start_retry_diag.stage = fd_rev.stage;
++}
++static void fdStartRetryFinish(uint32_t now, uint8_t reason)
++{
++    fdStartRetryRecord(now, FD_REV_NONE);
++    fd_start_retry_diag.stop_reason = reason;
++    /* Freeze elapsed after the successful handoff; an eventual long run
++     * must not turn wrapped DWT ages into startup timing observations. */
++    if (fd_start_retry_diag.successful_attempt) return;
++    uint32_t age = now - fd_power_policy.started;
++    fd_start_retry_diag.finished_at = age;
++    unsigned i = fd_rev.sr_attempts - 1u;
++    if (i < FD_SR_MAX_ATTEMPTS) {
++        volatile FdStartRetryRow *r = &fd_start_retry_diag.rows[i];
++        r->end_at = age;
++        if (reason == FD_BENCH_WINDOW || reason == FD_BENCH_NO_LOCK) {
++            if (r->failure_kind == FD_SR_FAIL_NONE) {
++                r->failure_kind = FD_SR_FAIL_TOTAL;
++                r->fail_at = age;
++                fd_start_retry_diag.failures++;
++            }
++        }
++    }
++}
++#endif
+ #ifdef TARGET_FD_EARLY_REKICK
+ /* Header8 words, four pulse rows8 words; no waveform control reads. */
+ volatile uint32_t fd_rk_diag[40]={0x46524b31u,1u};
+@@ -987,6 +1062,9 @@ static void fdBenchFinish(uint8_t reason)
+ {
+     if (!fd_power_bench.active_id) return;
+     fdEdgeFinish(DWT->CYCCNT);
++#ifdef TARGET_FD_START_RETRY
++    fdStartRetryFinish(DWT->CYCCNT, reason);
++#endif
+ #ifdef TARGET_FD_EARLY_REKICK
+     fd_rk_diag[4]=fd_rev.stage;fd_rk_diag[5]=fd_rev.confidence;fd_rk_diag[6]=reason;
+     if(fd_rk_diag[3]<=3u)fd_rk_diag[8u+8u*fd_rk_diag[3]+5u]=DWT->CYCCNT-fd_power_policy.started;
+@@ -1257,6 +1335,9 @@ static uint8_t fdBenchBegin(void)
+ #endif
+ #ifdef TARGET_STARTUP_SEQUENCE
+     fdRevBeginPolicy(&fd_rev, DWT->CYCCNT);
++#ifdef TARGET_FD_START_RETRY
++    fdStartRetryBegin(DWT->CYCCNT);
++#endif
+ #ifdef TARGET_FD_EARLY_REKICK
+     fd_rk_diag[2]=fd_power_bench.active_id;fd_rk_diag[3]=0u;fd_rk_diag[4]=FD_REV_ALIGN;
+     fd_rk_diag[5]=fd_rk_diag[6]=fd_rk_diag[7]=0u;
+@@ -1332,6 +1413,19 @@ static void fdRevTick(void)
+     uint8_t was_align = fd_rev.stage == FD_REV_ALIGN;
+ #endif
+     uint8_t action = fdRevAdvancePolicy(&fd_rev, now);
++#ifdef TARGET_FD_START_RETRY
++    if (action != FD_REV_NONE) fdStartRetryRecord(now, action);
++    if (action == FD_REV_START_STOP) {
++        allOff();
++        fd_start_retry_diag.rows[fd_rev.sr_attempts - 1u].off_at = DWT->CYCCNT - fd_power_policy.started;
++        bemf_timeout_happened++;
++        adcZcdResetAcquisition(ADC_ZCD_RESET_TIMEOUT);
++        if (stuckRotorGuardInput()) fdBenchService();
++        fdBenchStop(FD_BENCH_NO_LOCK);
++        __set_PRIMASK(mask);
++        return;
++    }
++#endif
+ #ifdef TARGET_FD_EARLY_REKICK
+     if(action==FD_REV_RK_STOP) {fdBenchStop(FD_BENCH_NO_LOCK);__set_PRIMASK(mask);return;}
+ #endif
+@@ -1400,6 +1494,10 @@ static void fdRevTick(void)
+ #endif
+         fdLightHandoff(now);
+         fd_rev_acquiring = 0u;
++#ifdef TARGET_FD_START_RETRY
++        fd_start_retry_diag.rows[fd_rev.sr_attempts - 1u].end_at = now - fd_power_policy.started;
++        fd_start_retry_diag.finished_at = now - fd_power_policy.started;
++#endif
+         commutation_interval = fd_rev.measured / 80u; /* TIM2: 0.5 us/tick */
+         thiszctime = commutation_interval;
+         zero_crosses = FD_REV_REQUIRED_EDGES; /* only observed qualified edges */
+@@ -1429,6 +1527,17 @@ static void fdRevTick(void)
+         zero_crosses = 0u;
+         adcZcdResetAcquisition(ADC_ZCD_RESET_COUNT);
+         fd_rev.sector_at = DWT->CYCCNT; /* dwell starts AFTER bridge release */
++#ifdef TARGET_FD_START_RETRY
++        fd_power_bench.floor = 0u;
++        unsigned i = fd_rev.sr_attempts - 1u;
++        fd_start_retry_diag.rows[i].off_at = fd_rev.sector_at - fd_power_policy.started;
++        fd_start_retry_diag.rows[i].end_at = fd_start_retry_diag.rows[i].off_at;
++        /* Count genuine missing-feedback attempts, never positioning or an
++         * accepted event; retain native counters/latches across restarts. */
++        bemf_timeout_happened++;
++        adcZcdResetAcquisition(ADC_ZCD_RESET_TIMEOUT);
++        if (stuckRotorGuardInput()) fdBenchService();
++#endif
+ #ifdef TARGET_FD_EARLY_REKICK
+         fdRkRecord(fd_rev.sector_at,action);
+ #endif
+@@ -1440,8 +1549,21 @@ static void fdRevTick(void)
+ #endif
+ #ifdef TARGET_FD_BLUE_START
+         || action == FD_REV_BLUE_RESTART || action == FD_REV_BLUE_FORCED
++#endif
++#ifdef TARGET_FD_START_RETRY
++        || action == FD_REV_START_RESTART
+ #endif
+     ) {
++#ifdef TARGET_FD_START_RETRY
++        if (action == FD_REV_START_RESTART) {
++            step = fdDoubleAlignSeed(forward);
++            commutation_interval = 10000u;
++            zero_crosses = 0u;
++            bemfcounter = bad_count = 0u;
++            adcZcdResetAcquisition(ADC_ZCD_RESET_COUNT);
++            SET_INTERVAL_TIMER_COUNT(0u);
++        }
++#endif
+ #ifdef TARGET_FD_BLUE_START
+         if(action==FD_REV_BLUE_RESTART) {
+             /* Full release was100ms. Repeat original positioning, no rotated retry seed. */
+@@ -1534,6 +1656,15 @@ static void fdRevTick(void)
+         if(action==FD_REV_LAUNCH || action==FD_REV_RK_LAUNCH) {
+             fd_rev.sector_at=DWT->CYCCNT;fdRkRecord(fd_rev.sector_at,action);
+         }
++#endif
++#ifdef TARGET_FD_START_RETRY
++        if (action == FD_REV_START_RESTART || action == FD_REV_LAUNCH) {
++            fd_rev.sector_at = DWT->CYCCNT;
++            if (action == FD_REV_START_RESTART) {
++                fd_rev.sr_attempt_at = fd_rev.sector_at;
++                fdStartRetryRecord(fd_rev.sector_at, action);
++            } else fdStartRetryRecord(fd_rev.sector_at, action);
++        }
+ #endif
+         bad_count = 0u;
+     }
+@@ -1545,6 +1676,16 @@ static void fdRevObserveEdge(void)
+     uint32_t mask = __get_PRIMASK();
+     __disable_irq();
+     if (!fd_power_bench.inhibit && fd_rev_acquiring) {
++#ifdef TARGET_FD_START_RETRY
++        uint32_t sr_at = DWT->CYCCNT;
++        if (fd_rev.stage != FD_REV_OPEN || fd_rev.seen ||
++            (uint32_t)(sr_at - fd_rev.sector_at) >= fdRevRetryTicks(&fd_rev) ||
++            (uint32_t)(sr_at - fd_rev.sr_attempt_at) >= FD_SR_ATTEMPT_TICKS ||
++            fdRevDeadlinePolicy(&fd_rev, sr_at, fd_power_policy.started)) {
++            fdRevTick(); __set_PRIMASK(mask); return;
++        }
++        uint8_t sr_previous = fd_rev.confidence;
++#endif
+ #ifdef TARGET_FD_BLUE_START
+         if(!fd_rev.blue_first && (fd_rev.stage!=FD_REV_OPEN || fd_rev.seen ||
+            (uint32_t)(DWT->CYCCNT-fd_rev.sector_at)>=fdRevRetryTicks(&fd_rev) ||
+@@ -1595,6 +1736,10 @@ static void fdRevObserveEdge(void)
+         if(fd_rev.confidence==rk_previous) {__set_PRIMASK(mask);return;}
+         fd_rk_diag[rk_idx+6u]++;fd_rk_diag[5]=fd_rev.confidence;
+ #endif
++#ifdef TARGET_FD_START_RETRY
++        if (fd_rev.confidence == sr_previous) { __set_PRIMASK(mask); return; }
++        fdStartRetryEdgeRecord(sr_at);
++#endif
+ #ifdef TARGET_FD_REPOSITION
+         if (fd_rev.reposition_used && fd_rev.observed_once && fd_reposition_diag[4] == UINT32_MAX)
+             fd_reposition_diag[4] = DWT->CYCCNT-fd_power_policy.started;
+diff --git a/tests/fd6288_start_retry_adapter_tests.c b/tests/fd6288_start_retry_adapter_tests.c
+new file mode 100644
+index 0000000..3bc4fb4
+--- /dev/null
++++ b/tests/fd6288_start_retry_adapter_tests.c
+@@ -0,0 +1,288 @@
++#include <assert.h>
++#include <stdio.h>
++#include <stdlib.h>
++#define TARGET_STARTUP_SEQUENCE
++#define TARGET_STARTUP_SEQUENCE_V2
++#define TARGET_STARTUP_FEEDBACK
++#define TARGET_STARTUP_S4
++#define TARGET_STARTUP_S4E
++#define TARGET_STARTUP_HANDOFF_REAL
++#define TARGET_STARTUP_RESCUE_RETAIN
++#define TARGET_STARTUP_RESCUE_BRIDGE
++#define TARGET_STARTUP_PHASE_DELAY
++#define TARGET_STARTUP_SEED_DELAY
++#define TARGET_STARTUP_RESCUE_RAMP
++#define TARGET_STARTUP_FIRST_WAIT
++#define TARGET_FD_DOUBLE_ALIGN
++#define TARGET_FD_ALIGN_HOLD
++#define TARGET_FD_ALIGN_SETTLE
++#define TARGET_FD_ALIGN_BUDGET
++#define TARGET_FD_LAUNCH_ADVANCE
++#define TARGET_FD_REPOSITION
++#define TARGET_FD_FULL_RETRY
++#define TARGET_FD_RETRY_ADJACENT
++#define TARGET_FD_STALE_RETRY
++#define TARGET_FD_ASYNC_COMM
++#define TARGET_FD_NO_DIAGNOSTICS
++#define TARGET_FD_START_RETRY
++#define TARGET_FD_NATIVE_EARLY
++#define TARGET_FD_FIRST_EDGE_500US
++#define FD6288_SECOND_ALIGN_MS 300
++#include "fd6288_startup_sequence.h"
++/* ACTUAL_REASONS */
++static struct { uint32_t CYCCNT; } dwt;
++#define DWT (&dwt)
++static FdRevPolicy fd_rev;
++static struct { uint32_t inhibit, active_id, floor; } fd_power_bench;
++static struct { uint32_t started; } fd_power_policy;
++static struct { uint32_t frozen; } fd_align_observe;
++static struct { uint8_t auto_advance; } eepromBuffer;
++static uint32_t mask,outputs,commutations,scheduled,last_reason,failure_pin;
++#ifdef TARGET_FD_LAUNCH_TWO
++static uint32_t schedule_at,schedule_deadline;
++#endif
++static uint32_t armed,running,adjusted_input,input,forward,step;
++volatile uint8_t fd_rev_acquiring;
++static uint32_t stuck_rotor_inhibit,drive_safety_limit_inhibit,heli_coast_active;
++static uint32_t heli_coast_restart_inhibit,fd_power_starting,prop_brake_active;
++static uint32_t duty_cycle_setpoint,duty_cycle,adjusted_duty_cycle,last_duty_cycle;
++static uint32_t zero_crosses,commutation_interval,thiszctime,commutation_intervals[6];
++static uint32_t average_interval,last_average_interval,desync_check,bad_count,bemfcounter,bemf_timeout_happened;
++static uint32_t fd_reposition_diag[8];
++#include "fd6288_start_retry_diag.h"
++static volatile FdStartRetryDiagnostics fd_start_retry_diag;
++/* ACTUAL_RETRY_RECORD */
++#define fdAlignBegin(...) ((void)0)
++#define fdEdgeBegin(...) ((void)0)
++static unsigned stepper_sine;
++
++static uint8_t auto_advance_level,temp_advance;
++static uint32_t __get_PRIMASK(void){return mask;}
++static void __disable_irq(void){mask=1;}
++static void __set_PRIMASK(uint32_t v){mask=v;}
++#define ADC_ZCD_RESET_COUNT 0
++#define ADC_ZCD_RESET_TIMEOUT 1
++#define FD_POWER_WINDOW_END 1
++#define SET_DUTY_CYCLE_ALL(v) (outputs=(v))
++#define SET_INTERVAL_TIMER_COUNT(v) ((void)(v))
++#define SET_HELI_COAST_HIGH_Z_SAMPLE(v) (outputs=0)
++#define fdTraceEvent(...) ((void)0)
++#define fdTraceFreeze(...) ((void)0)
++#define fdTracePinFailure() (failure_pin++)
++#define fdEdgeClose(...) ((void)0)
++#define fdLightHandoff(...) ((void)0)
++#define fdLightRetry(...) ((void)0)
++#define fdLightEdge(...) ((void)0)
++static void adcZcdSeedHandoff(uint32_t v){(void)v;}
++static unsigned detector_timeouts;
++static void adcZcdResetAcquisition(uint32_t v){if(v==ADC_ZCD_RESET_TIMEOUT)detector_timeouts++;scheduled=0;}
++static unsigned stuckRotorGuardInput(void){return stuck_rotor_inhibit;}
++static void allOff(void){outputs=0;scheduled=0;}
++static void commutate(void){step=forward?(step==6?1:step+1):(step==1?6:step-1);commutations++;scheduled=0;
++#ifdef TARGET_FD_LAUNCH_TWO
++scheduled=0; /* actual commutate cancels the pending timer */
++#endif
++}
++static void fdAsyncScheduleDeadline(uint32_t a,uint32_t b){
++#ifdef TARGET_FD_LAUNCH_TWO
++schedule_at=a;schedule_deadline=b;
++#else
++(void)a;(void)b;
++#endif
++scheduled++;}
++static void fdBenchFinish(uint8_t reason){fdStartRetryFinish(DWT->CYCCNT,reason);last_reason=reason;fd_power_bench.active_id=0;}
++static void fdPowerRequestStop(void *p,uint32_t reason){(void)p;(void)reason;}
++static void fdPowerOperatorZero(void *p){(void)p;}
++static unsigned fdBenchConfigOk(void){return 1;}
++static void heliCoastTrackingLost(uint8_t inhibit){assert(fd_power_bench.inhibit);allOff();running=0;heli_coast_restart_inhibit=inhibit;}
++static void fdBenchStop(uint8_t reason);
++#define fdBenchObserve(...) ((void)0)
++#define fdTraceTrialFinish(...) ((void)0)
++#define FD_POWER_FADE_TICKS (20000u*160u)
++static unsigned min_startup_duty=360,minimum_duty_cycle=210;
++static unsigned driveEffectiveDutyLimit(void){return 610;}
++/* ACTUAL_SERVICE */
++/* ACTUAL_ADAPTER */
++
++
++
++static void begin(uint32_t start, unsigned dir)
++{
++    DWT->CYCCNT = start;
++    fd_power_policy.started = start;
++    fdRevBeginPolicy(&fd_rev, start);
++    fd_power_bench.inhibit = 0; fd_power_bench.active_id = 1; fd_power_bench.floor = 360;
++    armed = running = fd_rev_acquiring = 1; adjusted_input = input = 215;
++    forward = dir; step = dir ? 5 : 3;
++    mask = stuck_rotor_inhibit = drive_safety_limit_inhibit = heli_coast_active = 0;
++    heli_coast_restart_inhibit = prop_brake_active = stepper_sine = 0;
++    outputs = 123; commutations = scheduled = last_reason = 0;
++    bemf_timeout_happened = detector_timeouts = 0;
++    fdStartRetryBegin(start);
++}
++static void position(void)
++{
++    unsigned before = commutations;
++    DWT->CYCCNT = fd_rev.sector_at + 30000u*160u - 1;
++    fdRevTick(); assert(commutations == before && fd_rev.align_left == 2);
++    DWT->CYCCNT++; fdRevTick();
++    assert(step == (forward ? 6u : 2u) && fd_rev.align_left == 1);
++    DWT->CYCCNT = fd_rev.sector_at + 300000u*160u - 1;
++    fdRevTick(); assert(fd_rev.stage == FD_REV_ALIGN);
++    DWT->CYCCNT++; fdRevTick();
++    assert(fd_rev.stage == FD_REV_OPEN && step == (forward ? 2u : 6u));
++    assert(fd_rev.period == 30000u*160u && !fd_rev.confidence);
++    assert(fd_start_retry_diag.rows[fd_rev.sr_attempts-1u].launch_at ==
++        (uint32_t)(fd_rev.sector_at - fd_power_policy.started));
++    outputs = 123;
++}
++static void edge(unsigned us)
++{
++    DWT->CYCCNT = fd_rev.sector_at + us*160u;
++    fdRevObserveEdge();
++    if (fd_rev.stage == FD_REV_PENDING) {
++        DWT->CYCCNT = fd_rev.edge_at + fd_rev.delay;
++        fdRevTick();
++    }
++}
++static void fail_sector(void)
++{
++    unsigned before = commutations;
++    DWT->CYCCNT = fd_rev.sector_at + fd_rev.period - 1;
++    fdRevTick(); assert(commutations == before && fd_rev.stage == FD_REV_OPEN);
++    DWT->CYCCNT++; fdRevTick();
++    assert(!outputs && !scheduled && commutations == before);
++}
++static void restart(void)
++{
++    assert(fd_rev.stage == FD_REV_RELAX && !outputs && !fdAsyncAllowed());
++    uint32_t off = fd_rev.sector_at;
++    unsigned before = commutations, attempts = fd_rev.sr_attempts;
++    fdBenchWritePwm(999); assert(!outputs);
++    DWT->CYCCNT = off + FD_SR_RELAX_TICKS - 1;
++    fdRevTick(); assert(fd_rev.stage == FD_REV_RELAX && !outputs);
++    DWT->CYCCNT++; fdRevTick();
++    assert(commutations == before + 1 && fd_rev.stage == FD_REV_ALIGN);
++    assert(fd_rev.sr_attempts == attempts + 1 && fd_rev.sr_failures == attempts);
++    assert(step == (forward ? 5u : 3u) && fd_rev.align_left == 2);
++    assert(!fd_rev.confidence && !fd_rev.seen && !fd_rev.reposition_used);
++    assert(!fd_rev.measured && !fd_rev.last_real_period && !zero_crosses);
++    assert(fd_rev.sr_attempt_at == DWT->CYCCNT);
++}
++int main(void)
++{
++    assert(FD_SR_TOTAL_TICKS == 2090000u*160u);
++    for (unsigned wrap=0; wrap<2; wrap++) for (unsigned dir=0; dir<2; dir++) {
++        uint32_t start = wrap ? UINT32_MAX-1000u : 1000u;
++        /* Missing first or any subsequent startup edge gets full recovery,
++         * not a blind commutation, rotated seed, or same-vector re-kick. */
++        for (unsigned accepted=0; accepted<6; accepted++) {
++            begin(start,dir);
++            for (unsigned attempt=1; attempt<=3; attempt++) {
++                position();
++                for (unsigned n=0;n<accepted;n++) edge(8000);
++                fail_sector();
++                assert(fd_rev.sr_failures == attempt);
++                assert(bemf_timeout_happened == attempt && detector_timeouts == attempt);
++                assert(fd_start_retry_diag.rows[attempt-1].qualified_edges == accepted);
++                assert(fd_start_retry_diag.rows[attempt-1].failure_kind == FD_SR_FAIL_SECTOR);
++                if (attempt<3) restart();
++            }
++            assert(fd_power_bench.inhibit && !running && !outputs && !scheduled);
++            assert(last_reason == FD_BENCH_NO_LOCK && fd_rev.sr_attempts == 3);
++            fdBenchWritePwm(999); assert(!outputs && fdBenchGuardInput());
++            unsigned before = commutations;
++            DWT->CYCCNT += 2000000u*160u; fdRevTick();
++            assert(commutations == before && fd_rev.sr_attempts == 3);
++            adjusted_input=0; assert(!fdBenchGuardInput());
++        }
++        /* Six real feedback events on any attempt reach normal operation. */
++        for (unsigned success=1; success<=3; success++) {
++            begin(start,dir);
++            for(unsigned attempt=1; attempt<success; attempt++) {
++                position(); edge(8000); fail_sector(); restart();
++            }
++            position();
++            for(unsigned n=0;n<6;n++) edge(n ? 8000 : 500);
++            assert(fd_rev.stage == FD_REV_CLOSED && !fd_rev_acquiring && zero_crosses == 6);
++            assert(fd_start_retry_diag.successful_attempt == success);
++            assert(fd_start_retry_diag.rows[success-1].qualified_edges == 6);
++            assert(fd_rev.sr_failures == success-1 && bemf_timeout_happened == success-1);
++            assert(!fdRevDeadlinePolicy(&fd_rev,start+FD_SR_TOTAL_TICKS,start));
++            /* Runtime loss uses a stop, never startup re-entry. */
++            unsigned attempts=fd_rev.sr_attempts;
++            fdBenchStop(FD_BENCH_LOST_FEEDBACK);
++            assert(!running && !outputs && !scheduled && fd_power_bench.inhibit);
++            DWT->CYCCNT+=FD_SR_RELAX_TICKS; fdRevTick(); assert(fd_rev.sr_attempts==attempts);
++        }
++    }
++    /* Very early qualified feedback is adopted, never fixed30ms forced dwell. */
++    const unsigned early_us[]={1,339,500,1000,4000};
++    for(unsigned i=0;i<5;i++) {
++        begin(0,1); position(); uint32_t at=fd_rev.sector_at;
++        DWT->CYCCNT=at+early_us[i]*160u; fdRevObserveEdge();
++        assert(fd_rev.stage==FD_REV_PENDING && fd_rev.confidence==1);
++        assert(fd_rev.delay==500u*160u && scheduled && !fd_rev.sr_failures);
++        unsigned before=commutations;
++        DWT->CYCCNT=fd_rev.edge_at+fd_rev.delay-1; fdRevTick(); assert(commutations==before);
++        DWT->CYCCNT++; fdRevTick(); assert(commutations==before+1);
++        assert(fd_rev.period==FD_REV_RETRY_TICKS && fd_rev.stage==FD_REV_OPEN);
++    }
++    /* Event at exactly a sector deadline cannot rescue an expired attempt. */
++    begin(0,1); position();
++    DWT->CYCCNT=fd_rev.sector_at+fd_rev.period; fdRevObserveEdge();
++    assert(fd_rev.stage==FD_REV_RELAX && fd_rev.sr_failures==1 && !fd_rev.confidence && !outputs);
++    /* Partial/pending handoff cannot renew per-attempt or global caps. */
++    for(unsigned phase=0;phase<3;phase++) {
++        begin(0,1); position();
++        if(phase){fd_rev.stage=FD_REV_PENDING;fd_rev.confidence=phase==2?6:1;fd_rev.edge_at=FD_SR_ATTEMPT_TICKS-1;fd_rev.delay=500u*160u;scheduled=1;}
++        DWT->CYCCNT=FD_SR_ATTEMPT_TICKS; fdRevTick();
++        assert(fd_rev.stage==FD_REV_RELAX && !outputs && !scheduled);
++        assert(fd_rev.sr_failure_kind==FD_SR_FAIL_ATTEMPT);
++    }
++    for(unsigned state=0;state<3;state++) {
++        begin(0,1); position();
++        if(state==1)fail_sector();
++        if(state==2){fd_rev.stage=FD_REV_PENDING;fd_rev.confidence=6;scheduled=1;}
++        DWT->CYCCNT=FD_SR_TOTAL_TICKS; fdRevTick();
++        assert(fd_power_bench.inhibit && !outputs && !scheduled && !running);
++    }
++    /* Operator zero, disarm and native faults in alignment/open/pending/off wait. */
++    for(unsigned state=0;state<4;state++) for(unsigned fault=0;fault<4;fault++) {
++        begin(0,1);
++        if(state)position();
++        if(state==2){DWT->CYCCNT=fd_rev.sector_at+500u*160u;fdRevObserveEdge();}
++        if(state==3)fail_sector();
++        unsigned attempts=fd_rev.sr_attempts,before=commutations;
++        if(fault==0)adjusted_input=0;
++        if(fault==1)armed=0;
++        if(fault==2)stuck_rotor_inhibit=1;
++        if(fault==3)drive_safety_limit_inhibit=1;
++        fdBenchService();
++        assert(!fd_rev_acquiring && !fd_power_bench.active_id);
++        DWT->CYCCNT+=FD_SR_RELAX_TICKS+500000u*160u;fdRevTick();
++        assert(commutations==before && fd_rev.sr_attempts==attempts);
++    }
++    const char *record_path = getenv("FD_SR_TEST_RECORD");
++    if (record_path) {
++        FILE *f = fopen(record_path,"wb"); assert(f);
++        for (unsigned success=1;success<=4;success++) {
++            /* Write first-attempt success, third-attempt success, all failures. */
++            if(success==2)continue;
++            begin(0,1);
++            for(unsigned attempt=1;attempt<=3;attempt++) {
++                position();
++                if(attempt==success) {
++                    for(unsigned n=0;n<6;n++)edge(8000);
++                    fdBenchFinish(FD_BENCH_OPERATOR_ZERO);
++                    break;
++                }
++                fail_sector();if(attempt<3)restart();
++            }
++            FdStartRetryDiagnostics record=fd_start_retry_diag;
++            assert(fwrite(&record,sizeof(record),1,f)==1);
++        }
++        assert(fclose(f)==0);
++    }
++    puts("PASS ALIGN_RETRY actual policy/tick/event/PWM/stop: normal500us and six-edge handoff, no forced first step; full30+300ms restart after100ms off;3 attempts/native timeout count; first/later-sector failures; fixed630ms/2.09s caps; held-throttle latch; faults/zero/disarm; directions/wrap");
++}
+diff --git a/tests/run_fd6288_start_retry_tests.cjs b/tests/run_fd6288_start_retry_tests.cjs
+new file mode 100644
+index 0000000..927f125
+--- /dev/null
++++ b/tests/run_fd6288_start_retry_tests.cjs
+@@ -0,0 +1,44 @@
++const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),assert=require('node:assert/strict'),{spawnSync}=require('node:child_process');
++const root=path.resolve(__dirname,'..'),main=fs.readFileSync(path.join(root,'Src/main.c'),'utf8');
++function fn(signature){
++ const start=main.indexOf(signature),open=main.indexOf('{',start);assert(start>=0&&open>start);
++ if(signature==='static void fdBenchService(void)')return main.slice(start,main.indexOf('static uint8_t fdBenchGuardInput(void)',start));
++ let depth=0;for(let i=open;i<main.length;i++){if(main[i]==='{')depth++;if(main[i]==='}'&&!--depth)return main.slice(start,i+1);}throw Error(signature);
++}
++const ph=fs.readFileSync(path.join(root,'Inc/fd6288_startup_power.h'),'utf8');
++const reasons=ph.slice(ph.indexOf('enum {'),ph.indexOf('};',ph.indexOf('enum {'))+2);
++const source=fs.readFileSync(path.join(__dirname,'fd6288_start_retry_adapter_tests.c'),'utf8').replace('/* ACTUAL_REASONS */',reasons)
++  .replace('/* ACTUAL_RETRY_RECORD */',[
++  'static void fdStartRetryRecord(uint32_t now, uint8_t action)',
++  'static void fdStartRetryBegin(uint32_t now)',
++  'static void fdStartRetryEdgeRecord(uint32_t now)',
++  'static void fdStartRetryFinish(uint32_t now, uint8_t reason)'
++ ].map(fn).join('\n'))
++ .replace('/* ACTUAL_SERVICE */',fn('static void fdBenchService(void)'))
++ .replace('/* ACTUAL_ADAPTER */',[
++  'static void fdBenchStop(uint8_t reason)','static uint8_t fdBenchGuardInput(void)',
++  'static void fdRevTick(void)','static void fdRevObserveEdge(void)','static void fdBenchWritePwm(uint16_t ticks)', 'static uint8_t fdAsyncAllowed(void)'
++ ].map(fn).join('\n')).replace('while ((uint32_t)(DWT->CYCCNT - off_at) < 5u * FD_REV_US) {}',
++ 'while ((uint32_t)(DWT->CYCCNT - off_at) < 5u * FD_REV_US) {DWT->CYCCNT++;}');
++// Peripheral simulation only: DWT advances while actual code polls5us bridge gap.
++
++const dir=fs.mkdtempSync(path.join(os.tmpdir(),'fd-launch-hold-')),exe=path.join(dir,'test');
++for(const [cmd,args,input] of [[process.env.CC||'cc',[...(process.argv.includes('--two')?['-DTARGET_FD_LAUNCH_TWO']:[]),'-std=c11','-O1','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-I'+path.join(root,'Inc'),'-x','c','-','-o',exe],source],[exe,[],undefined]]){
++ const r=spawnSync(cmd,args,{input,env:{...process.env,FD_SR_TEST_RECORD:path.join(dir,'records.bin')},encoding:'utf8'});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');assert.equal(r.status,0);
++}
++
++const {decode,SIZE}=require('../tools/scripts/fd6288_start_retry_decode.cjs');
++const records=fs.readFileSync(path.join(dir,'records.bin'));assert.equal(records.length,SIZE*3);
++const decoded=[0,1,2].map(i=>decode(records.subarray(i*SIZE,(i+1)*SIZE)));
++assert.deepEqual(decoded.map(d=>d.successful_attempt),[1,3,null]);
++assert.deepEqual(decoded.map(d=>d.failed_attempts),[0,2,3]);
++assert.deepEqual(decoded.map(d=>d.attempts_started),[1,3,3]);
++for(const d of decoded)for(let i=1;i<d.attempts.length;i++){
++ assert(d.attempts[i].begin_ms-d.attempts[i-1].off_ms>=100);
++ assert(d.attempts[i].launch_ms-d.attempts[i].begin_ms>=330);
++}
++for(const offset of [0,4,12,16,32,40,44,48,64,80]){
++ const bad=Buffer.from(records.subarray(0,SIZE));bad.writeUInt32LE(0xffffffff,offset);assert.throws(()=>decode(bad));
++}
++assert.throws(()=>decode(Buffer.alloc(SIZE-1)));
++console.log('PASS actual C summary -> JS: first/third attempt success and3 failures, repeated positioning/off times, corrupt ABI/counters/timestamps rejected');
+diff --git a/tools/scripts/fd6288_start_retry_capture.cjs b/tools/scripts/fd6288_start_retry_capture.cjs
+new file mode 100644
+index 0000000..119a1c8
+--- /dev/null
++++ b/tools/scripts/fd6288_start_retry_capture.cjs
+@@ -0,0 +1,44 @@
++// Read-only latest startup/retry episode. No halt/reset/RAM writes/flash/throttle.
++const fs=require('fs'),path=require('path'),cp=require('child_process'),assert=require('assert/strict');
++const {connect,parseHex}=require('./fd6288_startup_capture.cjs');
++const {SIZE,decode}=require('./fd6288_start_retry_decode.cjs');
++async function dump(elf,out,stopped){
++ assert(stopped,'Require --stopped after operator confirmation');assert(!fs.existsSync(out),'Output already exists');
++ const nm=cp.execFileSync('arm-none-eabi-nm',['-S','--defined-only',elf],{encoding:'utf8'}),syms={};
++ for(const row of nm.split('\n')){const m=row.match(/^([0-9a-f]+) ([0-9a-f]+) \w (.+)$/);if(m)syms[m[3]]={address:parseInt(m[1],16),size:parseInt(m[2],16)};}
++ assert.equal(syms.fd_start_retry_diag?.size,SIZE,'Matching ALIGN_RETRY ELF required');
++ const hex=parseHex(fs.readFileSync(elf.replace(/\.elf$/,'.hex'),'utf8'));
++ const c=await connect();
++ try{
++  async function mem(address,n){const r=await c.rpc(`read_memory 0x${address.toString(16)} 8 ${n}`),v=r.trim().split(/\s+/).map(Number);assert.equal(v.length,n);assert(v.every(x=>Number.isInteger(x)&&x>=0&&x<=255));return Buffer.from(v);}
++  async function scalar(name){assert(syms[name],name);const s=syms[name];return(await mem(s.address,s.size)).readUIntLE(0,s.size);}
++  async function check(){assert.equal((await c.rpc('[target current] curstate')).trim(),'running');assert.equal((await mem(0xe000ed08,4)).readUInt32LE(),0x08001000);for(const n of ['input','adjusted_input','newinput','running','duty_cycle','heli_coast_active'])assert.equal(await scalar(n),0,n);assert.equal((await mem(0x48000010,4)).readUInt32LE()&0x1f00,0);assert.equal((await mem(0x48001410,4)).readUInt32LE()&1,0);for(let i=0;i<4;i++)assert.equal((await mem(0x40012c34+4*i,4)).readUInt32LE(),0);}
++  await check();
++  // Selected code identity, not a full-flash readback.
++  for(const name of ['fdRevTick','zcfoundroutine','fdBenchService','fdBenchStop','main','loadEEpromSettings']){
++   const s=syms[name];assert(s&&s.size>0&&s.size<8192,name);
++   const b=await mem(s.address,s.size);for(let i=0;i<b.length;i++)assert.equal(b[i],hex.get(s.address+i),'Code identity: '+name);
++  }
++  const address=syms.fd_start_retry_diag.address,a=await mem(address,SIZE);
++  const summary=decode(a),settings=await mem(syms.eepromBuffer.address,48);
++  assert.equal(settings[19],0,'Sine startup must be off');assert.equal(settings[24],24,'Expected original24k mainline parameters');
++  assert.equal(await scalar('fd_rev_acquiring'),0,'Still acquiring');
++  assert.equal(syms.fd_power_bench.size,40);
++  const benchRaw=await mem(syms.fd_power_bench.address,40);
++  assert.equal(benchRaw.readUInt32LE(32),0,'Active trial');
++  assert.equal(benchRaw.readUInt32LE(12),summary.trial,'Trial mismatch');
++  await check();assert.deepEqual(await mem(address,SIZE),a,'Summary changed during stopped read');
++  async function words(address,n){const v=(await c.rpc(`read_memory 0x${address.toString(16)} 32 ${n}`)).trim().split(/\s+/).map(Number);assert.equal(v.length,n);assert(v.every(x=>Number.isInteger(x)&&x>=0&&x<=0xffffffff));return v;}
++  const clockA=await words(0xe0001000,2),demcr=(await words(0xe000edfc,1))[0],clockB=await words(0xe0001000,2);
++  const clock={ctrl:clockB[0],demcr,cyccnt_first:clockA[1],cyccnt_second:clockB[1],delta:(clockB[1]-clockA[1])>>>0};
++  clock.valid=Boolean((clock.ctrl&1)&&(demcr&0x1000000)&&clock.delta>0);
++  assert(clock.valid,'Control clock invalid: do not interpret startup timings');
++  await check();assert.deepEqual(await mem(syms.fd_power_bench.address,40),benchRaw,'Bench changed');
++  const result={read_at:new Date().toISOString(),elf:path.resolve(elf),summary,clock,
++    ram_settings:{sine:settings[19],pwm_frequency_khz:settings[24],startup_power:settings[25],motor_kv:settings[26]*40+20,motor_poles:settings[27],advance_raw:settings[23],auto_advance:settings[47]},
++    bench_raw_hex:benchRaw.toString('hex'),raw_hex:a.toString('hex')};
++  fs.writeFileSync(out,JSON.stringify(result,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify(result,null,2));return result;
++ }finally{c.close();}
++}
++if(require.main===module){const [elf,out,...flags]=process.argv.slice(2);assert(elf&&out,'Usage: node fd6288_start_retry_capture.cjs MATCHING.elf NEW.json --stopped');dump(elf,out,flags.includes('--stopped')).catch(e=>{console.error(e);process.exitCode=1;});}
++module.exports={dump};
+diff --git a/tools/scripts/fd6288_start_retry_decode.cjs b/tools/scripts/fd6288_start_retry_decode.cjs
+new file mode 100644
+index 0000000..0c47bac
+--- /dev/null
++++ b/tools/scripts/fd6288_start_retry_decode.cjs
+@@ -0,0 +1,35 @@
++const assert=require('node:assert/strict');
++const SIZE=168, NONE=0xffffffff;
++function decode(b){
++ assert.equal(b.length,SIZE,'Retry summary size');
++ const names=['magic','abi','trial','attempts','failures','stage','confidence','stop_reason','successful_attempt','finished_at','max_attempts','total_limit'];
++ const h=Object.fromEntries(names.map((n,i)=>[n,b.readUInt32LE(i*4)]));
++ assert.equal(h.magic,0x46535231);assert.equal(h.abi,1);assert.equal(h.max_attempts,3);
++ assert.equal(h.total_limit,2090000*160);assert(h.trial>0,'No trial recorded');
++ assert(h.attempts>=1&&h.attempts<=3&&h.failures<=h.attempts);
++ assert(h.stage<=5&&h.confidence<=6&&h.stop_reason<=14);
++ assert(h.successful_attempt<=h.attempts);
++ const fields=['begin_at','launch_at','first_edge_at','last_edge_at','qualified_edges','fail_at','off_at','end_at','failure_kind','handoff_at'];
++ const kinds=['none','feedback_sector_timeout','attempt_time_limit','whole_start_time_limit'];
++ const ms=n=>n===NONE?null:n/160000;
++ const attempts=[];
++ for(let i=0;i<h.attempts;i++){
++  const raw=Object.fromEntries(fields.map((n,j)=>[n,b.readUInt32LE(48+40*i+4*j)]));
++  assert(raw.qualified_edges<=6&&raw.failure_kind<=3);
++  for(const n of fields.filter(n=>n.endsWith('_at')))assert(raw[n]===NONE||raw[n]<=480000000,'Implausible startup age: '+n);
++  assert(raw.begin_at!==NONE);
++  if(raw.launch_at!==NONE)assert(raw.launch_at>=raw.begin_at);
++  if(raw.first_edge_at!==NONE){assert(raw.launch_at!==NONE&&raw.first_edge_at>=raw.launch_at);assert(raw.last_edge_at>=raw.first_edge_at);}
++  if(raw.handoff_at!==NONE)assert(raw.qualified_edges===6&&raw.handoff_at>=raw.last_edge_at);
++  if(raw.fail_at!==NONE)assert(raw.failure_kind!==0);
++  const row={attempt:i+1};for(const n of fields)if(n.endsWith('_at'))row[n.replace('_at','_ms')]=ms(raw[n]);
++  row.qualified_edges=raw.qualified_edges;row.failure_kind=kinds[raw.failure_kind];
++  attempts.push(row);
++ }
++ return {trial:h.trial,attempts_started:h.attempts,failed_attempts:h.failures,
++  stage:h.stage,confidence:h.confidence,stop_reason:h.stop_reason,
++  successful_attempt:h.successful_attempt||null,startup_finished_ms:ms(h.finished_at),
++  total_limit_ms:ms(h.total_limit),attempts,
++  caveats:['Latest throttle episode;3 attempts total including the first. Accepted events are ADC-qualified feedback, not measured rotor angle/direction.','Times are software DWT observations, not oscilloscope timestamps. Successful startup timing freezes at handoff; stop_reason may describe a later operator stop/runtime loss.','First30ms+second300ms positioning repeats after100ms full bridge-off. Normal feedback is adopted; no forced first-vector dwell or early-event re-kick. Runtime feedback loss stops without restart.']};
++}
++module.exports={SIZE,decode};

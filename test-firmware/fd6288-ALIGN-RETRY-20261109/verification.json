@@ -1,0 +1,30 @@
+{
+  "status": "offline_passed_not_flashed",
+  "baseline_disabled_byte_identical": true,
+  "baseline_hex_sha256": "bfe2c4a8fefae61bb0506f8167960624a477752443ac65a5d6f8339e0850035f",
+  "elf_hex_bin_match": true,
+  "main_hex_bounds": [
+    134221824,
+    134281215
+  ],
+  "main_hex_bytes": 40984,
+  "bin_bytes": 59392,
+  "selected_symbols": {
+    "address": 536870932,
+    "size": 168
+  },
+  "reader_symbols_valid": true,
+  "no_sine_blue_or_rekick_symbols": true,
+  "settings_restore_bounds": [
+    134281216,
+    134283263
+  ],
+  "settings_restore_matches_original_full_page": true,
+  "hashes": {
+    "AM32_CUSTOM_FD6288_G431_2.20.hex": "6629c95009f48f5ab1e1608850113f449dda9b8589df1155dd1550bb020b3284",
+    "AM32_CUSTOM_FD6288_G431_2.20.elf": "2d2f7eef0165e644ebc406b468a4571e810cb4abb8cc68a97d2f735f22e87e84",
+    "AM32_CUSTOM_FD6288_G431_2.20.bin": "43081e7e0731df9ccf8ee3a39c80374583ba32f2c4df09ec852010cca304ad8a",
+    "settings-page.bin": "4f426d535486cb0d9b9c8b7bc0b74cd390efb56c73e9116e3a64f6c5a7baf7f3",
+    "restore-settings.hex": "2559d6b4daf6e46cffc2ed3ec01a76d5899114bee42385ae06d6658beee20f5c"
+  }
+}
