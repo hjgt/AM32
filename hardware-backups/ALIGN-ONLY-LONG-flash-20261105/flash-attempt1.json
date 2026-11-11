@@ -1,0 +1,10 @@
+[
+  {
+    "operator": "User requested implementation of long observation version; direct flashing and skipped readback follow prior authorization",
+    "image": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-ALIGN-ONLY-LONG-20261105/AM32_CUSTOM_FD6288_G431_2.20.hex"
+  },
+  {
+    "command": "reset init",
+    "result": "ERR:\n"
+  }
+]

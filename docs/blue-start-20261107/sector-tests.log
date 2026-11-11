@@ -1,0 +1,2 @@
+PASS sector statistics: wrap, blank exclusion, counters, edges, freeze, capacity, restart
+PASS C->JS sector ABI and corrupt/unfinished capture rejection

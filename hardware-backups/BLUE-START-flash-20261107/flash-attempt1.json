@@ -1,0 +1,10 @@
+[
+  {
+    "operator": "User approved Bluejay-style first-step timeout and startup-only100ms bounded retries; second alignment stays300ms; direct flash and skipped readback follow session authorization; live zero gate below",
+    "image": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-BLUE-START-20261107/AM32_CUSTOM_FD6288_G431_2.20.hex"
+  },
+  {
+    "command": "read_memory 0x20004672 8 2",
+    "result": "ERR:read_memory: failed to read memory"
+  }
+]

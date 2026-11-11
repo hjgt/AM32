@@ -1,0 +1,3 @@
+PASS 9994 +/-2 duty transitions: old trigger +244 fits both old/new power compares.
+PASS all monotonic 210..400 positioning/acquisition transitions.
+Counterexample only for a larger drop: request400->210, old CCR4=667, new compare704, 667+244>704. This does not establish such a driven transition in trial18.

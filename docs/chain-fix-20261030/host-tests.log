@@ -1,0 +1,45 @@
+PASS: 474 assertions against actual ADC/commutation/fault functions.
+Not a motor model: load, current, timing margins and startup still require hardware validation.
+Host test executable: /var/folders/1y/skn0ph2949j3nq3fjnvkbcjm0000gn/T/fd6288-host-tests-nWWvVt/test-0
+PASS: 488 assertions against actual ADC/commutation/fault functions.
+Not a motor model: load, current, timing margins and startup still require hardware validation.
+Host test executable: /var/folders/1y/skn0ph2949j3nq3fjnvkbcjm0000gn/T/fd6288-host-tests-nWWvVt/test-1
+PASS: 226 assertions against actual ADC/commutation/fault functions.
+Not a motor model: load, current, timing margins and startup still require hardware validation.
+Host test executable: /var/folders/1y/skn0ph2949j3nq3fjnvkbcjm0000gn/T/fd6288-host-tests-nWWvVt/test-2
+PASS: 226 assertions against actual ADC/commutation/fault functions.
+Not a motor model: load, current, timing margins and startup still require hardware validation.
+Host test executable: /var/folders/1y/skn0ph2949j3nq3fjnvkbcjm0000gn/T/fd6288-host-tests-nWWvVt/test-3
+PASS: 12627 assertions against actual ADC/commutation/fault functions.
+Not a motor model: load, current, timing margins and startup still require hardware validation.
+Host test executable: /var/folders/1y/skn0ph2949j3nq3fjnvkbcjm0000gn/T/fd6288-host-tests-nWWvVt/test-4
+PASS: 12804 assertions against actual ADC/commutation/fault functions.
+Not a motor model: load, current, timing margins and startup still require hardware validation.
+Host test executable: /var/folders/1y/skn0ph2949j3nq3fjnvkbcjm0000gn/T/fd6288-host-tests-nWWvVt/test-5
+PASS: 773 assertions against actual ADC/commutation/fault functions.
+Not a motor model: load, current, timing margins and startup still require hardware validation.
+Host test executable: /var/folders/1y/skn0ph2949j3nq3fjnvkbcjm0000gn/T/fd6288-host-tests-nWWvVt/test-7
+PASS: 945 assertions against actual ADC/commutation/fault functions.
+Not a motor model: load, current, timing margins and startup still require hardware validation.
+Host test executable: /var/folders/1y/skn0ph2949j3nq3fjnvkbcjm0000gn/T/fd6288-host-tests-nWWvVt/test-8
+PASS: 83316 assertions against actual ADC/commutation/fault functions.
+Not a motor model: load, current, timing margins and startup still require hardware validation.
+Host test executable: /var/folders/1y/skn0ph2949j3nq3fjnvkbcjm0000gn/T/fd6288-host-tests-nWWvVt/test-11
+PASS: 83375 assertions against actual ADC/commutation/fault functions.
+Not a motor model: load, current, timing margins and startup still require hardware validation.
+Host test executable: /var/folders/1y/skn0ph2949j3nq3fjnvkbcjm0000gn/T/fd6288-host-tests-nWWvVt/test-12
+PASS: 83518 assertions against actual ADC/commutation/fault functions.
+Not a motor model: load, current, timing margins and startup still require hardware validation.
+Host test executable: /var/folders/1y/skn0ph2949j3nq3fjnvkbcjm0000gn/T/fd6288-host-tests-nWWvVt/test-13
+PASS: 83680 assertions against actual ADC/commutation/fault functions.
+Not a motor model: load, current, timing margins and startup still require hardware validation.
+Host test executable: /var/folders/1y/skn0ph2949j3nq3fjnvkbcjm0000gn/T/fd6288-host-tests-nWWvVt/test-14
+PASS: 586 assertions against actual ADC/commutation/fault functions.
+Not a motor model: load, current, timing margins and startup still require hardware validation.
+Host test executable: /var/folders/1y/skn0ph2949j3nq3fjnvkbcjm0000gn/T/fd6288-host-tests-nWWvVt/test-17
+PASS: 694 assertions against actual ADC/commutation/fault functions.
+Not a motor model: load, current, timing margins and startup still require hardware validation.
+Host test executable: /var/folders/1y/skn0ph2949j3nq3fjnvkbcjm0000gn/T/fd6288-host-tests-nWWvVt/test-19
+PASS: 744 assertions against actual ADC/commutation/fault functions.
+Not a motor model: load, current, timing margins and startup still require hardware validation.
+Host test executable: /var/folders/1y/skn0ph2949j3nq3fjnvkbcjm0000gn/T/fd6288-host-tests-nWWvVt/test-20

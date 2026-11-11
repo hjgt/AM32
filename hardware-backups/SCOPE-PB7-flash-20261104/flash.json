@@ -1,0 +1,18 @@
+[
+  {
+    "operator": "fresh zero confirmation; explicitly requested direct flash without checks or verification",
+    "image": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-SCOPE-PB7-20261104/AM32_CUSTOM_FD6288_G431_2.20.hex"
+  },
+  {
+    "command": "reset init",
+    "result": "OK:"
+  },
+  {
+    "command": "flash write_image erase {/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-SCOPE-PB7-20261104/AM32_CUSTOM_FD6288_G431_2.20.hex}",
+    "result": "OK:auto erase enabled\nwrote 40032 bytes from file /Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-SCOPE-PB7-20261104/AM32_CUSTOM_FD6288_G431_2.20.hex in 1.216069s (32.148 KiB/s)\n"
+  },
+  {
+    "command": "reset run",
+    "result": "OK:"
+  }
+]

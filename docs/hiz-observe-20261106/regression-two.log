@@ -1,0 +1,1 @@
+PASS actual two-vector adapter: exact500us first delay, one feedback step, second held30ms, late second event observed,392ms cap, no first-event forced step, no third vector, faults, rearm, both directions, wrap

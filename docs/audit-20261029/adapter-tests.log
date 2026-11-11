@@ -1,0 +1,2 @@
+PASS S4T complete first attempt, finite second rescue, absolute cutoff, wrap, healthy handoff, partial-edge exclusion
+PASS actual restart adapter: release/PWM gating, reverse/forward realignment, zero/fault/deadline cancellation (mock service/peripherals)

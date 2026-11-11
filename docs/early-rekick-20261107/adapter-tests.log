@@ -1,0 +1,1 @@
+PASS EARLY_REKICK actual tick/service/event/PWM/stop: <=1ms inclusive, max3 replacements/4pulses,20ms all-off+5us gap, same original launch vector/no re-alignment, ordinary500us path and six usable events, no timeout rescue, faults/zero,630ms budget, directions/wrap

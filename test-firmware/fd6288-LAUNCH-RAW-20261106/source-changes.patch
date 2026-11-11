@@ -1,0 +1,566 @@
+diff --git a/Inc/fd6288_edge_raw.h b/Inc/fd6288_edge_raw.h
+index 2ff2b74..24b7498 100644
+--- a/Inc/fd6288_edge_raw.h
++++ b/Inc/fd6288_edge_raw.h
+@@ -22,7 +22,11 @@ static inline void fdEdgeBegin(uint32_t trial,uint32_t now) {
+ }
+ static inline uint8_t fdEdgeActive(void) {
+ #ifdef TARGET_FD_ALIGN_SAMPLE_PAIR
++#ifdef TARGET_FD_LAUNCH_RAW
++ return fd_edge_observe.abi==4u && !fd_edge_observe.frozen && fd_edge_observe.active!=UINT32_MAX;
++#else
+  return 0;
++#endif
+ #else
+  return !fd_edge_observe.frozen && fd_edge_observe.active!=UINT32_MAX;
+ #endif
+@@ -32,11 +36,29 @@ static inline void fdEdgeClose(uint32_t now) {
+  fd_edge_observe.active=UINT32_MAX;
+ }
+ static inline void fdEdgeFinish(uint32_t now) {
++#ifdef TARGET_FD_LAUNCH_RAW
++ if(fd_edge_observe.frozen)return; /* retain the capture-window end */
++#endif
+  fdEdgeClose(now);fd_edge_observe.end1=now-fd_edge_observe.started;fd_edge_observe.frozen=1;
+ }
+ static inline void fdEdgeStep(uint32_t now,uint8_t stage) {
+ #ifdef TARGET_FD_ALIGN_SAMPLE_PAIR
++#ifdef TARGET_FD_LAUNCH_RAW
++ if(stage!=2u || fd_edge_observe.frozen)return;
++ if(fd_edge_observe.abi==3u) {
++  /* Pair sampling/control already ended in commutate(). Reuse its slots;
++   * clear counters only, never memset12KB in the masked launch path. */
++  fd_edge_observe.abi=4u;
++  fd_edge_observe.sectors=0u;
++  fd_edge_observe.first_samples=fd_edge_observe.seen=fd_edge_observe.count=0u;
++  fd_edge_observe.max_cycles=fd_edge_observe.calls=0u;
++  fd_edge_observe.start0=fd_edge_observe.end0=0u;
++  fd_edge_observe.start1=fd_edge_observe.end1=fd_edge_observe.post_samples=0u;
++  fd_edge_observe.samples[0].present=fd_edge_observe.samples[1].present=0u;
++ }
++#else
+  (void)now;(void)stage;return;
++#endif
+ #endif
+  if(fd_edge_observe.frozen || stage!=2u)return;
+  fd_edge_observe.active=fd_edge_observe.sectors++;
+@@ -56,6 +78,21 @@ static inline uint8_t fdEdgeNeeded(int16_t margin,uint8_t reason,uint8_t flags)
+ static inline void fdEdgeSample(FdEdgeSample v) {
+  if(!fdEdgeActive())return;
+  v.reserved=(uint16_t)fd_edge_observe.sectors;
++#ifdef TARGET_FD_LAUNCH_RAW
++ /* Already-consumed ADC triplets only. First2ms at full consumed rate,
++  * then alternate groups, always retain ACCEPT. At most one24B store. */
++ uint32_t age=(uint32_t)(v.at-fd_edge_observe.started)-fd_edge_observe.start0;
++ if(age>=40000u*160u) {fdEdgeFinish(v.at);return;}
++ uint32_t n=fd_edge_observe.seen++;
++ if(v.reason==7u && !fd_edge_observe.start1)
++  fd_edge_observe.start1=v.at-fd_edge_observe.started;
++ if(age>=2000u*160u && (n&1u) && v.reason!=7u) {
++  fd_edge_observe.post_samples++;return;
++ }
++ fdEdgeStore(2u+fd_edge_observe.first_samples++,v);
++ if(fd_edge_observe.first_samples==512u)fdEdgeFinish(v.at);
++ return;
++#endif
+  if(fd_edge_observe.active==0 && fd_edge_observe.first_samples<256u)
+   fdEdgeStore(2u+fd_edge_observe.first_samples++,v);
+  if(!fd_edge_observe.start1) {
+diff --git a/Inc/fd6288_startup_power.h b/Inc/fd6288_startup_power.h
+index cebac1a..58272e9 100644
+--- a/Inc/fd6288_startup_power.h
++++ b/Inc/fd6288_startup_power.h
+@@ -11,7 +11,7 @@ enum {
+     FD_BENCH_WINDOW = 1, FD_BENCH_NATIVE_STUCK, FD_BENCH_SAFETY_CAP,
+     FD_BENCH_NOT_RUNNING, FD_BENCH_BAD_CONFIG, FD_BENCH_NO_ZERO,
+     FD_BENCH_OPERATOR_ZERO, FD_BENCH_NO_LOCK, FD_BENCH_LOST_FEEDBACK,
+-    FD_BENCH_COMM_LATE, FD_BENCH_COMM_INVALID
++    FD_BENCH_COMM_LATE, FD_BENCH_COMM_INVALID, FD_BENCH_ALIGN_DONE
+ };
+ typedef struct {
+     uint32_t id, elapsed_cycles, accepted, timeouts;
+diff --git a/Inc/fd6288_startup_sequence.h b/Inc/fd6288_startup_sequence.h
+index 9af7972..0fa161f 100644
+--- a/Inc/fd6288_startup_sequence.h
++++ b/Inc/fd6288_startup_sequence.h
+@@ -8,12 +8,37 @@
+ #include "fd6288_sector_diag.h"
+ enum { FD_REV_OFF, FD_REV_ALIGN, FD_REV_OPEN, FD_REV_PENDING, FD_REV_CLOSED, FD_REV_RELAX };
+ enum { FD_REV_NONE, FD_REV_STEP, FD_REV_HANDOFF, FD_REV_RETRY, FD_REV_LAUNCH, FD_REV_PLANNED, FD_REV_RELEASE, FD_REV_REALIGN };
++#ifdef TARGET_FD_ALIGN_ONLY
++#ifndef FD6288_ALIGN_ONLY_SECOND_MS
++#define FD6288_ALIGN_ONLY_SECOND_MS 90
++#endif
++#if FD6288_ALIGN_ONLY_SECOND_MS < 90 || FD6288_ALIGN_ONLY_SECOND_MS > 300
++#error "ALIGN_ONLY second-vector observation must be bounded to 90..300 ms"
++#endif
++enum { FD_REV_ALIGN_MARK = 8, FD_REV_ALIGN_STOP };
++/* Keep the original 60ms second-vector boundary/marker. Only the diagnostic
++ * hold after that boundary changes; original90ms and long300ms are archived
++ * as distinct images. This is a software service deadline, not a HW cutoff. */
++enum { FD_ALIGN_ONLY_EXTRA_TICKS = (FD6288_ALIGN_ONLY_SECOND_MS - 60u) * 1000u * 160u,
++    FD_ALIGN_ONLY_TOTAL_TICKS = (30u + FD6288_ALIGN_ONLY_SECOND_MS) * 1000u * 160u };
++#endif
+ enum { FD_REV_EDGE_IGNORED, FD_REV_EDGE_EARLY, FD_REV_EDGE_LATE,
+     FD_REV_EDGE_SEED, FD_REV_EDGE_PERIOD, FD_REV_EDGE_GOOD, FD_REV_EDGE_READY };
++#ifdef TARGET_FD_ALIGN_SETTLE
++#ifndef FD6288_SECOND_ALIGN_MS
++#define FD6288_SECOND_ALIGN_MS 60
++#endif
++#if FD6288_SECOND_ALIGN_MS < 60 || FD6288_SECOND_ALIGN_MS > 300
++#error "Second alignment must be bounded to 60..300 ms"
++#endif
++#if defined(TARGET_FD_ALIGN_ONLY) && FD6288_SECOND_ALIGN_MS != 60
++#error "ALIGN_ONLY preserves the original60ms marker; use ALIGN_ONLY_SECOND_MS"
++#endif
++#endif
+ enum {
+     FD_REV_US = 160u, FD_REV_ALIGN_TICKS = 30000u * FD_REV_US,
+ #ifdef TARGET_FD_ALIGN_SETTLE
+-    FD_REV_SECOND_ALIGN_TICKS = 60000u * FD_REV_US,
++    FD_REV_SECOND_ALIGN_TICKS = FD6288_SECOND_ALIGN_MS * 1000u * FD_REV_US,
+ #else
+     FD_REV_SECOND_ALIGN_TICKS = FD_REV_ALIGN_TICKS,
+ #endif
+@@ -158,7 +183,11 @@ static inline uint16_t fdDoubleAlignDuty(const FdRevPolicy *s, uint32_t now)
+      * positioning vector keeps the prior 360 request instead of dropping
+      * to 210 for a second 10ms ramp. This is duty, not regulated torque.
+      * No change to vector order, dwell, acquisition budget or duty cap. */
+-    if (s->align_left == 1u) return 360u;
++    if (s->align_left == 1u
++#ifdef TARGET_FD_ALIGN_ONLY
++        || s->align_left == 0u
++#endif
++    ) return 360u;
+ #endif
+     uint32_t us = (uint32_t)(now - s->sector_at) / FD_REV_US;
+     if (us > 10000u) us = 10000u;
+@@ -187,12 +216,11 @@ enum { FD_REPOSITION_RELEASE_TICKS = 20000u*FD_REV_US,
+     FD_REPOSITION_REQUIRED = FD_REPOSITION_RELEASE_TICKS + FD_REV_ALIGN_TICKS +
+         FD_REV_SECOND_ALIGN_TICKS + FD_REPOSITION_ACQ_RESERVE };
+ #ifdef TARGET_FD_FULL_RETRY
+-/* S4T: preserve the entire first390ms attempt. Admit ONE restart only
+- * at an expired sector within390..410ms, then hard stop at820ms total.
+- * Latest entry leaves20ms release +90ms alignment +300ms acquisition.
+- * Bounds are experimental wall-clock limits, not a thermal guarantee. */
+-enum { FD_FULL_RETRY_ENTRY_END = 410000u*FD_REV_US,
+-    FD_FULL_RETRY_END = 820000u*FD_REV_US };
++/* One restart, preserving each attempt's alignment + acquisition allowance.
++ * Baseline390/410/820ms; second-align300ms gives630/650/1300ms.
++ * These bounds do not renew on partial streaks or late service. */
++enum { FD_FULL_RETRY_ENTRY_END = FD_REV_ACQUIRE_TICKS + 20000u*FD_REV_US,
++    FD_FULL_RETRY_END = 2u*FD_REV_ACQUIRE_TICKS + 40000u*FD_REV_US };
+ static __attribute__((noinline)) uint8_t fdRevRetryEligible(const FdRevPolicy *s, uint32_t now)
+ {
+     uint8_t feedback_absent = !s->observed_once;
+@@ -227,6 +255,25 @@ static inline uint8_t fdRevCanReposition(const FdRevPolicy *s, uint32_t now)
+ #endif
+ static inline uint8_t fdRevAdvancePolicy(FdRevPolicy *s, uint32_t now)
+ {
++#ifdef TARGET_FD_ALIGN_ONLY
++    /* Never enter acquisition/reposition. Keep ALIGN throughout the extra
++     * hold so ADC feedback cannot schedule a commutation. sector_at remains
++     * the second vector's start: late marking cannot renew the hold budget. */
++    if (s->stage == FD_REV_OFF) return FD_REV_NONE;
++    if (s->stage != FD_REV_ALIGN) return FD_REV_ALIGN_STOP;
++    if (s->align_left <= 1u) {
++        uint32_t age = now - s->sector_at;
++        if (age >= FD_REV_SECOND_ALIGN_TICKS + FD_ALIGN_ONLY_EXTRA_TICKS) {
++            s->stage = FD_REV_OFF;
++            return FD_REV_ALIGN_STOP;
++        }
++        if (s->align_left == 1u && age >= FD_REV_SECOND_ALIGN_TICKS) {
++            s->align_left = 0u;
++            return FD_REV_ALIGN_MARK;
++        }
++        return FD_REV_NONE;
++    }
++#endif
+ #ifdef TARGET_FD_REPOSITION
+     /* Only AFTER the original rescue is exhausted, at an expired sector
+      * boundary, with enough total time for the complete replacement attempt. */
+@@ -603,6 +650,11 @@ static inline uint8_t fdRevEdgePolicy(FdRevPolicy *s, uint32_t now, uint8_t adva
+ static inline uint8_t fdRevDeadlinePolicy(const FdRevPolicy *s, uint32_t now,
+     uint32_t started)
+ {
++#ifdef TARGET_FD_ALIGN_ONLY
++    (void)s;
++    /* Whole-trial deadline also bounds a late first-vector transition. */
++    return (uint32_t)(now - started) >= FD_ALIGN_ONLY_TOTAL_TICKS;
++#else
+ #ifdef TARGET_STARTUP_S4E
+     if (s->stage == FD_REV_CLOSED) return 0u;
+ #endif
+@@ -618,6 +670,7 @@ static inline uint8_t fdRevDeadlinePolicy(const FdRevPolicy *s, uint32_t now,
+     return s->stage == FD_REV_CLOSED ?
+         (uint32_t)(now - s->closed_at) >= FD_REV_OBSERVE_TICKS :
+         (uint32_t)(now - started) >= FD_REV_ACQUIRE_TICKS;
++#endif
+ }
+ #endif
+ #ifdef TARGET_STARTUP_SEQUENCE
+diff --git a/Inc/targets.h b/Inc/targets.h
+index bdee0af..0d56ce4 100755
+--- a/Inc/targets.h
++++ b/Inc/targets.h
+@@ -6064,6 +6064,18 @@
+ #define TARGET_FD_ADC_COHERENT
+ #endif
+ 
++#if defined(FD6288_SCOPE_PB7) && FD6288_SCOPE_PB7
++#if !defined(TARGET_FD_LAUNCH_ADVANCE) || !FD6288_ALIGN_SAMPLE_PAIR || FD6288_STARTUP_LEVEL
++#error "PB7 probe requires ALIGN-PAIR baseline without level acquisition"
++#endif
++#define TARGET_FD_SCOPE_PB7
++#endif
++#if defined(FD6288_ALIGN_ONLY) && FD6288_ALIGN_ONLY
++#if FD6288_ALIGN_ONLY != 1 || !defined(TARGET_FD_SCOPE_PB7) || !defined(TARGET_FD_ALIGN_HOLD) || !defined(TARGET_FD_ALIGN_SETTLE)
++#error "ALIGN_ONLY requires ALIGN-PAIR/PB7 with second-vector hold and settle"
++#endif
++#define TARGET_FD_ALIGN_ONLY
++#endif
+ #ifndef FD6288_STARTUP_LEVEL
+ #define FD6288_STARTUP_LEVEL 0
+ #endif
+@@ -6102,3 +6114,10 @@
+ #endif
+ #define TARGET_FD_ALIGN_SAMPLE_PAIR
+ #endif
++
++#if defined(FD6288_LAUNCH_RAW) && FD6288_LAUNCH_RAW
++#if FD6288_LAUNCH_RAW != 1 || !defined(TARGET_FD_ALIGN_SAMPLE_PAIR) || defined(TARGET_FD_ALIGN_ONLY)
++#error "Launch raw capture requires ALIGN-PAIR normal launch, not ALIGN_ONLY"
++#endif
++#define TARGET_FD_LAUNCH_RAW
++#endif
+diff --git a/Makefile b/Makefile
+index a6881cf..cea1694 100755
+--- a/Makefile
++++ b/Makefile
+@@ -178,6 +178,16 @@ FD6288_SECTOR_DIAG ?= 0
+ FD6288_NO_DIAGNOSTICS ?= 0
+ FD6288_ALIGN_SAMPLE_PAIR ?= 0
+ CFLAGS_CUSTOM_FD6288_G431 += -DFD6288_ALIGN_SAMPLE_PAIR=$(FD6288_ALIGN_SAMPLE_PAIR)
++FD6288_LAUNCH_RAW ?= 0
++CFLAGS_CUSTOM_FD6288_G431 += -DFD6288_LAUNCH_RAW=$(FD6288_LAUNCH_RAW)
++FD6288_SCOPE_PB7 ?= 0
++CFLAGS_CUSTOM_FD6288_G431 += -DFD6288_SCOPE_PB7=$(FD6288_SCOPE_PB7)
++FD6288_ALIGN_ONLY ?= 0
++CFLAGS_CUSTOM_FD6288_G431 += -DFD6288_ALIGN_ONLY=$(FD6288_ALIGN_ONLY)
++FD6288_ALIGN_ONLY_SECOND_MS ?= 90
++CFLAGS_CUSTOM_FD6288_G431 += -DFD6288_ALIGN_ONLY_SECOND_MS=$(FD6288_ALIGN_ONLY_SECOND_MS)
++FD6288_SECOND_ALIGN_MS ?= 60
++CFLAGS_CUSTOM_FD6288_G431 += -DFD6288_SECOND_ALIGN_MS=$(FD6288_SECOND_ALIGN_MS)
+ FD6288_STARTUP_LEVEL ?= 0
+ CFLAGS_CUSTOM_FD6288_G431 += -DFD6288_STARTUP_LEVEL=$(FD6288_STARTUP_LEVEL)
+ FD6288_FIRST_EDGE_500US ?= 0
+diff --git a/Mcu/g431/Src/comparator.c b/Mcu/g431/Src/comparator.c
+index 2bd12e5..be2c19c 100755
+--- a/Mcu/g431/Src/comparator.c
++++ b/Mcu/g431/Src/comparator.c
+@@ -163,7 +163,9 @@ uint8_t adcZcdEventIsCrossing(void) { return adc_zcd_event_crossing; }
+ static uint8_t adcZcdQualifyDrive(int32_t margin)
+ {
+     int32_t directed_margin = rising ? margin : -margin;
++#ifdef TARGET_FD_STARTUP_LEVEL
+     uint32_t elapsed = INTERVAL_TIMER_COUNT;
++#endif
+     if (adc_zcd_reported != 0u) {
+         FD_DECISION(FD_SAMPLE_REPORTED);
+         return 0u;
+@@ -202,6 +204,9 @@ static uint8_t adcZcdQualifyDrive(int32_t margin)
+         return 0u;
+     }
+ 
++#ifndef TARGET_FD_STARTUP_LEVEL
++    uint32_t elapsed = INTERVAL_TIMER_COUNT;
++#endif
+     if ((adc_zcd_earliest != 0u) && (elapsed <= adc_zcd_earliest)) {
+         FD_DECISION(FD_SAMPLE_EARLY);
+         /* Do not let a rejected early pulse remain armed and turn into a
+diff --git a/Mcu/g431/Src/phaseouts.c b/Mcu/g431/Src/phaseouts.c
+index faaa4d8..f865e3a 100755
+--- a/Mcu/g431/Src/phaseouts.c
++++ b/Mcu/g431/Src/phaseouts.c
+@@ -292,6 +292,9 @@ void phaseALOW()
+ 
+ void allOff()
+ {
++#ifdef TARGET_FD_SCOPE_PB7
++    GPIOB->BRR = (1u << 7);
++#endif
+ #ifdef TARGET_FD_ASYNC_COMM
+     uint32_t mask = __get_PRIMASK();
+     __disable_irq();
+diff --git a/Src/main.c b/Src/main.c
+index 5bbc8af..20bc7a3 100755
+--- a/Src/main.c
++++ b/Src/main.c
+@@ -487,6 +487,9 @@ uint32_t total = 0;
+ uint16_t readings[50];
+ 
+ uint8_t bemf_timeout_happened = 0;
++#ifdef TARGET_FD_SCOPE_PB7
++static uint8_t fd_scope_launch;
++#endif
+ uint8_t changeover_step = 5;
+ uint8_t filter_level = 5;
+ uint8_t running = 0;
+@@ -989,14 +992,22 @@ static void fdBenchStop(uint8_t reason)
+     if (!fd_power_bench.inhibit) {
+         fd_power_bench.inhibit = 1u; /* publish before canceling pending work */
+ #ifdef TARGET_STARTUP_SEQUENCE
++#ifdef TARGET_FD_ALIGN_ONLY
++        if (reason == FD_BENCH_WINDOW) reason = FD_BENCH_ALIGN_DONE;
++#else
+         if (reason == FD_BENCH_WINDOW && fd_rev.stage != FD_REV_CLOSED)
+             reason = FD_BENCH_NO_LOCK;
++#endif
+ #ifndef TARGET_STARTUP_FEEDBACK
+         if (reason == FD_BENCH_WINDOW &&
+             adc_zcd_diag.resets[ADC_ZCD_RESET_TIMEOUT] != fd_power_timeouts_start)
+             reason = FD_BENCH_LOST_FEEDBACK;
+ #endif
+-        if (reason != FD_BENCH_WINDOW && fd_power_bench.active_id) fdTracePinFailure();
++        if (reason != FD_BENCH_WINDOW &&
++#ifdef TARGET_FD_ALIGN_ONLY
++            reason != FD_BENCH_ALIGN_DONE &&
++#endif
++            fd_power_bench.active_id) fdTracePinFailure();
+         fd_rev_acquiring = 0u;
+ #endif
+         fdBenchFinish(reason);
+@@ -1240,6 +1251,18 @@ static void fdRevTick(void)
+     uint8_t was_align = fd_rev.stage == FD_REV_ALIGN;
+ #endif
+     uint8_t action = fdRevAdvancePolicy(&fd_rev, now);
++#ifdef TARGET_FD_ALIGN_ONLY
++    if (action == FD_REV_ALIGN_STOP) {
++        fdBenchStop(FD_BENCH_ALIGN_DONE);
++        __set_PRIMASK(mask);
++        return;
++    }
++    if (action == FD_REV_ALIGN_MARK) {
++        /* Marker only: no comStep, no launch gap, no ADC acquisition. */
++        GPIOB->BSRR = (1u << 7);
++        fd_align_observe.frozen = 1u;
++    }
++#endif
+     if (action != FD_REV_NONE) fdEdgeClose(now);
+ #ifdef TARGET_FD_ALIGN_SETTLE
+     if (fd_rev.stage != FD_REV_ALIGN) fd_align_observe.frozen = 1u;
+@@ -1333,6 +1356,9 @@ static void fdRevTick(void)
+         /* A step never invents a zero_cross or feeds the closed-loop IIR.
+          * S2 planned steps do not count as timeouts; S3 missing-feedback
+          * retries were explicitly counted above. */
++#ifdef TARGET_FD_SCOPE_PB7
++        fd_scope_launch = (action == FD_REV_LAUNCH);
++#endif
+         SET_INTERVAL_TIMER_COUNT(0u);
+         fdTraceEvent(FD_EVENT_REV_STEP, fd_rev.period / FD_REV_US);
+         commutate();
+@@ -1863,6 +1889,10 @@ static void fdAlignmentPairReset(void)
+ }
+ static void fdAlignmentPairSample(const uint16_t v[3], uint32_t at, uint32_t cnt, uint32_t duty, uint32_t trigger)
+ {
++#ifdef TARGET_FD_LAUNCH_RAW
++    /* Do not reuse drive counters as a fresh pair budget during retries. */
++    if(fd_edge_observe.abi==4u) {fdAlignmentPairReset();return;}
++#endif
+     if(fd_pair_trial!=fd_edge_observe.trial) {
+         fd_pair_trial=fd_edge_observe.trial;fdAlignmentPairReset();
+     }
+@@ -2032,6 +2062,10 @@ void commutate()
+ #endif
+     ) {
+         comStep(step);
++#ifdef TARGET_FD_SCOPE_PB7
++        GPIOB->BSRR = fd_scope_launch ? (1u << 7) : (1u << 23);
++        fd_scope_launch = 0u;
++#endif
+     }
+ #ifndef TARGET_ADC_ZCD_GUARD
+     __enable_irq();
+@@ -3244,6 +3278,14 @@ int main(void)
+     initAfterJump();
+     checkDeviceInfo();
+     initCorePeripherals();
++#ifdef TARGET_FD_SCOPE_PB7
++    LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_GPIOB);
++    GPIOB->BRR = (1u << 7);
++    LL_GPIO_SetPinOutputType(GPIOB, LL_GPIO_PIN_7, LL_GPIO_OUTPUT_PUSHPULL);
++    LL_GPIO_SetPinPull(GPIOB, LL_GPIO_PIN_7, LL_GPIO_PULL_NO);
++    LL_GPIO_SetPinSpeed(GPIOB, LL_GPIO_PIN_7, LL_GPIO_SPEED_FREQ_LOW);
++    LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_7, LL_GPIO_MODE_OUTPUT);
++#endif
+     fdTraceInit();
+     enableCorePeripherals();
+     loadEEpromSettings();
+diff --git a/tests/run_fd6288_align_pair_tests.cjs b/tests/run_fd6288_align_pair_tests.cjs
+index ecdf2bf..7450b6c 100644
+--- a/tests/run_fd6288_align_pair_tests.cjs
++++ b/tests/run_fd6288_align_pair_tests.cjs
+@@ -1,4 +1,5 @@
+ const fs=require('fs'),path=require('path'),os=require('os'),assert=require('assert/strict'),{spawnSync}=require('child_process');
++const launch=process.argv.includes('--launch-raw');
+ const s=fs.readFileSync('Src/main.c','utf8'),start=s.indexOf('volatile uint8_t fd_align_sample_late;'),end=s.indexOf('\n#endif\n#ifdef TARGET_FD_ALIGN_SETTLE',start);assert(start>0&&end>start);
+ const h=fs.readFileSync('Mcu/g431/Inc/peripherals.h','utf8'),hs=h.indexOf('static inline uint16_t zcd_ccr4_from_duty'),he=h.indexOf('\n#define SET_DUTY_CYCLE_ALL',hs);
+ const c=`#include <assert.h>
+@@ -6,6 +7,7 @@ const c=`#include <assert.h>
+ #define TARGET_FD_EDGE_RAW
+ #define TARGET_FD_EDGE_OBSERVE
+ #define TARGET_FD_ALIGN_SAMPLE_PAIR
++${launch?'#define TARGET_FD_LAUNCH_RAW':''}
+ #include "fd6288_edge_observe.h"
+ volatile FdEdgeObserve fd_edge_observe;
+ static struct {uint32_t CCR1,CCR4;} timer;
+@@ -39,10 +41,50 @@ int main(void) {
+  fdAlignmentPairReset();assert(timer.CCR4==600&&!fd_align_sample_late);
+  fdEdgeBegin(4,0);sample(10000,1,600);sample(10042,1,600);sample(10084,1,900);assert(!fd_edge_observe.first_samples&&!fd_pair_started);
+  for(unsigned d=0;d<=6665;d++){fd_align_sample_late=1;unsigned v=zcd_ccr4_from_duty(d);if(d<704)assert(v==0);else assert(v>=460&&v+244<=d);}
++${launch?`
++ for(unsigned wrap=0;wrap<2;wrap++) {
++  fdAlignmentPairReset();fdEdgeBegin(5+wrap,wrap?0xffff0000u:0u);
++  fd_edge_observe.first_samples=512;fd_edge_observe.count=514;
++  fd_edge_observe.samples[500].a=1234; /* no12KB clear on buffer reuse */
++  uint32_t at=fd_edge_observe.started+330000u*160u;
++  fdEdgeStep(at,1);assert(fd_edge_observe.abi==3 && !fdEdgeActive());
++  fdEdgeStep(at,2);assert(fd_edge_observe.abi==4 && fdEdgeActive());
++  assert(!fd_edge_observe.count && fd_edge_observe.samples[500].a==1234);
++  for(unsigned n=1;n<1100;n++) {
++   uint32_t now=at+n*42u*160u;
++   if(n==21){fdEdgeClose(now);fdEdgeStep(now,2);}
++   fdEdgeSample((FdEdgeSample){.at=now,.a=n,.b=n+1,.c=n+2,.step=n<21?2:3,.reason=n==8||n==60?7:n==1?1:n==2?0:2});
++  }
++  assert(fd_edge_observe.frozen && fd_edge_observe.active==UINT32_MAX);
++  assert(fd_edge_observe.first_samples<512 && fd_edge_observe.first_samples>470);
++  assert(fd_edge_observe.seen==fd_edge_observe.count+fd_edge_observe.post_samples);
++  assert(fd_edge_observe.start1==fd_edge_observe.start0+8u*42u*160u);
++  for(unsigned i=0;i<47;i++)assert(fd_edge_observe.samples[2+i].a==i+1);
++  uint32_t count=fd_edge_observe.count,end=fd_edge_observe.end1;
++  fdEdgeFinish(at+100000u*160u);assert(fd_edge_observe.end1==end);
++  fd_rev.align_left=1;fd_rev.sector_at=at+500000u*160u;timer.CCR4=600;
++  sample(10000,999,600);assert(fd_edge_observe.count==count && timer.CCR4==600 && !fd_pair_started && !fd_align_sample_late);
++  output=fd_edge_observe;
++ }
++ fdEdgeBegin(7,0);assert(fd_edge_observe.abi==3 && !fd_edge_observe.count && !fdEdgeActive());
++ fdEdgeStep(330000u*160u,2);fdEdgeSample((FdEdgeSample){.at=330001u*160u,.step=2});
++ fdEdgeFinish(330002u*160u);assert(fd_edge_observe.count==1);
++ fdEdgeBegin(8,0);fdEdgeStep(330000u*160u,2);
++ for(unsigned n=0;n<600;n++)fdEdgeSample((FdEdgeSample){.at=(330001u+n*42u)*160u,.step=2,.reason=7});
++ assert(fd_edge_observe.frozen && fd_edge_observe.count==512 && fd_edge_observe.first_samples==512);
++` : ''}
+  assert(fwrite(&output,sizeof(output),1,stdout)==1);
+ }
+ `;
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'fd-pairs-'));fs.writeFileSync(path.join(dir,'test.c'),c);
+ let r=spawnSync('cc',['-std=c11','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-IInc',path.join(dir,'test.c'),'-o',path.join(dir,'test')]);assert.equal(r.status,0,r.stderr.toString());r=spawnSync(path.join(dir,'test'));assert.equal(r.status,0,r.stderr.toString());
+-const d=require('../tools/scripts/fd6288_edge_decode.cjs').decode(r.stdout);assert.equal(d.records.length,512);assert.equal(d.pairs.length,256);assert.equal(d.pairs[0].delta_mid,100);
++const d=require('../tools/scripts/fd6288_edge_decode.cjs').decode(r.stdout);
++if(launch){
++ assert.equal(d.header.abi,4);assert(d.records.length>470);assert.equal(d.records[0].reason,1);assert.equal(d.records[1].reason,0);
++ assert.equal(d.records.filter(x=>x.reason===7).length,2);assert.equal(d.records.at(-1).sector,2);
++ assert(d.records.every(x=>x.from_launch_us<40000));
++ for(let i=1;i<47;i++)assert.equal(d.records[i].from_launch_us-d.records[i-1].from_launch_us,42);
++ for(const off of [0,4,16,28,32]){let bad=Buffer.from(r.stdout);bad.writeUInt32LE(0xffffffff,off);assert.throws(()=>require('../tools/scripts/fd6288_edge_decode.cjs').decode(bad));}
++ console.log('PASS launch recorder: preserves actual pair sampling, header-only reuse, full-rate2ms, decimation, ACCEPT retention, first/second sector, bounds/freeze, retry non-overwrite, wrap, new trial, ABI4 decoder');
++}else{assert.equal(d.records.length,512);assert.equal(d.pairs.length,256);assert.equal(d.pairs[0].delta_mid,100);}
+ console.log('PASS actual alignment adapter: preload discard, early/late tags, bounds, wrap, stop reset, stale trigger rejection, duty window enumeration, ABI3 decoding');
+diff --git a/tests/run_fd6288_sector_tests.cjs b/tests/run_fd6288_sector_tests.cjs
+index b346e0f..a3de8f1 100644
+--- a/tests/run_fd6288_sector_tests.cjs
++++ b/tests/run_fd6288_sector_tests.cjs
+@@ -9,7 +9,9 @@ assert.equal(d.records[0].first_accept_us,100/160);assert.equal(d.records[0].exi
+ assert.equal(d.records[0].reasons.accepted,1);
+ const extended=Buffer.from(raw);extended.writeUInt32LE(820000*160,32+4);
+ assert.equal(decode(extended).records[0].end_us,820000);
+-for(const [at,value] of [[0,0],[4,2],[16,0],[24,0],[32+4,160000001]]){
++extended.writeUInt32LE(1300000*160,32+4);
++assert.equal(decode(extended).records[0].end_us,1300000);
++for(const [at,value] of [[0,0],[4,2],[16,0],[24,0],[32+4,320000001]]){
+  const bad=Buffer.from(raw);bad.writeUInt32LE(value,at);assert.throws(()=>decode(bad));
+ }
+ assert.throws(()=>decode(raw.subarray(0,raw.length-1)));
+diff --git a/tools/scripts/fd6288_edge_decode.cjs b/tools/scripts/fd6288_edge_decode.cjs
+index ea3a2d5..cb7aea2 100644
+--- a/tools/scripts/fd6288_edge_decode.cjs
++++ b/tools/scripts/fd6288_edge_decode.cjs
+@@ -1,6 +1,6 @@
+ const fs=require('node:fs'),assert=require('node:assert/strict');
+ function decode(b){
+- if(b.length===12404)return b.readUInt32LE(4)===3?decodePairs(b):decodeRaw(b);
++ if(b.length===12404)return b.readUInt32LE(4)===4?decodeLaunch(b):b.readUInt32LE(4)===3?decodePairs(b):decodeRaw(b);
+  assert.equal(b.length,592);assert.equal(b.readUInt32LE(0),0x46454f31);assert.equal(b.readUInt32LE(4),1);
+  const names=['magic','abi','trial','started','frozen','sectors','active','first_samples','seen','count','max_cycles','calls','start0','end0','start1','end1'];
+  const header=Object.fromEntries(names.map((k,i)=>[k,b.readUInt32LE(i*4)]));
+@@ -53,3 +53,27 @@ function decodePairs(b){
+  for(let i=1;i<records.length;i++){const a=records[i-1],z=records[i];if(!a.late&&z.late&&a.step===z.step&&z.at_us>a.at_us&&z.at_us-a.at_us<250) pairs.push({early:i-1,late:i,dt_us:z.at_us-a.at_us,delta_mid:z.mid_error-a.mid_error});}
+  return {hook_max_us:b.readUInt32LE(40)/160,header:{abi:3,trial:b.readUInt32LE(8),started:b.readUInt32LE(12),count},records,pairs,caveats:['Second alignment only; early CCR4=600, late=900 at compare1200. One group discarded after each preload switch.','Pair eligibility uses same step and <250us software interval, not independent rotor-position or hardware sample-time evidence.','No drive windows in this diagnostic mode. Unpaired records remain visible.']};
+ }
++
++function decodeLaunch(b){
++ assert.equal(b.readUInt32LE(0),0x46454f31);assert.equal(b.readUInt32LE(4),4);
++ const names=['magic','abi','trial','started','frozen','sectors','active','first_samples','seen','count','max_cycles','calls','start0','end0','start1','end1','post_samples'];
++ const h=Object.fromEntries(names.map((k,i)=>[k,b.readUInt32LE(i*4)]));
++ assert(h.frozen===1&&h.active===0xffffffff&&h.first_samples<=512&&h.count===h.first_samples);
++ assert(h.end1>=h.start0&&h.seen===h.count+h.post_samples);
++ const records=[];
++ for(let i=0;i<h.first_samples;i++){
++  const o=68+(2+i)*24,at=b.readUInt32LE(o);
++  assert(b[o+21]===1&&b[o+19]>=1&&b[o+19]<=6&&b[o+18]<10);
++  assert(at>=h.start0&&at-h.start0<40000*160);
++  if(i)assert(at>=records[i-1].at_us*160);
++  records.push({index:i,sector:b.readUInt16LE(o+22),at_us:at/160,from_launch_us:(at-h.start0)/160,
++   a:b.readUInt16LE(o+4),b:b.readUInt16LE(o+6),c:b.readUInt16LE(o+8),directed_margin:b.readInt16LE(o+10),
++   cnt:b.readUInt16LE(o+12),duty:b.readUInt16LE(o+14),trigger:b.readUInt16LE(o+16),reason:b[o+18],step:b[o+19],flags:b[o+20]});
++ }
++ return {header:h,hook_max_us:h.max_cycles/160,records,caveats:[
++  'ABI4 reuses alignment-pair storage at first launch; alignment CCR4 pairing is retained, but its raw records are replaced.',
++  'First2ms: every consumed triplet. Then alternate consumed groups, always keeping ACCEPT. At most512 retained records or40ms from launch; skipped count is explicit.',
++  'Software ADC-readout timestamps and current timer register snapshots, not hardware sample times or an oscilloscope waveform.',
++  'Blank/invalid groups remain visible. Flags bit0 is software-valid nonblank, not independent physical validity.',
++  'Hook maximum covers selected recorder work only; excludes eligibility, detector, IRQ and launch header reset. No guarantee of unchanged timing.']};
++}
+diff --git a/tools/scripts/fd6288_light_decode.cjs b/tools/scripts/fd6288_light_decode.cjs
+index e3640d6..3ec5af9 100644
+--- a/tools/scripts/fd6288_light_decode.cjs
++++ b/tools/scripts/fd6288_light_decode.cjs
+@@ -7,7 +7,7 @@ function decode(b){
+   const o=64+i*48,r={};names.forEach((n,j)=>r[n]=j===11?b.readInt32LE(o+j*4):b.readUInt32LE(o+j*4));
+   if(!r.id)continue;
+   for(const n of ['first_edge','handoff'])r[n+'_us']=r[n]===0xffffffff?null:r[n]/160;
+-  r.reason_name=({1:'window',2:'native_stuck',3:'safety_cap',4:'not_running',5:'bad_config',6:'no_zero',7:'operator_zero',8:'no_lock',9:'closed_feedback_timeout',10:'commutation_late',11:'commutation_invalid'})[r.reason]||'unknown';
++  r.reason_name=({1:'window',2:'native_stuck',3:'safety_cap',4:'not_running',5:'bad_config',6:'no_zero',7:'operator_zero',8:'no_lock',9:'closed_feedback_timeout',10:'commutation_late',11:'commutation_invalid',12:'alignment_done'})[r.reason]||'unknown';
+   records.push(r);
+  }
+  return {trials:b.readUInt32LE(8),completed:b.readUInt32LE(12),records:records.sort((a,b)=>a.id-b.id)};
+diff --git a/tools/scripts/fd6288_sector_capture.cjs b/tools/scripts/fd6288_sector_capture.cjs
+index 5501d04..c6bf7ee 100644
+--- a/tools/scripts/fd6288_sector_capture.cjs
++++ b/tools/scripts/fd6288_sector_capture.cjs
+@@ -13,9 +13,9 @@ function decode(b){
+   const o=32+60*i,u=n=>b.readUInt32LE(o+n),s=n=>b.readUInt16LE(o+n);
+   const reasons=Array.from({length:10},(_,j)=>s(16+j*2));
+   assert.equal(reasons.reduce((a,v)=>a+v,0),s(36));assert(s(38)<=s(36));
+-  // S4T may acquire until820ms. This is a decode plausibility bound,
+-  // not a firmware timeout; allow service latency below1s.
+-  assert(u(4)>=u(0)&&u(4)<=160000000);assert(b[o+52]>=1&&b[o+52]<=6);
++  // Long300ms alignment can acquire until1300ms. Decoder plausibility
++  // bound only: allow service latency below2s, not a firmware timeout.
++  assert(u(4)>=u(0)&&u(4)<=320000000);assert(b[o+52]>=1&&b[o+52]<=6);
+   records.push({sector:i+1,start_us:u(0)/160,end_us:u(4)/160,
+    first_accept_us:u(8)===0xffffffff?null:u(8)/160,last_accept_us:u(12)===0xffffffff?null:u(12)/160,
+    reasons:Object.fromEntries(['invalid','blank','pre','hysteresis','early','unarmed','confirmation','accepted','reported','coast'].map((k,j)=>[k,reasons[j]])),
+diff --git a/tools/scripts/fd6288_startup_capture.cjs b/tools/scripts/fd6288_startup_capture.cjs
+index 58125a8..81b1b0e 100644
+--- a/tools/scripts/fd6288_startup_capture.cjs
++++ b/tools/scripts/fd6288_startup_capture.cjs
+@@ -9,7 +9,7 @@ const SIZE = 23656, HEADER = 104, MAGIC = 0x46535431;
+ const reasons = ['invalid', 'blank', 'pre', 'hysteresis', 'early', 'unarmed', 'confirmation', 'accepted', 'reported', 'coast'];
+ const events = ['', 'start', 'commutate', 'zc', 'timeout', 'desync', 'stop', 'fault', 'bench_stop', 'rev_step', 'rev_edge', 'rev_handoff', 'rev_decision'];
+ const revDecisions = ['ignored_stage_or_duplicate', 'too_early', 'too_late', 'first_qualified_edge', 'inconsistent_period', 'qualified_pair', 'ready_for_handoff'];
+-const benchReasons = ['', 'window_300ms', 'native_stuck', 'safety_cap', 'not_running', 'bad_config', 'no_zero_or_start_not_allowed', 'operator_zero', 'rev_no_lock', 'rev_lost_feedback'];
++const benchReasons = ['', 'window_300ms', 'native_stuck', 'safety_cap', 'not_running', 'bad_config', 'no_zero_or_start_not_allowed', 'operator_zero', 'rev_no_lock', 'rev_lost_feedback', 'commutation_late', 'commutation_invalid', 'alignment_done'];
+ const revStages = ['off', 'align', 'open_loop', 'pending_handoff', 'closed_loop'];
+ const sha = b => crypto.createHash('sha256').update(b).digest('hex');
+ function header(b) {

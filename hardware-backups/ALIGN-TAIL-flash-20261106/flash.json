@@ -1,0 +1,58 @@
+[
+  {
+    "operator": "User requested alignment-tail snapshots plus current launch capture; direct flash and skipped readback follow session authorization; live zero gate below",
+    "image": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-ALIGN-TAIL-20261106/AM32_CUSTOM_FD6288_G431_2.20.hex"
+  },
+  {
+    "command": "read_memory 0x20004672 8 2",
+    "result": "OK:0x0 0x0"
+  },
+  {
+    "command": "read_memory 0x20004668 8 2",
+    "result": "OK:0x0 0x0"
+  },
+  {
+    "command": "read_memory 0x20004718 8 2",
+    "result": "OK:0x0 0x0"
+  },
+  {
+    "command": "read_memory 0x200042c4 8 1",
+    "result": "OK:0x0"
+  },
+  {
+    "command": "read_memory 0x200042c8 8 2",
+    "result": "OK:0x0 0x0"
+  },
+  {
+    "command": "read_memory 0x20004670 8 1",
+    "result": "OK:0x0"
+  },
+  {
+    "command": "read_memory 0x40012c34 32 1",
+    "result": "OK:0x0"
+  },
+  {
+    "command": "read_memory 0x40012c38 32 1",
+    "result": "OK:0x0"
+  },
+  {
+    "command": "read_memory 0x40012c3c 32 1",
+    "result": "OK:0x0"
+  },
+  {
+    "command": "read_memory 0x40012c40 32 1",
+    "result": "OK:0x0"
+  },
+  {
+    "command": "reset init",
+    "result": "OK:"
+  },
+  {
+    "command": "flash write_image erase {/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-ALIGN-TAIL-20261106/AM32_CUSTOM_FD6288_G431_2.20.hex}",
+    "result": "OK:auto erase enabled\nwrote 40952 bytes from file /Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-ALIGN-TAIL-20261106/AM32_CUSTOM_FD6288_G431_2.20.hex in 1.223424s (32.689 KiB/s)\n"
+  },
+  {
+    "command": "reset run",
+    "result": "OK:"
+  }
+]

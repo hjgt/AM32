@@ -1,0 +1,80 @@
+{
+  "trial": 14,
+  "operator_report": "又失败，请读取；未补充本次机械动作",
+  "rekicks_applied": 0,
+  "first_event_age_us": 1378.23125,
+  "event_to_next_vector_us": 517.6124999999884,
+  "next_vector_ms": 22.520868749999966,
+  "next_valid": 539,
+  "next_pre": 537,
+  "next_hysteresis": 2,
+  "next_accepted": 0,
+  "next_margin_range": [
+    -58,
+    -7
+  ],
+  "stop_reason": "no_lock",
+  "session_trials": 14,
+  "session_handoffs": 11,
+  "session_failed_ids": [
+    5,
+    7,
+    14
+  ],
+  "raw_records": 217,
+  "hook_max_us": 1.36875,
+  "after_accept_raw": [
+    {
+      "after_accept_us": 0.0,
+      "margin": 10
+    },
+    {
+      "after_accept_us": 41.543750000000045,
+      "margin": 11
+    },
+    {
+      "after_accept_us": 82.68124999999986,
+      "margin": 11
+    },
+    {
+      "after_accept_us": 124.45000000000005,
+      "margin": 12
+    },
+    {
+      "after_accept_us": 166.08749999999986,
+      "margin": 12
+    },
+    {
+      "after_accept_us": 207.76250000000005,
+      "margin": 13
+    },
+    {
+      "after_accept_us": 249.43124999999986,
+      "margin": 13
+    },
+    {
+      "after_accept_us": 290.98125000000005,
+      "margin": 14
+    },
+    {
+      "after_accept_us": 332.75,
+      "margin": 14
+    },
+    {
+      "after_accept_us": 374.41875000000005,
+      "margin": 13
+    },
+    {
+      "after_accept_us": 416.0625,
+      "margin": 14
+    },
+    {
+      "after_accept_us": 457.74374999999986,
+      "margin": 14
+    },
+    {
+      "after_accept_us": 501.36874999999986,
+      "margin": 15
+    }
+  ]
+}

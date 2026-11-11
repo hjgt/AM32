@@ -1,0 +1,4 @@
+PASS tail checkpoints: exact297/299.8ms boundaries, one store per slot, survives drive/retry/freeze, missing slot explicit, wrap, decoder
+PASS ABI6 full61ms coverage, second-vector dense prefix, late ACCEPT retained past old40ms cap
+PASS launch recorder: preserves actual pair sampling, header-only reuse, full-rate2ms, decimation, ACCEPT retention, first/second sector, bounds/freeze, retry non-overwrite, wrap, new trial, ABI4 decoder
+PASS actual alignment adapter: preload discard, early/late tags, bounds, wrap, stop reset, stale trigger rejection, duty window enumeration, ABI3 decoding

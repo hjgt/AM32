@@ -76,3 +76,7 @@ test-firmware/fd6288-ALIGN-RETRY100-R5-20261109/*.bin -text
 test-firmware/fd6288-ALIGN-RETRY300-R5-20261109/*.hex -text
 test-firmware/fd6288-ALIGN-RETRY300-R5-20261109/*.elf -text
 test-firmware/fd6288-ALIGN-RETRY300-R5-20261109/*.bin -text
+
+# Keep archived Intel HEX bytes identical to the captured files.
+test-firmware/**/*.hex -text
+hardware-backups/**/*.hex -text

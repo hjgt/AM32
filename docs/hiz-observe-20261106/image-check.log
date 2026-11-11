@@ -1,0 +1,5 @@
+PASS: 41220 HEX data bytes, all inside 0x8001000..0x800f7ff.
+BIN 59392 bytes; initial SP 0x20008000, reset 0x800729d.
+Bootloader and EEPROM have no HEX data records. BIN/HEX bytes agree.
+8dd0b33513320f6593f2c72d91c7d18982511a1efd2743a292f5994096fa0fde  obj-hiz-on-20261106/AM32_CUSTOM_FD6288_G431_2.20.bin
+2383928b15de21b70c03fd88592fbecfb149e478c65fe56575067c2f58744832  obj-hiz-on-20261106/AM32_CUSTOM_FD6288_G431_2.20.hex

@@ -1,0 +1,82 @@
+{
+  "trial": 6,
+  "same_settings_as_trial5": true,
+  "operator_observation": "本次仅请求读取，未补充机械现象/是否重新随机起点；不据此假定相同机械运动",
+  "alignment_tail_mid_errors": [
+    -91,
+    -131
+  ],
+  "alignment_tail_window_pass": [
+    true,
+    false
+  ],
+  "retained_groups": 120,
+  "boundary_groups": 4,
+  "first_record": {
+    "slot": 2,
+    "at_us": 330092.50625,
+    "from_bridge_off_us": 6.85625,
+    "a": 0,
+    "b": 1033,
+    "c": 1740,
+    "ab": -1033,
+    "bc": -707,
+    "ca": 1740,
+    "mid_error": null,
+    "cnt": 1696,
+    "duty": 0,
+    "trigger": 3332,
+    "reason": 253,
+    "last_alignment_step": 6,
+    "flags": 49,
+    "boundary_group": true
+  },
+  "second_record": {
+    "slot": 3,
+    "at_us": 330147.08125,
+    "from_bridge_off_us": 61.43125,
+    "a": 8,
+    "b": 8,
+    "c": 5,
+    "ab": 0,
+    "bc": 3,
+    "ca": -3,
+    "mid_error": null,
+    "cnt": 3762,
+    "duty": 0,
+    "trigger": 3332,
+    "reason": 253,
+    "last_alignment_step": 6,
+    "flags": 49,
+    "boundary_group": true
+  },
+  "nonboundary_ranges": {
+    "a": [
+      1,
+      12
+    ],
+    "b": [
+      6,
+      14
+    ],
+    "c": [
+      2,
+      12
+    ],
+    "ab": [
+      -7,
+      -1
+    ],
+    "bc": [
+      0,
+      6
+    ],
+    "ca": [
+      -1,
+      3
+    ]
+  },
+  "nonboundary_max_line_spread_counts": 7,
+  "software_stop_after_off_us": 5019.2875,
+  "record_hook_max_us": 1.5125
+}

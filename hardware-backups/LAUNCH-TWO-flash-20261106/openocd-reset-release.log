@@ -1,0 +1,15 @@
+Open On-Chip Debugger 0.12.0
+Licensed under GNU GPL v2
+For bug reports, read
+	http://openocd.org/doc/doxygen/bugs.html
+Info : The selected transport took over low-level target control. The results might differ compared to plain JTAG/SWD
+adapter speed: 50 kHz
+
+srst_only separate srst_nogate srst_open_drain connect_deassert_srst
+
+Info : clock speed 50 kHz
+Info : STLINK V2J37S7 (API v2) VID:PID 0483:3748
+Info : Target voltage: 3.240876
+Error: init mode failed (unable to connect to the target)
+
+Assertion failed: (handle), function stlink_usb_assert_srst, file stlink_usb.c, line 2166.

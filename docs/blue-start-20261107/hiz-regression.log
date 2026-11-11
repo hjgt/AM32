@@ -1,0 +1,2 @@
+PASS Hi-Z actual tick/stop/event/PWM/JEOS: no launch,5ms,336ms cap, frozen512, boundary flags, no detector, faults, zero rearm, directions, DWT wrap
+PASS ABI7 C logger → JS decoder, tail preservation, line differences

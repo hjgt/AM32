@@ -1,0 +1,627 @@
+Open On-Chip Debugger 0.12.0
+Licensed under GNU GPL v2
+For bug reports, read
+	http://openocd.org/doc/doxygen/bugs.html
+Info : The selected transport took over low-level target control. The results might differ compared to plain JTAG/SWD
+adapter speed: 100 kHz
+
+Info : clock speed 100 kHz
+Info : STLINK V2J37S7 (API v2) VID:PID 0483:3748
+Info : Target voltage: 3.256802
+Info : [stm32g4x.cpu] Cortex-M4 r0p1 processor detected
+Info : [stm32g4x.cpu] target has 6 breakpoints, 4 watchpoints
+Info : gdb port disabled
+Info : Listening on port 6666 for tcl connections
+Info : telnet server disabled
+Info : accepting 'tcl' connection on tcp/6666
+Info : Unable to match requested speed 2000 kHz, using 1800 kHz
+Info : Unable to match requested speed 2000 kHz, using 1800 kHz
+[stm32g4x.cpu] halted due to debug-request, current mode: Thread 
+xPSR: 0x01000000 pc: 0x08000264 msp: 0x20001000
+OK:
+Info : device idcode = 0x20036468 (STM32G43/G44xx - Rev 'unknown' : 0x2003)
+Info : RDP level 0 (0xAA)
+Info : flash size = 128 KiB
+Info : flash mode : single-bank
+Info : Padding image section 0 at 0x080011d8 with 40 bytes
+Info : Flash write discontinued at 0x0800a7a8, next section at 0x0800f7e0
+Warn : Adding extra erase range, 0x0800a7a8 .. 0x0800a7ff
+Warn : Adding extra erase range, 0x0800f000 .. 0x0800f7df
+OK:auto erase enabled
+wrote 38856 bytes from file /Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-ALIGN-ONLY-20261105/AM32_CUSTOM_FD6288_G431_2.20.hex in 1.189315s (31.905 KiB/s)
+
+Info : Unable to match requested speed 2000 kHz, using 1800 kHz
+Info : Unable to match requested speed 2000 kHz, using 1800 kHz
+OK:
+Info : dropped 'tcl' connection
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 100ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 700ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 1500ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 3100ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : accepting 'tcl' connection on tcp/6666
+Info : Unable to match requested speed 2000 kHz, using 1800 kHz
+Info : Unable to match requested speed 2000 kHz, using 1800 kHz
+ERR:
+
+Info : dropped 'tcl' connection
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : Previous state query failed, trying to reconnect
+Error: jtag status contains invalid mode value - communication failure
+Polling target stm32g4x.cpu failed, trying to reexamine
+Examination failed, GDB will be halted. Polling again in 6300ms
+Info : accepting 'tcl' connection on tcp/6666
+shutdown command invoked

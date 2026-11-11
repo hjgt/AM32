@@ -1,0 +1,3 @@
+slot,at_us,from_bridge_off_us,a,b,c,ab,bc,ca,mid_error,cnt,duty,trigger,reason,last_alignment_step,flags,boundary_group
+0,327090.825,-2994.825,1487,657,9,830,648,-1478,-91,1033,1200,600,255,6,5,False
+1,329886.64375,-199.00625,1491,619,9,872,610,-1482,-131,1762,1200,600,255,6,4,False

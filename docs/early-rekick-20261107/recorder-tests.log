@@ -1,0 +1,2 @@
+PASS ABI9 actual C recorder→JS: all4 pulse windows+feedback continuation,20ms gaps, dense prefixes, ACCEPT always kept, original tail preserved,512/124ms limits, freeze and wrap
+PASS re-kick metadata: initial+3, ignored/normal/exhausted classification, software times, corruption rejection

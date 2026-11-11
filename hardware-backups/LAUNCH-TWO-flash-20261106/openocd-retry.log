@@ -1,0 +1,32 @@
+Open On-Chip Debugger 0.12.0
+Licensed under GNU GPL v2
+For bug reports, read
+	http://openocd.org/doc/doxygen/bugs.html
+Info : The selected transport took over low-level target control. The results might differ compared to plain JTAG/SWD
+adapter speed: 100 kHz
+
+Info : clock speed 100 kHz
+Info : STLINK V2J37S7 (API v2) VID:PID 0483:3748
+Info : Target voltage: 3.256802
+Warn : target stm32g4x.cpu examination failed
+Info : gdb port disabled
+Info : Listening on port 6666 for tcl connections
+Info : telnet server disabled
+Info : accepting 'tcl' connection on tcp/6666
+Error: Target not examined yet
+Error: read_memory: read at 0x20004672 with width=8 and count=2 failed
+ERR:read_memory: failed to read memory
+Info : dropped 'tcl' connection
+Info : accepting 'tcl' connection on tcp/6666
+OK:adapter speed: 50 kHz
+
+ERR:
+Info : dropped 'tcl' connection
+Info : accepting 'tcl' connection on tcp/6666
+Error: Unable to set adapter speed
+OK:adapter speed: 100 kHz
+
+ERR:
+Info : dropped 'tcl' connection
+Info : accepting 'tcl' connection on tcp/6666
+shutdown command invoked

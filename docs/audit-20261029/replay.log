@@ -1,0 +1,2 @@
+Post-only: ADC guard accepted=0 over 540 fresh groups (one blank); upstream steady post qualifies after 7 polls.
+Partial-next-sequence counterexample: all complete frames pre; two mixed JDR snapshots produce an accepted edge. Hardware delay prerequisite is NOT established by this host test.

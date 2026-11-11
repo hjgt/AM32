@@ -1,0 +1,42 @@
+{
+  "trial": 8,
+  "operator": "几乎都失败，定位后每轮短促转约45度，三声、不到一圈、约1.2秒；用户估计而非角度时标测量",
+  "trial_count": 8,
+  "no_lock": 7,
+  "handoff_then_operator_zero": 1,
+  "final_elapsed_ms": 1347.96265,
+  "attempts": [
+    {
+      "attempt": 1,
+      "first_event_from_drive_ms": 8.416012499999953,
+      "first_drive_held_ms": 30.023,
+      "following_drive_ms": 22.533150000000024,
+      "following_first_margin": 147,
+      "following_last_margin": -95,
+      "following_accepted": 0,
+      "release_to_restart_ms": 100.01126249999996
+    },
+    {
+      "attempt": 2,
+      "first_event_from_drive_ms": 3.537412500000093,
+      "first_drive_held_ms": 30.023318750000094,
+      "following_drive_ms": 22.53365625,
+      "following_first_margin": 194,
+      "following_last_margin": -116,
+      "following_accepted": 0,
+      "release_to_restart_ms": 100.01042499999993
+    },
+    {
+      "attempt": 3,
+      "first_event_from_drive_ms": 12.698675000000046,
+      "first_drive_held_ms": 30.02371250000014,
+      "following_drive_ms": 22.535456250000045,
+      "following_first_margin": 113,
+      "following_last_margin": -90,
+      "following_accepted": 0,
+      "release_to_restart_ms": null
+    }
+  ],
+  "wave_groups": 389,
+  "hook_max_us": 1.525
+}

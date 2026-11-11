@@ -1,0 +1,22 @@
+{
+  "trial": 5,
+  "operator_report": "第五次失败，要求读取；未补充本次具体机械动作",
+  "rekicks_applied": 0,
+  "first_event_after_actual_launch_ms": 3.9411875,
+  "event_to_following_vector_us": 517.7125000000233,
+  "following_vector_ms": 22.504099999999976,
+  "following_valid_groups": 539,
+  "following_pre_groups": 539,
+  "following_margin_range": [
+    -55,
+    -11
+  ],
+  "following_accepted": 0,
+  "last_end_ms": 357.02394375,
+  "session_trials": 5,
+  "session_handoffs": 4,
+  "raw_records": 235,
+  "raw_consumed_groups": 647,
+  "hook_max_us": 1.36875,
+  "conclusion": "This failure was a normal3.94ms first event followed by no second event; no early-event recovery invoked. Timing alone cannot classify failures."
+}

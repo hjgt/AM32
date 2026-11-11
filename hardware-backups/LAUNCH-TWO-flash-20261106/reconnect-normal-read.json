@@ -1,0 +1,10 @@
+[
+  {
+    "command": "adapter speed 100",
+    "result": "OK:adapter speed: 100 kHz\n"
+  },
+  {
+    "command": "stm32g4x.cpu arp_examine",
+    "result": "OK:"
+  }
+]

@@ -1,0 +1,52 @@
+{
+  "trial": 5,
+  "operator_observation": "猛地被吸住，小幅抖一下停住，像打冷颤；无额外机械/电气同步时标",
+  "alignment_tail_mid_errors": [
+    -220,
+    -229
+  ],
+  "alignment_tail_window_pass": [
+    true,
+    true
+  ],
+  "software_off_us": 330065.44375,
+  "trigger_write_after_off_us": 0.4,
+  "software_stop_after_off_us": 5026.75,
+  "retained_groups": 120,
+  "first_read_after_off_us": 27.575,
+  "last_read_after_off_us": 4984.51875,
+  "boundary_groups": 3,
+  "nonboundary_groups": 117,
+  "nonboundary_raw_ranges": {
+    "a": [
+      0,
+      13
+    ],
+    "b": [
+      4,
+      15
+    ],
+    "c": [
+      3,
+      13
+    ],
+    "ab": [
+      -7,
+      4
+    ],
+    "bc": [
+      -3,
+      5
+    ],
+    "ca": [
+      -2,
+      4
+    ]
+  },
+  "nonboundary_max_line_spread_counts": 7,
+  "record_hook_max_us": 1.5125,
+  "record_count_seen": 120,
+  "adc_read_no_repeated_JEOS_all": true,
+  "software_duty_zero_all": true,
+  "next_action": "Same firmware, randomize initial position and read each trial separately; no timing or launch change yet"
+}

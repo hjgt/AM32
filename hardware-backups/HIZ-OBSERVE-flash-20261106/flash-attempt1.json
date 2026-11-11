@@ -1,0 +1,10 @@
+[
+  {
+    "operator": "User approved Hi-Z no-launch diagnostic implementation; direct flash and skipped readback follow session authorization; live zero gate below",
+    "image": "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/test-firmware/fd6288-HIZ-OBSERVE-20261106/AM32_CUSTOM_FD6288_G431_2.20.hex"
+  },
+  {
+    "command": "read_memory 0x20004676 8 2",
+    "result": "ERR:read_memory: failed to read memory"
+  }
+]

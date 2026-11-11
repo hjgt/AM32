@@ -1,0 +1,1 @@
+PASS actual bridge entrypoints: six comStep sectors, allpwm, proportional/full brake, brushed directions blocked under Hi-Z/inhibit, IRQ mask restored

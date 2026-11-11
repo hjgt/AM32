@@ -1,0 +1,8 @@
+ERR:read_memory: failed to read memory
+Traceback (most recent call last):
+  File "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/hardware-backups/HIZ-OBSERVE-flash-20261106/flash.py", line 25, in <module>
+    value=rpc('read_memory 0x%x 8 %d'%(addr,size))
+  File "/Users/nxf75465/codex/am32_on_omp_esc/AM32-main/hardware-backups/HIZ-OBSERVE-flash-20261106/flash.py", line 14, in rpc
+    if not t.startswith('OK:'):raise RuntimeError(t)
+                               ^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: ERR:read_memory: failed to read memory
