@@ -15,6 +15,9 @@ void ADC_DMA_Callback();
 void enableADC_DMA();
 void activateADC();
 void ADC_Init(void);
+#ifdef TARGET_FD_ADC_COHERENT
+void adcZcdRearmInjected(void);
+#endif
 
 void Configure_DMA();
 

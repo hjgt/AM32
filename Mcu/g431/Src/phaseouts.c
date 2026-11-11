@@ -7,8 +7,15 @@
 #include "phaseouts.h"
 
 #include "targets.h"
+#include "fd6288_startup_power.h"
+#ifdef TARGET_FD_ASYNC_COMM
+#include "fd6288_async.h"
+#endif
 
 extern char prop_brake_active;
+#ifdef TARGET_FD_NATIVE_SINE
+uint8_t fdNativeSineBridgeAllowed(void);
+#endif
 
 #ifndef PWM_ENABLE_BRIDGE
 
@@ -31,7 +38,13 @@ extern char prop_brake_active;
 #endif
 
 void proportionalBrake()
-{ // alternate all channels between braking (ABC LOW)
+{
+#ifdef TARGET_FD_HIZ_OBSERVE
+    uint32_t hiz_mask = __get_PRIMASK();
+    __disable_irq();
+    if (fd_hiz_active || fd_power_bench.inhibit) { __set_PRIMASK(hiz_mask); return; }
+#endif
+ // alternate all channels between braking (ABC LOW)
     // and coasting (ABC float) put lower channel into
     // alternate mode and turn upper OFF for each
     // channel
@@ -56,6 +69,10 @@ void proportionalBrake()
         LL_GPIO_MODE_ALTERNATE);
     LL_GPIO_SetPinMode(PHASE_C_GPIO_PORT_LOW, PHASE_C_GPIO_LOW,
         LL_GPIO_MODE_ALTERNATE);
+
+#ifdef TARGET_FD_HIZ_OBSERVE
+    __set_PRIMASK(hiz_mask);
+#endif
 }
 
 void phaseBPWM()
@@ -288,13 +305,36 @@ void phaseALOW()
 
 void allOff()
 {
+#ifdef TARGET_FD_SCOPE_PB7
+    GPIOB->BRR = (1u << 7);
+#endif
+#ifdef TARGET_FD_ASYNC_COMM
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    fdAsyncCancel();
+#endif
     phaseAFLOAT();
     phaseBFLOAT();
     phaseCFLOAT();
+#ifdef TARGET_FD_ASYNC_COMM
+    __set_PRIMASK(mask);
+#endif
 }
 
 void comStep(int newStep)
 {
+#ifdef TARGET_STARTUP_POWER_BENCH
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    if (fd_power_bench.inhibit
+#ifdef TARGET_FD_HIZ_OBSERVE
+        || fd_hiz_active
+#endif
+    ) {
+        __set_PRIMASK(mask);
+        return;
+    }
+#endif
     // TIM14->CNT = 0;
     switch (newStep) {
     case 1: // A-B
@@ -335,32 +375,83 @@ void comStep(int newStep)
     }
 
     // stop_time = TIM14->CNT;
+#ifdef TARGET_STARTUP_POWER_BENCH
+    __set_PRIMASK(mask);
+#endif
 }
 
 void fullBrake()
-{ // full braking shorting all low sides
+{
+#ifdef TARGET_FD_HIZ_OBSERVE
+    uint32_t hiz_mask = __get_PRIMASK();
+    __disable_irq();
+    if (fd_hiz_active || fd_power_bench.inhibit) { __set_PRIMASK(hiz_mask); return; }
+#endif
+ // full braking shorting all low sides
     phaseALOW();
     phaseBLOW();
     phaseCLOW();
+
+#ifdef TARGET_FD_HIZ_OBSERVE
+    __set_PRIMASK(hiz_mask);
+#endif
 }
 
 void allpwm()
 { // for stepper_sine
+#ifdef TARGET_STARTUP_POWER_BENCH
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    if (fd_power_bench.inhibit
+#ifdef TARGET_FD_NATIVE_SINE
+        || !fdNativeSineBridgeAllowed()
+#endif
+#ifdef TARGET_FD_HIZ_OBSERVE
+        || fd_hiz_active
+#endif
+    ) {
+        __set_PRIMASK(mask);
+        return;
+    }
+#endif
     phaseAPWM();
     phaseBPWM();
     phaseCPWM();
+#ifdef TARGET_STARTUP_POWER_BENCH
+    __set_PRIMASK(mask);
+#endif
 }
 
 void twoChannelForward()
 {
+#ifdef TARGET_FD_HIZ_OBSERVE
+    uint32_t hiz_mask = __get_PRIMASK();
+    __disable_irq();
+    if (fd_hiz_active || fd_power_bench.inhibit) { __set_PRIMASK(hiz_mask); return; }
+#endif
+
     phaseAPWM();
     phaseBLOW();
     phaseCPWM();
+
+#ifdef TARGET_FD_HIZ_OBSERVE
+    __set_PRIMASK(hiz_mask);
+#endif
 }
 
 void twoChannelReverse()
 {
+#ifdef TARGET_FD_HIZ_OBSERVE
+    uint32_t hiz_mask = __get_PRIMASK();
+    __disable_irq();
+    if (fd_hiz_active || fd_power_bench.inhibit) { __set_PRIMASK(hiz_mask); return; }
+#endif
+
     phaseALOW();
     phaseBPWM();
     phaseCLOW();
+
+#ifdef TARGET_FD_HIZ_OBSERVE
+    __set_PRIMASK(hiz_mask);
+#endif
 }

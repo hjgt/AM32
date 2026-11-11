@@ -1,0 +1,453 @@
+/* Native AM32 sine-start trial. Included by main.c instead of the old bench
+ * adapter. No alignment, forced rev-up table, early-event rejection or retry.
+ * The native sine table, input mapping and angle stepping remain in main.c.
+ * A positive-throttle episode is bounded to 3 seconds, or one second after
+ * six real feedback events, whichever comes first. Observe zero before reuse.
+ */
+#include "fd6288_async.h"
+#include "fd6288_native_sine_config.h"
+#ifdef TARGET_FD_SINE_FIXED_PROBE
+#define FD_NATIVE_SINE_LIMIT_CYCLES (100000u * 160u)
+typedef struct {
+    uint16_t before, after, gpioa, gpiof;
+    uint32_t at;
+} FdSinePinSample;
+/* Foreground-only bounded observation. Never writes GPIO, PWM or ADC. */
+volatile struct {
+    uint32_t magic, abi, trial, count, frozen, driven_at;
+    FdSinePinSample samples[256];
+} fd_sine_pins = { .magic = 0x46504931u, .abi = 1u };
+_Static_assert(sizeof(FdSinePinSample) == 12u, "sine pin sample ABI");
+_Static_assert(sizeof(fd_sine_pins) == 3096u, "sine pin buffer ABI");
+#else
+#define FD_NATIVE_SINE_LIMIT_CYCLES (3000000u * 160u)
+#endif
+
+volatile FdPowerDiagnostics fd_power_bench = {
+    .magic = FD_POWER_BENCH_MAGIC, .abi = 1u
+};
+/* Fixed event summary only. Times are DWT cycles relative to started. */
+volatile struct {
+    uint32_t magic, abi, trial, started, phase, reason;
+    uint32_t sine_steps, sixstep_at, first_edge_at, sixth_edge_at, stopped_at;
+    uint32_t edges, input_at_start, input_at_handoff, last_step;
+} fd_native_sine = { .magic = 0x46534e31u, .abi = 1u };
+_Static_assert(sizeof(fd_native_sine) == 60u, "native sine event ABI");
+#if defined(TARGET_FD_SINE_FIXED_12KHZ) || defined(TARGET_FD_SIXSTEP_ALIGN_CONTROL)
+/* Existing foreground sensor cadence only; not switching-current peaks. */
+volatile struct {
+    uint32_t magic, abi, trial, updates;
+    int32_t baseline_current, peak_current; /* 0.01A, filtered */
+    uint32_t baseline_voltage, minimum_voltage; /* 0.01V, filtered */
+    uint32_t baseline_raw_current, peak_raw_current; /* ADC counts */
+} fd_sine_sensors = { .magic = 0x46535331u, .abi = 1u };
+_Static_assert(sizeof(fd_sine_sensors) == 40u, "sine sensors ABI");
+static void fdSineRecordSensors(void)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    if (fd_power_bench.active_id && !fd_power_bench.inhibit &&
+        fd_native_sine.sine_steps) {
+        fd_sine_sensors.updates++;
+        if (actual_current > fd_sine_sensors.peak_current)
+            fd_sine_sensors.peak_current = actual_current;
+        if (battery_voltage < fd_sine_sensors.minimum_voltage)
+            fd_sine_sensors.minimum_voltage = battery_voltage;
+        if (ADC_raw_current > fd_sine_sensors.peak_raw_current)
+            fd_sine_sensors.peak_raw_current = ADC_raw_current;
+    }
+    __set_PRIMASK(mask);
+}
+#endif
+volatile uint8_t fd_rev_acquiring; /* always zero: no custom acquisition */
+static uint8_t fd_power_starting, fd_native_ready;
+void commutate(void);
+#ifdef TARGET_FD_SINE_CENTERED_PWM
+#include "fd6288_sine_pwm.h"
+/* Frozen once immediately BEFORE shutdown. Registers read here describe the
+ * last driven state, unlike a stopped SWD dump whose GPIO/CCRs are all off. */
+volatile struct {
+    uint32_t magic, abi, trial, steps, cr1, psc, arr, ccer, bdtr;
+    uint32_t ccr1, ccr2, ccr3, ccr4, gpioa_moder, gpiof_moder;
+    uint32_t gpioa_afrh, gpiof_afrl, phase_a, phase_b, phase_c;
+} fd_sine_pwm_snapshot = { .magic = 0x46535031u, .abi = 1u };
+_Static_assert(sizeof(fd_sine_pwm_snapshot) == 80u, "sine PWM snapshot ABI");
+#endif
+static void fdBenchService(void);
+/* DWT is a CONTROL clock here, even with every waveform logger disabled. */
+static uint8_t fd_native_clock_ok;
+#define FD_NATIVE_SINE_CLOCK_FAULT 15u
+static void fdNativeSineClockInit(void)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+    __DSB();
+    __ISB();
+    uint32_t before = DWT->CYCCNT;
+    for (volatile uint32_t i = 0u; i < 32u; i++) __NOP();
+    fd_native_clock_ok = (uint32_t)(DWT->CYCCNT - before) != 0u;
+    __set_PRIMASK(mask);
+}
+static uint8_t fdNativeSineClockReady(void)
+{
+    return fd_native_clock_ok &&
+        (CoreDebug->DEMCR & CoreDebug_DEMCR_TRCENA_Msk) &&
+        (DWT->CTRL & DWT_CTRL_CYCCNTENA_Msk);
+}
+
+/* The legacy sensor request sits inside !stepper_sine. Keep voltage/current
+ * and temperature conversion/telemetry alive while the sine bridge owns PWM.
+ * Only request the normal foreground work; never sample or write PWM here. */
+static void fdNativeSineSensorTick(void)
+{
+    if (stepper_sine && one_khz_loop_counter > PID_LOOP_DIVIDER) {
+        PROCESS_ADC_FLAG = 1u;
+        one_khz_loop_counter = 0u;
+    }
+}
+
+uint8_t fdNativeSineBridgeAllowed(void)
+{
+    return fdNativeSineClockReady() && fd_power_bench.active_id && !fd_power_bench.inhibit && armed &&
+        adjusted_input && !stuck_rotor_inhibit && !drive_safety_limit_inhibit;
+}
+
+#ifdef TARGET_FD_SINE_FIXED_PROBE
+static void fdSineFixedSample(void)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    /* Wait by returning to the normal loop, never by polling the timer.
+     * After 1ms the fixed preload has crossed many carrier updates. */
+    if (fdNativeSineBridgeAllowed() && !fd_sine_pins.frozen &&
+        fd_native_sine.sine_steps && fd_sine_pins.count < 256u &&
+        (uint32_t)(DWT->CYCCNT - fd_sine_pins.driven_at) >= 1000u * 160u) {
+        FdSinePinSample s;
+        s.before = (uint16_t)TIM1->CNT;
+        s.gpioa = (uint16_t)(GPIOA->IDR & 0x1f00u);
+        s.gpiof = (uint16_t)(GPIOF->IDR & 1u);
+        s.after = (uint16_t)TIM1->CNT;
+        s.at = DWT->CYCCNT - fd_native_sine.started;
+        uint32_t i = fd_sine_pins.count;
+        fd_sine_pins.samples[i] = s;
+        fd_sine_pins.count = i + 1u;
+        if (i + 1u == 256u) fd_sine_pins.frozen = 1u;
+    }
+    __set_PRIMASK(mask);
+}
+#endif
+
+static uint8_t fdBenchConfigOk(void)
+{
+    return eepromBuffer.use_sine_start == 1u && eepromBuffer.startup_power == FD_NATIVE_SINE_STARTUP_POWER &&
+        eepromBuffer.motor_kv == FD_NATIVE_SINE_MOTOR_KV_CODE && eepromBuffer.motor_poles == FD_NATIVE_SINE_MOTOR_POLES &&
+        eepromBuffer.sine_mode_changeover_thottle_level == FD_NATIVE_SINE_RANGE &&
+        eepromBuffer.sine_mode_power == FD_NATIVE_SINE_POWER &&
+        eepromBuffer.advance_level >= 10u && eepromBuffer.advance_level <= 42u &&
+        eepromBuffer.auto_advance <= 1u && eepromBuffer.comp_pwm &&
+        !eepromBuffer.variable_pwm && eepromBuffer.pwm_frequency == FD_NATIVE_SINE_PWM_KHZ &&
+        !eepromBuffer.bi_direction && !eepromBuffer.rc_car_reverse &&
+        !use_speed_control_loop && minimum_duty_cycle == 210u &&
+        min_startup_duty == 360u && startup_max_duty_cycle == 610u;
+}
+
+#ifdef TARGET_FD_SIXSTEP_ALIGN_CONTROL
+#ifdef TARGET_FD_SIXSTEP_AB_CONTROL
+#define FD_SIXSTEP_ALIGN_VECTOR 1
+#else
+#define FD_SIXSTEP_ALIGN_VECTOR 6
+#endif
+static void fdBenchStop(uint8_t reason);
+void comStep(int newStep);
+__attribute__((noinline)) static void fdSixStepAlignApply(void)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    fdBenchService();
+    if (!fdNativeSineBridgeAllowed()) { __set_PRIMASK(mask); return; }
+    if (TIM1->PSC != 0u || TIM1->ARR != 6665u ||
+        (TIM1->CR1 & (TIM_CR1_CKD_Msk | TIM_CR1_UDIS)) ||
+        (TIM1->BDTR & TIM_BDTR_DTG_Msk) != TARGET_FIXED_DEAD_TIME_CODE) {
+        fdBenchStop(FD_BENCH_BAD_CONFIG);
+    } else if (driveEffectiveDutyLimit() < 360u) {
+        fdBenchStop(FD_BENCH_SAFETY_CAP);
+    } else {
+        /* Step6=A PWM/C LOW/B FLOAT, or step1=A PWM/B LOW/C FLOAT.
+         * Duty360/2000 -> compare1200 at24kHz; apply once with bridge off. */
+        allOff();
+        SET_DUTY_CYCLE_ALL((360u * tim1_arr) / 2000u + 1u);
+        TIM1->CCR4 = 0u; /* no injected ZC trigger or feedback commutation */
+        generatePwmTimerEvent();
+        comStep(FD_SIXSTEP_ALIGN_VECTOR);
+        fd_native_sine.sine_steps = 1u; /* legacy ABI: one vector command */
+        fd_native_sine.last_step = FD_SIXSTEP_ALIGN_VECTOR;
+        fd_sine_pins.driven_at = DWT->CYCCNT;
+    }
+    __set_PRIMASK(mask);
+}
+#endif
+
+#ifdef TARGET_FD_SINE_CLAMP_B
+static void fdBenchStop(uint8_t reason);
+void advanceincrement(void);
+void phaseAPWM(void);
+void phaseBLOW(void);
+void phaseCPWM(void);
+__attribute__((noinline)) static void fdSineClampApply(void)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    fdBenchService();
+    if (!fdNativeSineBridgeAllowed()) { __set_PRIMASK(mask); return; }
+    if (TIM1->ARR != 13330u || TIM1->PSC != 0u ||
+        (TIM1->CR1 & (TIM_CR1_CKD_Msk | TIM_CR1_UDIS)) ||
+        (TIM1->BDTR & TIM_BDTR_DTG_Msk) != TARGET_FIXED_DEAD_TIME_CODE) {
+        fdBenchStop(FD_BENCH_BAD_CONFIG);
+        __set_PRIMASK(mask); return;
+    }
+    allOff();
+    /* Reuse the actual fixed-sine formula while all six commands are off.
+     * Subtract B from ALL three compares; every pair difference is exact. */
+    advanceincrement();
+    if (!fdNativeSineBridgeAllowed()) { __set_PRIMASK(mask); return; }
+    uint32_t a = TIM1->CCR1, b = TIM1->CCR2, c = TIM1->CCR3;
+    if (b > a || b > c || a - b <= ZCD_SAMPLE_FLOOR || c - b <= ZCD_SAMPLE_FLOOR) {
+        fdBenchStop(FD_BENCH_BAD_CONFIG);
+    } else if ((a - b) * 2000u > (uint32_t)driveEffectiveDutyLimit() * (TIM1->ARR + 1u) ||
+               (c - b) * 2000u > (uint32_t)driveEffectiveDutyLimit() * (TIM1->ARR + 1u)) {
+        fdBenchStop(FD_BENCH_SAFETY_CAP);
+    } else {
+        TIM1->CCR1 = a - b;
+        TIM1->CCR2 = 0u;
+        TIM1->CCR3 = c - b;
+        TIM1->CCR4 = 0u;
+        generatePwmTimerEvent(); /* transfer the complete set while off */
+        phaseAPWM();
+        phaseBLOW();
+        phaseCPWM();
+        fd_native_sine.last_step = 0u; /* three-phase fixed vector, not step1 */
+        fd_sine_pins.driven_at = DWT->CYCCNT;
+    }
+    __set_PRIMASK(mask);
+}
+#endif
+
+static void fdBenchStop(uint8_t reason)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    fd_power_bench.inhibit = 1u;
+    fd_native_ready = 0u;
+    if (fd_power_bench.active_id) {
+#ifdef TARGET_FD_SINE_FIXED_PROBE
+        fd_sine_pins.frozen = 1u;
+#endif
+#ifdef TARGET_FD_SINE_CENTERED_PWM
+        fd_sine_pwm_snapshot.trial = fd_native_sine.trial;
+        fd_sine_pwm_snapshot.steps = fd_native_sine.sine_steps;
+        fd_sine_pwm_snapshot.cr1 = TIM1->CR1;
+        fd_sine_pwm_snapshot.psc = TIM1->PSC;
+        fd_sine_pwm_snapshot.arr = TIM1->ARR;
+        fd_sine_pwm_snapshot.ccer = TIM1->CCER;
+        fd_sine_pwm_snapshot.bdtr = TIM1->BDTR;
+        fd_sine_pwm_snapshot.ccr1 = TIM1->CCR1;
+        fd_sine_pwm_snapshot.ccr2 = TIM1->CCR2;
+        fd_sine_pwm_snapshot.ccr3 = TIM1->CCR3;
+        fd_sine_pwm_snapshot.ccr4 = TIM1->CCR4;
+        fd_sine_pwm_snapshot.gpioa_moder = GPIOA->MODER;
+        fd_sine_pwm_snapshot.gpiof_moder = GPIOF->MODER;
+        fd_sine_pwm_snapshot.gpioa_afrh = GPIOA->AFR[1];
+        fd_sine_pwm_snapshot.gpiof_afrl = GPIOF->AFR[0];
+        fd_sine_pwm_snapshot.phase_a = (uint16_t)phase_A_position;
+        fd_sine_pwm_snapshot.phase_b = (uint16_t)phase_B_position;
+        fd_sine_pwm_snapshot.phase_c = (uint16_t)phase_C_position;
+#endif
+        fd_native_sine.reason = reason;
+        fd_native_sine.stopped_at = DWT->CYCCNT - fd_native_sine.started;
+        fd_native_sine.phase = 4u;
+        fd_power_bench.completed++;
+    }
+    fd_power_bench.active_id = 0u;
+    fd_power_bench.floor = 0u;
+    fd_power_bench.last_reason = reason;
+    fd_power_starting = 0u;
+    fdAsyncCancel();
+    heliCoastTrackingLost(1u);
+    adcZcdResetAcquisition(ADC_ZCD_RESET_COUNT);
+    stepper_sine = 1;
+    do_once_sinemode = 1;
+    input = 0u;
+    __set_PRIMASK(mask);
+}
+
+static void fdBenchService(void)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    if (!adjusted_input) {
+        if (fd_power_bench.active_id) fdBenchStop(FD_BENCH_OPERATOR_ZERO);
+        fd_power_bench.inhibit = 0u;
+        fd_native_ready = 1u;
+        heli_coast_restart_inhibit = 0u;
+    } else if (fd_power_bench.active_id && !fd_power_bench.inhibit) {
+        uint32_t age = DWT->CYCCNT - fd_native_sine.started;
+        if (!fdNativeSineClockReady())
+            fdBenchStop(FD_NATIVE_SINE_CLOCK_FAULT);
+        else if (!armed || stuck_rotor_inhibit || drive_safety_limit_inhibit)
+            fdBenchStop(FD_BENCH_SAFETY_CAP);
+        else if (age >= FD_NATIVE_SINE_LIMIT_CYCLES || (fd_native_sine.edges >= 6u &&
+            age - fd_native_sine.sixth_edge_at >= 1000000u * 160u))
+            fdBenchStop(FD_BENCH_WINDOW);
+        else if (fd_native_sine.phase >= 2u && !running)
+            fdBenchStop(FD_BENCH_NOT_RUNNING);
+    }
+    __set_PRIMASK(mask);
+}
+
+static uint8_t fdBenchGuardInput(void)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    fdBenchService();
+    if (armed && !fdNativeSineClockReady()) fdBenchStop(FD_NATIVE_SINE_CLOCK_FAULT);
+    else if (armed && !fdBenchConfigOk()) fdBenchStop(FD_BENCH_BAD_CONFIG);
+    if (armed && adjusted_input > 35u && !fd_power_bench.active_id &&
+        !fd_power_bench.inhibit && fd_native_ready) {
+        fd_native_ready = 0u;
+        fd_power_bench.active_id = ++fd_power_bench.trials;
+        fd_power_bench.floor = min_startup_duty;
+        fd_native_sine.trial = fd_power_bench.active_id;
+        fd_native_sine.started = DWT->CYCCNT;
+        fd_native_sine.phase = 1u;
+        fd_native_sine.reason = fd_native_sine.sine_steps = fd_native_sine.edges = 0u;
+        fd_native_sine.sixstep_at = fd_native_sine.first_edge_at = UINT32_MAX;
+        fd_native_sine.sixth_edge_at = fd_native_sine.stopped_at = UINT32_MAX;
+        fd_native_sine.input_at_start = adjusted_input;
+        fd_native_sine.input_at_handoff = fd_native_sine.last_step = 0u;
+#if defined(TARGET_FD_SINE_FIXED_12KHZ) || defined(TARGET_FD_SIXSTEP_ALIGN_CONTROL)
+        fd_sine_sensors.trial = fd_native_sine.trial;
+        fd_sine_sensors.updates = 0u;
+        fd_sine_sensors.baseline_current = fd_sine_sensors.peak_current = actual_current;
+        fd_sine_sensors.baseline_voltage = fd_sine_sensors.minimum_voltage = battery_voltage;
+        fd_sine_sensors.baseline_raw_current = fd_sine_sensors.peak_raw_current = ADC_raw_current;
+#endif
+        fdAsyncCancel();
+        allOff();
+        SET_DUTY_CYCLE_ALL(0u);
+        heli_coast_active = heli_coast_restart_inhibit = 0u;
+        prop_brake_active = 0u;
+        running = 0;
+        stepper_sine = 1;
+        do_once_sinemode = 1;
+#ifdef TARGET_FD_SINE_FIXED_PROBE
+        fd_sine_pins.trial = fd_native_sine.trial;
+        fd_sine_pins.count = fd_sine_pins.frozen = fd_sine_pins.driven_at = 0u;
+        phase_A_position = 150;
+        phase_B_position = 269;
+        phase_C_position = 29;
+#else
+        phase_A_position = 180;
+        phase_B_position = 299;
+        phase_C_position = 59;
+#endif
+        step_delay = 100u;
+    }
+    uint8_t blocked = fd_power_bench.inhibit ||
+        (adjusted_input > 35u && !fd_power_bench.active_id);
+    if (blocked) input = duty_cycle_setpoint = 0u;
+    __set_PRIMASK(mask);
+    return blocked;
+}
+
+static uint8_t fdBenchBegin(void)
+{
+    fd_power_starting = 1u;
+    return !fd_power_bench.inhibit && fd_power_bench.active_id != 0u;
+}
+
+static void fdBenchWritePwm(uint16_t ticks)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    fdBenchService();
+    if (fd_power_bench.inhibit || stuck_rotor_inhibit || drive_safety_limit_inhibit ||
+        !armed || !adjusted_input || !fd_power_bench.active_id) {
+        allOff();
+        SET_DUTY_CYCLE_ALL(0u);
+    } else if (!stepper_sine) {
+        last_duty_cycle = duty_cycle;
+        SET_DUTY_CYCLE_ALL(ticks);
+    }
+    __set_PRIMASK(mask);
+}
+
+#ifndef TARGET_FD_NATIVE_SINE_ONLY
+static uint8_t fdNativeSineHandoff(void)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    fdBenchService();
+    if (!fd_power_bench.active_id || fd_power_bench.inhibit || !armed ||
+        !adjusted_input || stuck_rotor_inhibit || drive_safety_limit_inhibit) {
+        __set_PRIMASK(mask);
+        return 0u;
+    }
+    /* Three sine CCRs differ. Restore a common six-step PWM and its CH4
+     * sample trigger before exposing the driven vector, with the bridge off.
+     * Current/temperature caps retain priority over the ADC sampling floor. */
+    if (!driveSafetyLimitAllowsZcd()) {
+        fdBenchStop(FD_BENCH_SAFETY_CAP);
+        __set_PRIMASK(mask);
+        return 0u;
+    }
+    uint16_t duty = min_startup_duty;
+    uint16_t cap = driveEffectiveDutyLimit();
+    if (duty > cap) duty = cap;
+    uint16_t ticks = (uint16_t)((uint32_t)duty * tim1_arr / 2000u + 1u);
+    if (ticks < ZCD_MINIMUM_ON_TICKS) ticks = ZCD_MINIMUM_ON_TICKS;
+    fdAsyncCancel();
+    allOff();
+    SET_DUTY_CYCLE_ALL(ticks);
+    generatePwmTimerEvent();
+    adcZcdResetAcquisition(ADC_ZCD_RESET_START);
+    stepper_sine = 0;
+    running = 1;
+    old_routine = 1;
+    commutation_interval = average_interval = last_average_interval = 9000u;
+    for (unsigned i = 0u; i < 6u; i++) commutation_intervals[i] = 9000u;
+    SET_INTERVAL_TIMER_COUNT(9000u);
+    zero_crosses = 20u; /* native sine handover seed; NOT twenty measured ZCs */
+    prop_brake_active = 0u;
+    step = changeover_step;
+    duty_cycle_setpoint = duty_cycle = last_duty_cycle = duty;
+    adjusted_duty_cycle = ticks;
+    fd_native_sine.phase = 2u;
+    fd_native_sine.sixstep_at = DWT->CYCCNT - fd_native_sine.started;
+    fd_native_sine.input_at_handoff = adjusted_input;
+    commutate();
+    fd_native_sine.last_step = step;
+    __set_PRIMASK(mask);
+    return !fd_power_bench.inhibit;
+}
+#endif
+
+
+static void fdNativeSineEdge(void)
+{
+    if (!fd_power_bench.active_id || fd_native_sine.phase < 2u) return;
+    uint32_t age = DWT->CYCCNT - fd_native_sine.started;
+    fd_native_sine.edges++;
+    if (fd_native_sine.edges == 1u) fd_native_sine.first_edge_at = age;
+    if (fd_native_sine.edges == 6u) {
+        fd_native_sine.sixth_edge_at = age;
+        fd_native_sine.phase = 3u;
+    }
+}
+
+static uint8_t fdBenchDeadlineExpired(void)
+{
+    return fd_power_bench.inhibit || (fd_power_bench.active_id &&
+        (uint32_t)(DWT->CYCCNT - fd_native_sine.started) >= FD_NATIVE_SINE_LIMIT_CYCLES);
+}

@@ -3096,13 +3096,12 @@
 
 // ---- ADC-based software ZCD ----
 // PA0=ADC1_IN1 (BEMF A), PA1=ADC1_IN2 (BEMF B), PA2=ADC1_IN3 (BEMF C).
-// Hardware COMP ZCD is not usable for a shared-neutral 6-step scheme on
-// this layout: PA2 is not a plus input on any comparator, and the PA5
-// neutral candidate only reaches COMP2 minus. See section 11 of the
-// porting notes.
-//
-// PA5 is only a 1.0k pulldown, tied to no phase, so it is not a usable
-// neutral input. This route reconstructs the reference as (Va+Vb+Vc)/3.
+// This target currently implements ADC ZCD, not a hardware COMP path.
+// PA0 reaches COMP3 plus / COMP1 minus; PA1 COMP1 plus; PA2 COMP2 minus.
+// Mixed polarity alone does not rule out COMP ZCD: the reference routing
+// still needs board-level verification, especially COMP2 plus (PA3/PA7).
+// PA5 is the measured bus-voltage input, NOT an unused pulldown or neutral.
+// This route reconstructs the reference as (Va+Vb+Vc)/3.
 // NEUTRAL_ADC_CHANNEL is DEPRECATED and is not read at runtime; the macro is
 // retained only for legacy compile-time references.
 #define USE_ADC_ZCD
@@ -3198,15 +3197,700 @@
 /* C11: this is a helicopter main ESC, not a crawler. Stall protection adds
  * torque as speed falls and is therefore the wrong failure response here.
  * Keep the standard AM32 stuck-rotor timeout available through its existing
- * EEPROM/configurator switch now that the target's ZCD path is validated. */
+ * EEPROM/configurator switch. Its usability with this ADC-ZCD port still
+ * requires loaded startup / false-trip validation; it is not overcurrent
+ * protection or a substitute for a trustworthy commutation observer. */
 #define TARGET_DISABLE_STALL_PROTECTION
+/* Loaded-ZCD candidate: target-local ADC qualification and native stuck-rotor
+ * stop integration. No EEPROM/configurator or bridge timing changes. */
+#define TARGET_ADC_ZCD_GUARD
+#ifndef FD6288_NATIVE_SINE_START
+#define FD6288_NATIVE_SINE_START 0
+#endif
+#ifndef FD6288_NATIVE_SINE_ONLY
+#define FD6288_NATIVE_SINE_ONLY 0
+#endif
+#if FD6288_NATIVE_SINE_ONLY != 0 && FD6288_NATIVE_SINE_ONLY != 1
+#error "Sine-only switch must be boolean"
+#endif
+#if FD6288_NATIVE_SINE_ONLY
+#if !FD6288_NATIVE_SINE_START
+#error "Sine-only observation requires the native sine trial"
+#endif
+#define TARGET_FD_NATIVE_SINE_ONLY
+#endif
+#ifndef FD6288_SINE_CENTERED_PWM
+#define FD6288_SINE_CENTERED_PWM 0
+#endif
+#if FD6288_SINE_CENTERED_PWM != 0 && FD6288_SINE_CENTERED_PWM != 1
+#error "Centered sine PWM must be boolean"
+#endif
+#if FD6288_SINE_CENTERED_PWM
+#if !FD6288_NATIVE_SINE_ONLY
+#error "Centered sine output is an isolated sine-only trial"
+#endif
+#define TARGET_FD_SINE_CENTERED_PWM
+#endif
+#ifndef FD6288_SINE_FIXED_PROBE
+#define FD6288_SINE_FIXED_PROBE 0
+#endif
+#if FD6288_SINE_FIXED_PROBE != 0 && FD6288_SINE_FIXED_PROBE != 1
+#error "Fixed sine probe must be boolean"
+#endif
+#if FD6288_SINE_FIXED_PROBE
+#if !FD6288_SINE_CENTERED_PWM || !FD6288_NATIVE_SINE_ONLY
+#error "Fixed sine probe requires the centered sine-only diagnostic"
+#endif
+#define TARGET_FD_SINE_FIXED_PROBE
+#endif
+#ifndef FD6288_SINE_FIXED_12KHZ
+#define FD6288_SINE_FIXED_12KHZ 0
+#endif
+#if FD6288_SINE_FIXED_12KHZ != 0 && FD6288_SINE_FIXED_12KHZ != 1
+#error "Fixed sine carrier comparison must be boolean"
+#endif
+#if FD6288_SINE_FIXED_12KHZ
+#if !FD6288_SINE_FIXED_PROBE
+#error "12kHz carrier comparison requires the bounded fixed-vector probe"
+#endif
+#define TARGET_FD_SINE_FIXED_12KHZ
+#endif
+#ifndef FD6288_SIXSTEP_ALIGN_CONTROL
+#define FD6288_SIXSTEP_ALIGN_CONTROL 0
+#endif
+#if FD6288_SIXSTEP_ALIGN_CONTROL != 0 && FD6288_SIXSTEP_ALIGN_CONTROL != 1
+#error "Six-step alignment control must be boolean"
+#endif
+#if FD6288_SIXSTEP_ALIGN_CONTROL
+#if !FD6288_SINE_FIXED_PROBE || FD6288_SINE_FIXED_12KHZ
+#error "Six-step control requires fixed100ms mode at the historical24kHz carrier"
+#endif
+#define TARGET_FD_SIXSTEP_ALIGN_CONTROL
+#endif
+#ifndef FD6288_SIXSTEP_AB_CONTROL
+#define FD6288_SIXSTEP_AB_CONTROL 0
+#endif
+#if FD6288_SIXSTEP_AB_CONTROL != 0 && FD6288_SIXSTEP_AB_CONTROL != 1
+#error "A-to-B positioning control must be boolean"
+#endif
+#if FD6288_SIXSTEP_AB_CONTROL
+#if !FD6288_SIXSTEP_ALIGN_CONTROL
+#error "A-to-B requires the bounded six-step positioning control"
+#endif
+#define TARGET_FD_SIXSTEP_AB_CONTROL
+#endif
+#ifndef FD6288_SINE_CLAMP_B
+#define FD6288_SINE_CLAMP_B 0
+#endif
+#if FD6288_SINE_CLAMP_B != 0 && FD6288_SINE_CLAMP_B != 1
+#error "Fixed B-clamped PWM test must be boolean"
+#endif
+#if FD6288_SINE_CLAMP_B
+#if !FD6288_SINE_FIXED_12KHZ || !FD6288_SINE_FIXED_PROBE || FD6288_SIXSTEP_ALIGN_CONTROL
+#error "B-clamp comparison requires12k fixed sine, excludes six-step control"
+#endif
+#define TARGET_FD_SINE_CLAMP_B
+#endif
+#if FD6288_NATIVE_SINE_START != 0 && FD6288_NATIVE_SINE_START != 1
+#error "Native sine switch must be boolean"
+#endif
+#if FD6288_NATIVE_SINE_START
+#if FD6288_STARTUP_SEQUENCE || FD6288_STARTUP_POWER_BENCH || FD6288_STARTUP_TRACE
+#error "Native sine excludes the previous startup policies and waveform recorders"
+#endif
+#define TARGET_FD_NATIVE_SINE
+#define TARGET_STARTUP_POWER_BENCH /* output interlocks only; separate adapter */
+#endif
+#define TARGET_STUCK_ROTOR_LATCH
+#if defined(FD6288_STARTUP_TRACE) && FD6288_STARTUP_TRACE
+#define TARGET_STARTUP_TRACE
+#endif
+#ifndef FD6288_STARTUP_TIMING_FIX
+#define FD6288_STARTUP_TIMING_FIX 0
+#endif
+#ifndef FD6288_STARTUP_PAIR_TRACE
+#define FD6288_STARTUP_PAIR_TRACE 0
+#endif
+#ifndef FD6288_STARTUP_S3_POWER
+#define FD6288_STARTUP_S3_POWER 0
+#endif
+#ifndef FD6288_STARTUP_WAVE_TRACE
+#define FD6288_STARTUP_WAVE_TRACE 0
+#endif
+#ifndef FD6288_ZCD_ACTUAL_DEADTIME
+#define FD6288_ZCD_ACTUAL_DEADTIME 0
+#endif
+#ifndef FD6288_STARTUP_S4
+#define FD6288_STARTUP_S4 0
+#endif
+#if FD6288_STARTUP_S4 != 0 && FD6288_STARTUP_S4 != 1
+#error "FD6288_STARTUP_S4 must be 0 or 1"
+#endif
+#if FD6288_STARTUP_S4
+#if FD6288_STARTUP_SEQUENCE != 3 || !FD6288_STARTUP_WAVE_TRACE || !FD6288_ZCD_ACTUAL_DEADTIME || FD6288_STARTUP_S3_POWER
+#error "S4 requires S3 feedback, waveform trace, actual-deadtime window and original power"
+#endif
+#define TARGET_STARTUP_S4
+#endif
+#ifndef FD6288_STARTUP_HANDOFF_REAL
+#define FD6288_STARTUP_HANDOFF_REAL 0
+#endif
+#if FD6288_STARTUP_HANDOFF_REAL != 0 && FD6288_STARTUP_HANDOFF_REAL != 1
+#error "FD6288_STARTUP_HANDOFF_REAL must be 0 or 1"
+#endif
+#if FD6288_STARTUP_HANDOFF_REAL
+#if !FD6288_STARTUP_S4
+#error "Real-period handoff comparison requires S4"
+#endif
+#define TARGET_STARTUP_HANDOFF_REAL
+#endif
+#ifndef FD6288_STARTUP_RESCUE_RETAIN
+#define FD6288_STARTUP_RESCUE_RETAIN 0
+#endif
+#if FD6288_STARTUP_RESCUE_RETAIN != 0 && FD6288_STARTUP_RESCUE_RETAIN != 1
+#error "FD6288_STARTUP_RESCUE_RETAIN must be 0 or 1"
+#endif
+#if FD6288_STARTUP_RESCUE_RETAIN
+#if !FD6288_STARTUP_HANDOFF_REAL
+#error "Retained rescue comparison requires S4B real-period handoff"
+#endif
+#define TARGET_STARTUP_RESCUE_RETAIN
+#endif
+#ifndef FD6288_STARTUP_RESCUE_BRIDGE
+#define FD6288_STARTUP_RESCUE_BRIDGE 0
+#endif
+#if FD6288_STARTUP_RESCUE_BRIDGE != 0 && FD6288_STARTUP_RESCUE_BRIDGE != 1
+#error "FD6288_STARTUP_RESCUE_BRIDGE must be 0 or 1"
+#endif
+#if FD6288_STARTUP_RESCUE_BRIDGE
+#if !FD6288_STARTUP_RESCUE_RETAIN
+#error "Rescue bridge comparison requires S4C retained rescue"
+#endif
+#define TARGET_STARTUP_RESCUE_BRIDGE
+#endif
+#ifndef FD6288_STARTUP_ACQ_LOG
+#define FD6288_STARTUP_ACQ_LOG 0
+#endif
+#if FD6288_STARTUP_ACQ_LOG < 0 || FD6288_STARTUP_ACQ_LOG > 2
+#error "FD6288_STARTUP_ACQ_LOG must be 0 (tail), 1 (prefix), or 2 (first edge)"
+#endif
+#if FD6288_STARTUP_ACQ_LOG
+#if !FD6288_STARTUP_RESCUE_BRIDGE
+#error "Acquisition logger requires unchanged S4D control policy"
+#endif
+#if FD6288_STARTUP_ACQ_LOG == 2
+#define TARGET_STARTUP_EDGE_LOG
+#else
+#define TARGET_STARTUP_ACQ_LOG
+#endif
+#endif
+#ifndef FD6288_STARTUP_S4E
+#define FD6288_STARTUP_S4E 0
+#endif
+#if FD6288_STARTUP_S4E != 0 && FD6288_STARTUP_S4E != 1
+#error "FD6288_STARTUP_S4E must be 0 or 1"
+#endif
+#if FD6288_STARTUP_S4E
+#if FD6288_STARTUP_ACQ_LOG != 2
+#error "S4E requires first-edge diagnostics and S4D base"
+#endif
+#define TARGET_STARTUP_S4E
+#endif
+#ifndef FD6288_STARTUP_LOSS_LOG
+#define FD6288_STARTUP_LOSS_LOG 0
+#endif
+#if FD6288_STARTUP_LOSS_LOG != 0 && FD6288_STARTUP_LOSS_LOG != 1
+#error "FD6288_STARTUP_LOSS_LOG must be 0 or 1"
+#endif
+#if FD6288_STARTUP_LOSS_LOG
+#if !FD6288_STARTUP_S4E
+#error "Loss-window logger requires S4E base"
+#endif
+#define TARGET_STARTUP_LOSS_LOG
+#endif
+#ifndef FD6288_STARTUP_PHASE_DELAY
+#define FD6288_STARTUP_PHASE_DELAY 0
+#endif
+#if FD6288_STARTUP_PHASE_DELAY != 0 && FD6288_STARTUP_PHASE_DELAY != 1
+#error "FD6288_STARTUP_PHASE_DELAY must be 0 or 1"
+#endif
+#if FD6288_STARTUP_PHASE_DELAY
+#if !FD6288_STARTUP_LOSS_LOG
+#error "Phase-delay experiment requires S4E loss-window diagnostics"
+#endif
+#define TARGET_STARTUP_PHASE_DELAY
+#endif
+#ifndef FD6288_STARTUP_SEED_DELAY
+#define FD6288_STARTUP_SEED_DELAY 0
+#endif
+#if FD6288_STARTUP_SEED_DELAY != 0 && FD6288_STARTUP_SEED_DELAY != 1
+#error "FD6288_STARTUP_SEED_DELAY must be 0 or 1"
+#endif
+#if FD6288_STARTUP_SEED_DELAY
+#if !FD6288_STARTUP_PHASE_DELAY
+#error "Seed-delay experiment requires S4F phase-delay base"
+#endif
+#define TARGET_STARTUP_SEED_DELAY
+#endif
+#ifndef FD6288_STARTUP_NOEDGE_LOG
+#define FD6288_STARTUP_NOEDGE_LOG 0
+#endif
+#if FD6288_STARTUP_NOEDGE_LOG != 0 && FD6288_STARTUP_NOEDGE_LOG != 1
+#error "FD6288_STARTUP_NOEDGE_LOG must be 0 or 1"
+#endif
+#if FD6288_STARTUP_NOEDGE_LOG
+#if !FD6288_STARTUP_SEED_DELAY
+#error "No-edge logger requires S4G base"
+#endif
+#define TARGET_STARTUP_NOEDGE_LOG
+#endif
+#ifndef FD6288_STARTUP_RESCUE_RAMP
+#define FD6288_STARTUP_RESCUE_RAMP 0
+#endif
+#if FD6288_STARTUP_RESCUE_RAMP != 0 && FD6288_STARTUP_RESCUE_RAMP != 1
+#error "FD6288_STARTUP_RESCUE_RAMP must be 0 or 1"
+#endif
+#if FD6288_STARTUP_RESCUE_RAMP
+#if !FD6288_STARTUP_NOEDGE_LOG
+#error "Rescue ramp requires S4G-NOEDGE base"
+#endif
+#define TARGET_STARTUP_RESCUE_RAMP
+#endif
+#ifndef FD6288_STARTUP_SPLIT_LOG
+#define FD6288_STARTUP_SPLIT_LOG 0
+#endif
+#if FD6288_STARTUP_SPLIT_LOG != 0 && FD6288_STARTUP_SPLIT_LOG != 1
+#error "FD6288_STARTUP_SPLIT_LOG must be 0 or 1"
+#endif
+#if FD6288_STARTUP_SPLIT_LOG
+#if !FD6288_STARTUP_RESCUE_RAMP
+#error "Split logger requires S4H-RAMP base"
+#endif
+#define TARGET_STARTUP_SPLIT_LOG
+#endif
+#ifndef FD6288_ASYNC_COMM
+#define FD6288_ASYNC_COMM 0
+#endif
+#ifndef FD6288_ADC_JEOS
+#define FD6288_ADC_JEOS 0
+#endif
+#if (FD6288_ASYNC_COMM != 0 && FD6288_ASYNC_COMM != 1) || (FD6288_ADC_JEOS != 0 && FD6288_ADC_JEOS != 1)
+#error "FD6288 asynchronous switches must be 0 or 1"
+#endif
+#if FD6288_ADC_JEOS && !FD6288_ASYNC_COMM
+#error "JEOS requires nonblocking commutation"
+#endif
+#if FD6288_ASYNC_COMM
+#if !FD6288_STARTUP_FIRST_WAIT && !FD6288_NATIVE_SINE_START
+#error "Experimental async path requires the S4I FIRST30 bench baseline"
+#endif
+#define TARGET_FD_ASYNC_COMM
+#endif
+#if FD6288_ADC_JEOS
+#define TARGET_FD_ADC_JEOS
+#endif
+#ifndef FD6288_DOUBLE_ALIGN
+#define FD6288_DOUBLE_ALIGN 0
+#endif
+#ifndef FD6288_QUIET_LOG
+#define FD6288_QUIET_LOG 0
+#endif
+#if (FD6288_DOUBLE_ALIGN != 0 && FD6288_DOUBLE_ALIGN != 1) || (FD6288_QUIET_LOG != 0 && FD6288_QUIET_LOG != 1)
+#error "Double alignment and quiet logger must be 0 or 1"
+#endif
+#if FD6288_DOUBLE_ALIGN
+#if !FD6288_ADC_JEOS || !FD6288_STARTUP_FIRST_WAIT || !FD6288_QUIET_LOG
+#error "Double alignment requires JEOS FIRST30 baseline and quiet logger"
+#endif
+#define TARGET_FD_DOUBLE_ALIGN
+#endif
+#ifndef FD6288_ALIGN_BUDGET
+#define FD6288_ALIGN_BUDGET 0
+#endif
+#if FD6288_ALIGN_BUDGET != 0 && FD6288_ALIGN_BUDGET != 1
+#error "Alignment budget switch must be 0 or 1"
+#endif
+#if FD6288_ALIGN_BUDGET
+#if !FD6288_DOUBLE_ALIGN
+#error "Alignment budget requires double alignment"
+#endif
+#define TARGET_FD_ALIGN_BUDGET
+#endif
+#ifndef FD6288_PIN_SYNC
+#define FD6288_PIN_SYNC 0
+#endif
+#if FD6288_PIN_SYNC != 0 && FD6288_PIN_SYNC != 1
+#error "Pin sync must be boolean"
+#endif
+#if FD6288_PIN_SYNC
+#if !FD6288_ALIGN_BUDGET || !FD6288_NO_DIAGNOSTICS || FD6288_PIN_SCAN
+#error "Pin sync requires quiet bounded control without slow scan"
+#endif
+#define TARGET_FD_PIN_SYNC
+#endif
+#ifndef FD6288_PIN_SCAN
+#define FD6288_PIN_SCAN 0
+#endif
+#if FD6288_PIN_SCAN != 0 && FD6288_PIN_SCAN != 1
+#error "Pin scan must be boolean"
+#endif
+#if FD6288_PIN_SCAN
+#if !FD6288_ALIGN_BUDGET || !FD6288_NO_DIAGNOSTICS
+#error "Pin scan requires quiet bounded control with other diagnostics removed"
+#endif
+#define TARGET_FD_PIN_SCAN
+#endif
+#ifndef FD6288_NO_DIAGNOSTICS
+#define FD6288_NO_DIAGNOSTICS 0
+#endif
+#ifndef FD6288_NATIVE_EARLY
+#define FD6288_NATIVE_EARLY 0
+#endif
+#if (FD6288_NO_DIAGNOSTICS != 0 && FD6288_NO_DIAGNOSTICS != 1) || (FD6288_NATIVE_EARLY != 0 && FD6288_NATIVE_EARLY != 1)
+#error "Diagnostic and early-commutation switches must be boolean"
+#endif
+#if FD6288_NO_DIAGNOSTICS
+#if !FD6288_NATIVE_SINE_START && (!FD6288_ALIGN_BUDGET || !FD6288_QUIET_LOG || FD6288_SECTOR_DIAG || FD6288_DENSE_LOG)
+#error "No diagnostics requires quiet S4L-B control and no recorders"
+#endif
+#define TARGET_FD_NO_DIAGNOSTICS
+#endif
+#if FD6288_NATIVE_EARLY
+#if !FD6288_ALIGN_BUDGET
+#error "Native early comparison requires S4L-B control"
+#endif
+#define TARGET_FD_NATIVE_EARLY
+#endif
+#ifndef FD6288_ALIGN_HOLD
+#define FD6288_ALIGN_HOLD 0
+#endif
+#if FD6288_ALIGN_HOLD != 0 && FD6288_ALIGN_HOLD != 1
+#error "Alignment hold must be boolean"
+#endif
+#if FD6288_ALIGN_HOLD
+#if !FD6288_NATIVE_EARLY || !FD6288_DOUBLE_ALIGN || FD6288_PIN_SCAN || FD6288_PIN_SYNC
+#error "Alignment hold requires native early double alignment without pin scan"
+#endif
+#define TARGET_FD_ALIGN_HOLD
+#endif
+#ifndef FD6288_ACQ_STATS
+#define FD6288_ACQ_STATS 0
+#endif
+#if FD6288_ACQ_STATS != 0 && FD6288_ACQ_STATS != 1
+#error "Acquisition statistics must be boolean"
+#endif
+#if FD6288_ACQ_STATS
+#if !FD6288_NATIVE_EARLY || !FD6288_NO_DIAGNOSTICS || FD6288_SECTOR_DIAG || FD6288_PIN_SCAN || FD6288_PIN_SYNC
+#error "Acquisition statistics require clean native early without other recorders"
+#endif
+/* Reuse the bounded sector aggregator, independently of waveform tracing. */
+#define TARGET_FD_ACQ_STATS
+#define TARGET_FD_SECTOR_DIAG
+#endif
+#ifndef FD6288_LAUNCH_ADVANCE
+#define FD6288_LAUNCH_ADVANCE 0
+#endif
+#if FD6288_LAUNCH_ADVANCE != 0 && FD6288_LAUNCH_ADVANCE != 1
+#error "Launch advance must be boolean"
+#endif
+#if FD6288_LAUNCH_ADVANCE
+#if !FD6288_ACQ_STATS || !FD6288_ALIGN_HOLD
+#error "Launch advance experiment requires S4N statistics baseline"
+#endif
+#define TARGET_FD_LAUNCH_ADVANCE
+#endif
+#ifndef FD6288_ALIGN_SETTLE
+#define FD6288_ALIGN_SETTLE 0
+#endif
+#if FD6288_ALIGN_SETTLE != 0 && FD6288_ALIGN_SETTLE != 1
+#error "Alignment settle must be boolean"
+#endif
+#if FD6288_ALIGN_SETTLE
+#if !FD6288_LAUNCH_ADVANCE
+#error "Alignment settle requires S4O statistics baseline"
+#endif
+#define TARGET_FD_ALIGN_SETTLE
+#endif
+#ifndef FD6288_PLANNED_ACQ
+#define FD6288_PLANNED_ACQ 0
+#endif
+#if FD6288_PLANNED_ACQ != 0 && FD6288_PLANNED_ACQ != 1
+#error "Planned acquisition must be boolean"
+#endif
+#if FD6288_PLANNED_ACQ
+#if !FD6288_ALIGN_SETTLE
+#error "Planned acquisition requires S4P baseline"
+#endif
+#define TARGET_FD_PLANNED_ACQ
+#endif
+#ifndef FD6288_REPOSITION
+#define FD6288_REPOSITION 0
+#endif
+#if FD6288_REPOSITION != 0 && FD6288_REPOSITION != 1
+#error "Reposition must be boolean"
+#endif
+#if FD6288_REPOSITION
+#if !FD6288_ALIGN_SETTLE || FD6288_PLANNED_ACQ
+#error "Reposition requires feedback-driven S4P, not planned acquisition"
+#endif
+#define TARGET_FD_REPOSITION
+#endif
+#ifndef FD6288_FULL_RETRY
+#define FD6288_FULL_RETRY 0
+#endif
+#if FD6288_FULL_RETRY != 0 && FD6288_FULL_RETRY != 1
+#error "Full retry must be boolean"
+#endif
+#if FD6288_FULL_RETRY
+#if !FD6288_REPOSITION
+#error "Full retry requires ordered reposition"
+#endif
+#define TARGET_FD_FULL_RETRY
+#endif
+#ifndef FD6288_RETRY_ADJACENT
+#define FD6288_RETRY_ADJACENT 0
+#endif
+#if FD6288_RETRY_ADJACENT != 0 && FD6288_RETRY_ADJACENT != 1
+#error "Adjacent retry must be boolean"
+#endif
+#if FD6288_RETRY_ADJACENT
+#if !FD6288_FULL_RETRY
+#error "Adjacent retry requires full retry"
+#endif
+#define TARGET_FD_RETRY_ADJACENT
+#endif
+#ifndef FD6288_STALE_RETRY
+#define FD6288_STALE_RETRY 0
+#endif
+#if FD6288_STALE_RETRY != 0 && FD6288_STALE_RETRY != 1
+#error "Stale retry must be boolean"
+#endif
+#if FD6288_STALE_RETRY
+#if !FD6288_RETRY_ADJACENT
+#error "Stale retry requires S4U adjacent retry baseline"
+#endif
+#define TARGET_FD_STALE_RETRY
+#endif
+#ifndef FD6288_EDGE_OBSERVE
+#define FD6288_EDGE_OBSERVE 0
+#endif
+#if FD6288_EDGE_OBSERVE < 0 || FD6288_EDGE_OBSERVE > 2
+#error "Edge observer must be 0, 1 (legacy), or 2 (raw windows)"
+#endif
+#if FD6288_EDGE_OBSERVE
+#if !FD6288_ALIGN_SETTLE || FD6288_PLANNED_ACQ || (FD6288_REPOSITION && FD6288_EDGE_OBSERVE == 1)
+#error "Edge observer requires unmodified S4P control baseline"
+#endif
+#define TARGET_FD_EDGE_OBSERVE
+#if FD6288_EDGE_OBSERVE == 2
+#define TARGET_FD_EDGE_RAW
+#endif
+#endif
+#ifndef FD6288_SECTOR_DIAG
+#define FD6288_SECTOR_DIAG 0
+#endif
+#if FD6288_SECTOR_DIAG != 0 && FD6288_SECTOR_DIAG != 1
+#error "Sector diagnostics must be 0 or 1"
+#endif
+#if FD6288_SECTOR_DIAG
+#if !FD6288_ALIGN_BUDGET || !FD6288_QUIET_LOG
+#error "Sector diagnostics require S4L-B quiet baseline"
+#endif
+#define TARGET_FD_SECTOR_DIAG
+#endif
+#if FD6288_QUIET_LOG
+#if !FD6288_ADC_JEOS || FD6288_DENSE_LOG
+#error "Quiet logger requires JEOS and excludes dense logger"
+#endif
+#define TARGET_FD_QUIET_LOG
+#endif
+#ifndef FD6288_DENSE_LOG
+#define FD6288_DENSE_LOG 0
+#endif
+#if FD6288_DENSE_LOG != 0 && FD6288_DENSE_LOG != 1
+#error "FD6288_DENSE_LOG must be 0 or 1"
+#endif
+#if FD6288_DENSE_LOG
+#if !FD6288_ADC_JEOS
+#error "Dense recorder requires S4J JEOS"
+#endif
+#define TARGET_FD_DENSE_LOG
+#endif
+#ifndef FD6288_STARTUP_FIRST_WAIT
+#define FD6288_STARTUP_FIRST_WAIT 0
+#endif
+#if FD6288_STARTUP_FIRST_WAIT != 0 && FD6288_STARTUP_FIRST_WAIT != 1
+#error "FD6288_STARTUP_FIRST_WAIT must be 0 or 1"
+#endif
+#if FD6288_STARTUP_FIRST_WAIT
+#if !FD6288_STARTUP_SPLIT_LOG
+#error "First-wait experiment requires split logger base"
+#endif
+#define TARGET_STARTUP_FIRST_WAIT
+#endif
+#if FD6288_ZCD_ACTUAL_DEADTIME != 0 && FD6288_ZCD_ACTUAL_DEADTIME != 1
+#error "FD6288_ZCD_ACTUAL_DEADTIME must be 0 or 1"
+#endif
+#if FD6288_ZCD_ACTUAL_DEADTIME
+#if !FD6288_STARTUP_WAVE_TRACE && !FD6288_NATIVE_SINE_START
+#error "Actual-deadtime sampling candidate requires S3-D diagnostics"
+#endif
+#define TARGET_ADC_ZCD_ACTUAL_DEADTIME
+#endif
+#if FD6288_STARTUP_WAVE_TRACE != 0 && FD6288_STARTUP_WAVE_TRACE != 1
+#error "FD6288_STARTUP_WAVE_TRACE must be 0 or 1"
+#endif
+#if FD6288_STARTUP_WAVE_TRACE
+#if FD6288_STARTUP_SEQUENCE != 3 || !FD6288_STARTUP_PAIR_TRACE || FD6288_STARTUP_S3_POWER
+#error "S3-D diagnostics require S3 paired mode and original S3 power"
+#endif
+#define TARGET_STARTUP_WAVE_TRACE
+#endif
+#if FD6288_STARTUP_S3_POWER != 0 && FD6288_STARTUP_S3_POWER != 1
+#error "FD6288_STARTUP_S3_POWER must be 0 or 1 (540/600 bench comparison)"
+#endif
+#if FD6288_STARTUP_TIMING_FIX != 0 && FD6288_STARTUP_TIMING_FIX != 1
+#error "FD6288_STARTUP_TIMING_FIX must be 0 (trace only) or 1 (timing candidate)"
+#endif
+#if defined(FD6288_STARTUP_SEQUENCE) && FD6288_STARTUP_SEQUENCE
+#if !defined(TARGET_STARTUP_TRACE) || !FD6288_STARTUP_TIMING_FIX || FD6288_STARTUP_POWER_BENCH
+#error "S1 requires trace + real-edge timing, and excludes P0/P1"
+#endif
+#if FD6288_STARTUP_POWER_EXTRA != 40
+#error "S1 bench uses the bounded +40 request"
+#endif
+#define TARGET_STARTUP_SEQUENCE
+#define TARGET_STARTUP_POWER_BENCH /* shared bounded trial / output interlocks */
+#if FD6288_STARTUP_SEQUENCE == 2 || FD6288_STARTUP_SEQUENCE == 3
+#define TARGET_STARTUP_SEQUENCE_V2
+#if FD6288_STARTUP_SEQUENCE == 3
+#if !FD6288_STARTUP_PAIR_TRACE
+#error "S3 feedback acquisition requires paired diagnostics"
+#endif
+#define TARGET_STARTUP_FEEDBACK
+#if FD6288_STARTUP_S3_POWER
+#define TARGET_STARTUP_S3_POWER
+#endif
+#endif
+#if FD6288_STARTUP_PAIR_TRACE
+#define TARGET_STARTUP_PAIR_TRACE
+#ifdef TARGET_STARTUP_FEEDBACK
+#ifdef TARGET_STARTUP_WAVE_TRACE
+#if defined(TARGET_FD_PIN_SYNC)
+#define FD6288_TRACE_VARIANT 33u
+#elif defined(TARGET_FD_PIN_SCAN)
+#define FD6288_TRACE_VARIANT 32u
+#elif defined(TARGET_FD_EDGE_OBSERVE)
+#define FD6288_TRACE_VARIANT 41u
+#elif defined(TARGET_FD_REPOSITION)
+#ifdef TARGET_FD_STALE_RETRY
+#define FD6288_TRACE_VARIANT 45u
+#elif defined(TARGET_FD_RETRY_ADJACENT)
+#define FD6288_TRACE_VARIANT 43u
+#elif defined(TARGET_FD_FULL_RETRY)
+#define FD6288_TRACE_VARIANT 42u
+#else
+#define FD6288_TRACE_VARIANT 40u
+#endif
+#elif defined(TARGET_FD_PLANNED_ACQ)
+#define FD6288_TRACE_VARIANT 38u
+#elif defined(TARGET_FD_ALIGN_SETTLE)
+#define FD6288_TRACE_VARIANT 37u
+#elif defined(TARGET_FD_LAUNCH_ADVANCE)
+#define FD6288_TRACE_VARIANT 36u
+#elif defined(TARGET_FD_ACQ_STATS)
+#define FD6288_TRACE_VARIANT 35u
+#elif defined(TARGET_FD_ALIGN_HOLD)
+#define FD6288_TRACE_VARIANT 34u
+#elif defined(TARGET_FD_NATIVE_EARLY)
+#define FD6288_TRACE_VARIANT 31u
+#elif defined(TARGET_FD_SECTOR_DIAG)
+#define FD6288_TRACE_VARIANT 30u
+#elif defined(TARGET_FD_ALIGN_BUDGET)
+#define FD6288_TRACE_VARIANT 29u
+#elif defined(TARGET_FD_DOUBLE_ALIGN)
+#define FD6288_TRACE_VARIANT 28u
+#elif defined(TARGET_FD_DENSE_LOG)
+#define FD6288_TRACE_VARIANT 27u
+#elif defined(TARGET_FD_ADC_JEOS)
+#define FD6288_TRACE_VARIANT 26u
+#elif defined(TARGET_FD_ASYNC_COMM)
+#define FD6288_TRACE_VARIANT 25u
+#elif defined(TARGET_STARTUP_FIRST_WAIT)
+#define FD6288_TRACE_VARIANT 24u
+#elif defined(TARGET_STARTUP_SPLIT_LOG)
+#define FD6288_TRACE_VARIANT 23u
+#elif defined(TARGET_STARTUP_RESCUE_RAMP)
+#define FD6288_TRACE_VARIANT 22u
+#elif defined(TARGET_STARTUP_NOEDGE_LOG)
+#define FD6288_TRACE_VARIANT 21u
+#elif defined(TARGET_STARTUP_SEED_DELAY)
+#define FD6288_TRACE_VARIANT 20u
+#elif defined(TARGET_STARTUP_PHASE_DELAY)
+#define FD6288_TRACE_VARIANT 19u
+#elif defined(TARGET_STARTUP_LOSS_LOG)
+#define FD6288_TRACE_VARIANT 18u
+#elif defined(TARGET_STARTUP_S4E)
+#define FD6288_TRACE_VARIANT 17u
+#elif defined(TARGET_STARTUP_EDGE_LOG)
+#define FD6288_TRACE_VARIANT 16u
+#elif defined(TARGET_STARTUP_ACQ_LOG)
+#define FD6288_TRACE_VARIANT 15u
+#elif defined(TARGET_STARTUP_RESCUE_BRIDGE)
+#define FD6288_TRACE_VARIANT 14u
+#elif defined(TARGET_STARTUP_RESCUE_RETAIN)
+#define FD6288_TRACE_VARIANT 13u
+#elif defined(TARGET_STARTUP_HANDOFF_REAL)
+#define FD6288_TRACE_VARIANT 12u
+#elif defined(TARGET_STARTUP_S4)
+#define FD6288_TRACE_VARIANT 11u
+#elif defined(TARGET_ADC_ZCD_ACTUAL_DEADTIME)
+#define FD6288_TRACE_VARIANT 10u
+#else
+#define FD6288_TRACE_VARIANT 9u
+#endif
+#elif defined(TARGET_STARTUP_S3_POWER)
+#define FD6288_TRACE_VARIANT 8u
+#else
+#define FD6288_TRACE_VARIANT 7u
+#endif
+#else
+#define FD6288_TRACE_VARIANT 6u
+#endif
+#else
+#define FD6288_TRACE_VARIANT 5u
+#endif
+#elif FD6288_STARTUP_SEQUENCE == 1
+#define FD6288_TRACE_VARIANT 4u
+#else
+#error "FD6288_STARTUP_SEQUENCE must be 0, 1 (S1), 2 (S2), or 3 (S3)"
+#endif
+#elif defined(FD6288_STARTUP_POWER_BENCH) && FD6288_STARTUP_POWER_BENCH
+#if !defined(TARGET_STARTUP_TRACE) || FD6288_STARTUP_TIMING_FIX
+#error "Power bench requires trace=1 and timing_fix=0 for an A-based comparison"
+#endif
+#if FD6288_STARTUP_POWER_EXTRA != 0 && FD6288_STARTUP_POWER_EXTRA != 40
+#error "Only P0 (+0) and P1 (+40) are enabled for this bench experiment"
+#endif
+#define TARGET_STARTUP_POWER_BENCH
+#define FD6288_TRACE_VARIANT (2u + (FD6288_STARTUP_POWER_EXTRA != 0))
+#endif
+#if FD6288_STARTUP_PAIR_TRACE && !defined(TARGET_STARTUP_PAIR_TRACE)
+#error "Paired trace requires trace=1 timing_fix=1 sequence=2 or 3"
+#endif
+#if FD6288_STARTUP_PAIR_TRACE != 0 && FD6288_STARTUP_PAIR_TRACE != 1
+#error "FD6288_STARTUP_PAIR_TRACE must be 0 or 1"
+#endif
+#if FD6288_STARTUP_S3_POWER && !defined(TARGET_STARTUP_S3_POWER)
+#error "S3 power comparison requires trace=1 timing_fix=1 sequence=3 pair_trace=1"
+#endif
 #define VARIABLE_PWM
 #define USE_DSHOT_TELEMETRY
 #define USE_SERIAL_TELEMETRY
 // ADC ZCD consumes at most one fresh sample per PWM period. The main-loop
 // comparison is `bemfcounter > TARGET_MIN_BEMF_COUNTS`, so zero accepts the
-// first eligible post-cross sample. Blanking, ON-window validation and an ADC
-// Schmitt band reject artifacts while minimizing extra PWM-period phase lag.
+// first QUALIFIED post-cross sample. comparator.c now owns fresh-sample
+// confirmation; do not add the same delay again in the common polling counter.
 #define TARGET_MIN_BEMF_COUNTS 0
 #endif
 
@@ -5469,4 +6153,124 @@
 
 #ifndef POLLING_MODE_THRESHOLD
 #define POLLING_MODE_THRESHOLD 2000
+#endif
+
+/* One queued ADC1 context keeps completed JDR ranks immutable until read.
+ * PIN_SYNC has an independent ADC2 diagnostic sequence and is excluded. */
+#if defined(TARGET_FD_ADC_JEOS) && defined(USE_ADC_ZCD) && !defined(TARGET_FD_PIN_SYNC)
+#define TARGET_FD_ADC_COHERENT
+#endif
+
+#if defined(FD6288_SCOPE_PB7) && FD6288_SCOPE_PB7
+#if !defined(TARGET_FD_LAUNCH_ADVANCE) || !FD6288_ALIGN_SAMPLE_PAIR || FD6288_STARTUP_LEVEL
+#error "PB7 probe requires ALIGN-PAIR baseline without level acquisition"
+#endif
+#define TARGET_FD_SCOPE_PB7
+#endif
+#if defined(FD6288_ALIGN_ONLY) && FD6288_ALIGN_ONLY
+#if FD6288_ALIGN_ONLY != 1 || !defined(TARGET_FD_SCOPE_PB7) || !defined(TARGET_FD_ALIGN_HOLD) || !defined(TARGET_FD_ALIGN_SETTLE)
+#error "ALIGN_ONLY requires ALIGN-PAIR/PB7 with second-vector hold and settle"
+#endif
+#define TARGET_FD_ALIGN_ONLY
+#endif
+#ifndef FD6288_STARTUP_LEVEL
+#define FD6288_STARTUP_LEVEL 0
+#endif
+#if FD6288_STARTUP_LEVEL != 0 && FD6288_STARTUP_LEVEL != 1
+#error "FD6288_STARTUP_LEVEL must be 0 or 1"
+#endif
+#if FD6288_STARTUP_LEVEL
+#if !defined(TARGET_STARTUP_FEEDBACK) || !defined(TARGET_FD_ADC_JEOS)
+#error "Startup level requires feedback acquisition and fresh JEOS samples"
+#endif
+#define TARGET_FD_STARTUP_LEVEL
+#endif
+
+#ifndef FD6288_FIRST_EDGE_500US
+#define FD6288_FIRST_EDGE_500US 0
+#endif
+#if FD6288_FIRST_EDGE_500US != 0 && FD6288_FIRST_EDGE_500US != 1
+#error "First-edge delay probe must be boolean"
+#endif
+#if FD6288_FIRST_EDGE_500US
+#if !defined(TARGET_FD_NATIVE_EARLY) || !defined(TARGET_FD_ASYNC_COMM) || !defined(TARGET_STARTUP_FEEDBACK)
+#error "First-edge probe requires native early feedback and async scheduling"
+#endif
+#define TARGET_FD_FIRST_EDGE_500US
+#endif
+
+#ifndef FD6288_ALIGN_SAMPLE_PAIR
+#define FD6288_ALIGN_SAMPLE_PAIR 0
+#endif
+#if FD6288_ALIGN_SAMPLE_PAIR != 0 && FD6288_ALIGN_SAMPLE_PAIR != 1
+#error "Alignment sample pair must be boolean"
+#endif
+#if FD6288_ALIGN_SAMPLE_PAIR
+#if !defined(TARGET_FD_EDGE_RAW) || !defined(TARGET_FD_ADC_COHERENT)
+#error "Alignment pairs require raw observer and coherent ADC"
+#endif
+#define TARGET_FD_ALIGN_SAMPLE_PAIR
+#endif
+
+#if defined(FD6288_LAUNCH_RAW) && FD6288_LAUNCH_RAW
+#if FD6288_LAUNCH_RAW != 1 || !defined(TARGET_FD_ALIGN_SAMPLE_PAIR) || defined(TARGET_FD_ALIGN_ONLY)
+#error "Launch raw capture requires ALIGN-PAIR normal launch, not ALIGN_ONLY"
+#endif
+#define TARGET_FD_LAUNCH_RAW
+#endif
+#if defined(FD6288_ALIGN_TAIL) && FD6288_ALIGN_TAIL
+#if FD6288_ALIGN_TAIL != 1 || !defined(TARGET_FD_LAUNCH_RAW)
+#error "Alignment tail checkpoints require the launch raw recorder"
+#endif
+#define TARGET_FD_ALIGN_TAIL
+#endif
+#if defined(FD6288_LAUNCH_HOLD) && FD6288_LAUNCH_HOLD
+#if FD6288_LAUNCH_HOLD != 1 || !defined(TARGET_FD_ALIGN_TAIL) || defined(TARGET_FD_ALIGN_ONLY) || FD6288_SECOND_ALIGN_MS != 300
+#error "Launch hold requires300ms alignment, tail capture and normal launch path"
+#endif
+#define TARGET_FD_LAUNCH_HOLD
+#endif
+#if defined(FD6288_LAUNCH_TWO) && FD6288_LAUNCH_TWO
+#if FD6288_LAUNCH_TWO != 1 || !defined(TARGET_FD_LAUNCH_HOLD) || !defined(TARGET_FD_FIRST_EDGE_500US)
+#error "Two-vector diagnostic requires launch hold and tail capture"
+#endif
+#define TARGET_FD_LAUNCH_TWO
+#endif
+
+#if defined(FD6288_HIZ_OBSERVE) && FD6288_HIZ_OBSERVE
+#if FD6288_HIZ_OBSERVE != 1 || !defined(TARGET_FD_ALIGN_TAIL) || FD6288_SECOND_ALIGN_MS != 300 || defined(TARGET_FD_LAUNCH_HOLD) || defined(TARGET_FD_ALIGN_ONLY)
+#error "Hi-Z observation requires300ms tail capture, no launch-hold/align-only"
+#endif
+#define TARGET_FD_HIZ_OBSERVE
+#endif
+
+#if defined(FD6288_BLUE_START) && FD6288_BLUE_START
+#if FD6288_BLUE_START != 1 || !defined(TARGET_FD_ALIGN_TAIL) || !defined(TARGET_FD_REPOSITION) || !defined(TARGET_FD_ADC_COHERENT) || !defined(TARGET_FD_ASYNC_COMM) || FD6288_SECOND_ALIGN_MS != 300 || defined(TARGET_FD_HIZ_OBSERVE) || defined(TARGET_FD_LAUNCH_HOLD) || defined(TARGET_FD_STARTUP_LEVEL)
+#error "BLUE_START requires normal300ms tail capture, coherent ADC, async, reposition gates; no other diagnostic control mode"
+#endif
+#define TARGET_FD_BLUE_START
+#endif
+
+#if defined(FD6288_EARLY_REKICK) && FD6288_EARLY_REKICK
+#if FD6288_EARLY_REKICK != 1 || !defined(TARGET_FD_ALIGN_TAIL) || !defined(TARGET_FD_REPOSITION) || !defined(TARGET_FD_ADC_COHERENT) || !defined(TARGET_FD_ASYNC_COMM) || FD6288_SECOND_ALIGN_MS != 300 || defined(TARGET_FD_BLUE_START) || defined(TARGET_FD_HIZ_OBSERVE) || defined(TARGET_FD_LAUNCH_HOLD) || defined(TARGET_FD_STARTUP_LEVEL)
+#error "EARLY_REKICK requires normal300ms tail capture, coherent ADC, async and release gates; incompatible diagnostic control mode"
+#endif
+#define TARGET_FD_EARLY_REKICK
+#endif
+
+#ifdef TARGET_FD_NATIVE_SINE
+#if !defined(TARGET_FD_ADC_COHERENT) || !defined(TARGET_FD_ASYNC_COMM) || !defined(TARGET_ADC_ZCD_ACTUAL_DEADTIME) || !defined(TARGET_FD_NO_DIAGNOSTICS)
+#error "Native sine trial retains coherent ADC, asynchronous commutation and actual deadtime sampling"
+#endif
+#endif
+
+/* Full startup retries keep the normal ALIGN-PAIR feedback path. */
+#if defined(FD6288_START_RETRY) && FD6288_START_RETRY
+#if FD6288_START_RETRY != 1 || !defined(TARGET_STARTUP_FIRST_WAIT) || !defined(TARGET_FD_DOUBLE_ALIGN) || !defined(TARGET_FD_ALIGN_HOLD) || !defined(TARGET_FD_ALIGN_SETTLE) || !defined(TARGET_FD_ALIGN_SAMPLE_PAIR) || !defined(TARGET_FD_REPOSITION) || !defined(TARGET_FD_ADC_COHERENT) || !defined(TARGET_FD_ASYNC_COMM) || !defined(TARGET_FD_FIRST_EDGE_500US) || (FD6288_SECOND_ALIGN_MS != 100 && FD6288_SECOND_ALIGN_MS != 300)
+#error "START_RETRY requires100/300ms ALIGN-PAIR, coherent ADC, async and release gates"
+#endif
+#if defined(TARGET_FD_BLUE_START) || defined(TARGET_FD_EARLY_REKICK) || defined(TARGET_FD_HIZ_OBSERVE) || defined(TARGET_FD_LAUNCH_HOLD) || defined(TARGET_FD_ALIGN_ONLY) || defined(TARGET_FD_STARTUP_LEVEL) || defined(TARGET_FD_NATIVE_SINE)
+#error "START_RETRY excludes other startup/recovery experiments"
+#endif
+#define TARGET_FD_START_RETRY
 #endif

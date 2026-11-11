@@ -8,9 +8,10 @@
  *
  * Current canonical map summary:
  *   BEMF ADC A/B/C : PA0 / PA1 / PA2
- *   voltage ADC    : PA3
+ *   voltage ADC    : PA5 (ADC2_IN13)
+ *   current ADC    : PA6 (ADC2_IN3)
  *   input / serial : PB5 / PB6
  *   high-side PWM  : PA8 / PA9 / PA10
  *   low-side PWM   : PA11 / PA12 / PF0
- *   PA5            : unused pulldown; software neutral is (A+B+C)/3
+ *   software neutral is (A+B+C)/3; PA3 is not the voltage-sense pin.
  */

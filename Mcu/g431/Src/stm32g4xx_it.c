@@ -5,6 +5,9 @@
 #include "WS2812.h"
 #include "main.h"
 #include "targets.h"
+#ifdef TARGET_FD_ASYNC_COMM
+#include "fd6288_async.h"
+#endif
 
 extern void transfercomplete();
 extern void PeriodElapsedCallback();
@@ -126,9 +129,24 @@ void TIM6_DAC_IRQHandler(void)
 
 void TIM1_UP_TIM16_IRQHandler(void)
 {
+#ifdef TARGET_FD_ASYNC_COMM
+    if (!LL_TIM_IsActiveFlag_UPDATE(TIM16) || !LL_TIM_IsEnabledIT_UPDATE(TIM16)) return;
+    LL_TIM_ClearFlag_UPDATE(TIM16);
+    PeriodElapsedCallback();
+#else
     PeriodElapsedCallback();
     LL_TIM_ClearFlag_UPDATE(TIM16);
+#endif
 }
+
+#ifdef TARGET_FD_ADC_JEOS
+void ADC1_2_IRQHandler(void)
+{
+    if (LL_ADC_IsActiveFlag_JEOS(ADC1) && LL_ADC_IsEnabledIT_JEOS(ADC1)) {
+        fdAdcJeosService();
+    }
+}
+#endif
 
 void EXTI15_10_IRQHandler(void)
 {
