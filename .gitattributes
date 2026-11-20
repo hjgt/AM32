@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Preserve archived flash-component bytes, including original HEX line endings.
+release/*-pure/*.hex -text
+release/*-pure/*.bin -text

@@ -22,10 +22,14 @@ typedef struct {
     uint8_t reason, reserved;
 } FdPowerSummary;
 typedef struct {
+#ifdef TARGET_FD_M1_PURE
+    uint32_t inhibit, active_id, floor, trial_epoch; /* Pair reset identity. */
+#else
     uint32_t magic, abi, extra, trials, completed, stops;
     uint32_t inhibit, last_reason, active_id, floor;
 #ifndef TARGET_FD_NO_DIAGNOSTICS
     FdPowerSummary records[FD_POWER_SUMMARIES];
+#endif
 #endif
 } FdPowerDiagnostics;
 extern volatile FdPowerDiagnostics fd_power_bench;

@@ -1,4 +1,23 @@
 #pragma once
+#ifdef TARGET_FD_M1_PURE
+/* Trial identity and 512-group budget preserve the original CCR4 schedule.
+ * These are control state, not retained ADC samples or run statistics. */
+typedef struct { uint32_t trial, samples; } FdM1PairControl;
+extern volatile FdM1PairControl fd_m1_pair_control;
+#define FD_ALIGN_PAIR_TRIAL (fd_m1_pair_control.trial)
+#define FD_ALIGN_PAIR_SAMPLES (fd_m1_pair_control.samples)
+#define fdEdgeBegin(trial_id,now) do { FD_ALIGN_PAIR_TRIAL=(trial_id); FD_ALIGN_PAIR_SAMPLES=0u; } while(0)
+#define fdEdgeClose(...) ((void)0)
+#define fdEdgeFinish(...) ((void)0)
+#define fdEdgeStep(...) ((void)0)
+#define fdEdgeStore(...) ((void)0)
+#define fdEdgeCost(...) ((void)0)
+#define fdEdgeNeeded(...) 0u
+#define fdEdgeSample(...) ((void)0)
+#define fdEdgeAlignSlot(...) 22u
+#else
+#define FD_ALIGN_PAIR_TRIAL (fd_edge_observe.trial)
+#define FD_ALIGN_PAIR_SAMPLES (fd_edge_observe.first_samples)
 /* Same observer and hooks, bounded chronological windows. No control reads. */
 typedef struct {
  uint32_t magic,abi,trial,started,frozen,sectors,active,first_samples;
@@ -192,3 +211,5 @@ static inline void fdEdgeHiZSample(FdEdgeSample v) {
  if(fd_edge_observe.first_samples==512u)fdEdgeFinish(v.at);
 }
 #endif
+
+#endif /* M1 PURE / original recorder */

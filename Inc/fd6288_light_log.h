@@ -5,7 +5,7 @@
 #ifndef FD6288_LIGHT_LOG
 #define FD6288_LIGHT_LOG 1
 #endif
-#if FD6288_LIGHT_LOG && defined(TARGET_FD_NATIVE_EARLY)
+#if FD6288_LIGHT_LOG && defined(TARGET_FD_NATIVE_EARLY) && !defined(TARGET_FD_M1_PURE)
 typedef struct {
     uint32_t id, started, first_edge, handoff, edges, retries;
     uint32_t max_streak, reason, stage, input_at_stop, interval_at_stop;

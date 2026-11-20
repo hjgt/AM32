@@ -886,20 +886,28 @@ volatile char input_ready = 0;
 #ifdef TARGET_FD_REPOSITION
 /* magic, trial, release/re-align/first-retry-edge/handoff ages, reason, end age.
  * Event-only observer; UINT32_MAX means absent, no ADC waveform writes. */
+#ifndef TARGET_FD_M1_PURE
 volatile uint32_t fd_reposition_diag[8];
+#endif
 #endif
 #ifdef TARGET_FD_ALIGN_SETTLE
 #include "fd6288_align_observe.h"
+#ifndef TARGET_FD_M1_PURE
 volatile FdAlignObserve fd_align_observe;
+#endif
 #endif
 _Static_assert(sizeof(FdPowerSummary) == 32u, "power summary ABI");
 #ifndef TARGET_FD_NO_DIAGNOSTICS
 _Static_assert(sizeof(FdPowerDiagnostics) == 552u, "power diagnostics ABI");
 #endif
+#ifdef TARGET_FD_M1_PURE
+volatile FdPowerDiagnostics fd_power_bench;
+#else
 volatile FdPowerDiagnostics fd_power_bench = {
     .magic = FD_POWER_BENCH_MAGIC, .abi = 1u,
     .extra = FD6288_STARTUP_POWER_EXTRA
 };
+#endif
 static FdPowerPolicy fd_power_policy;
 #ifndef TARGET_FD_NO_DIAGNOSTICS
 static FdPowerSummary fd_power_work;
@@ -910,6 +918,7 @@ static uint8_t fd_power_starting;
 static FdRevPolicy fd_rev;
 #ifdef TARGET_FD_START_RETRY
 #include "fd6288_start_retry_diag.h"
+#ifndef TARGET_FD_M1_PURE
 volatile FdStartRetryDiagnostics fd_start_retry_diag = { .magic = 0x46535231u, .abi = FD_SR_DIAG_ABI };
 static void fdStartRetryRecord(uint32_t now, uint8_t action)
 {
@@ -982,6 +991,12 @@ static void fdStartRetryFinish(uint32_t now, uint8_t reason)
         }
     }
 }
+#else
+#define fdStartRetryRecord(...) ((void)0)
+#define fdStartRetryBegin(...) ((void)0)
+#define fdStartRetryEdgeRecord(...) ((void)0)
+#define fdStartRetryFinish(...) ((void)0)
+#endif
 #endif
 #ifdef TARGET_FD_EARLY_REKICK
 /* Header8 words, four pulse rows8 words; no waveform control reads. */
@@ -1075,11 +1090,11 @@ static void fdBenchFinish(uint8_t reason)
         fd_blue_diag[8u+8u*(fd_rev.blue_attempts-1u)+6u]=DWT->CYCCNT-fd_power_policy.started;
 #endif
 #ifdef TARGET_FD_REPOSITION
-    fd_reposition_diag[6] = reason;
-    fd_reposition_diag[7] = DWT->CYCCNT-fd_power_policy.started;
+    FD_M1_DIAG(fd_reposition_diag[6] = reason);
+    FD_M1_DIAG(fd_reposition_diag[7] = DWT->CYCCNT-fd_power_policy.started);
 #endif
 #ifdef TARGET_FD_ALIGN_SETTLE
-    fd_align_observe.frozen = 1u;
+    FD_M1_DIAG(fd_align_observe.frozen = 1u);
 #endif
     fdLightFinish(reason, fd_rev.stage, adjusted_input, INTERVAL_TIMER_COUNT,
                   actual_current);
@@ -1322,16 +1337,21 @@ static uint8_t fdBenchBegin(void)
     fd_power_timeouts_start = adc_zcd_diag.resets[ADC_ZCD_RESET_TIMEOUT];
     fd_power_bench.active_id = fd_power_work.id;
 #else
+    #ifdef TARGET_FD_M1_PURE
+    fd_power_bench.active_id = ++fd_power_bench.trial_epoch;
+    if (!fd_power_bench.active_id) fd_power_bench.active_id = ++fd_power_bench.trial_epoch;
+#else
     fd_power_bench.active_id = ++fd_power_bench.trials;
     if (!fd_power_bench.active_id) fd_power_bench.active_id = ++fd_power_bench.trials;
+#endif
 #endif
     fd_power_bench.floor = min_startup_duty;
     fd_power_starting = 1u;
     fdLightBegin(DWT->CYCCNT);
 #ifdef TARGET_FD_REPOSITION
-    fd_reposition_diag[0] = 0x46525031u;
-    fd_reposition_diag[1] = fd_power_bench.active_id;
-    for (unsigned i=2;i<8;i++) fd_reposition_diag[i]=UINT32_MAX;
+    FD_M1_DIAG(fd_reposition_diag[0] = 0x46525031u);
+    FD_M1_DIAG(fd_reposition_diag[1] = fd_power_bench.active_id);
+    FD_M1_DIAG(for (unsigned i=2;i<8;i++) fd_reposition_diag[i]=UINT32_MAX);
 #endif
 #ifdef TARGET_STARTUP_SEQUENCE
     fdRevBeginPolicy(&fd_rev, DWT->CYCCNT);
@@ -1351,7 +1371,7 @@ static uint8_t fdBenchBegin(void)
     fd_blue_diag[8]=DWT->CYCCNT-fd_power_policy.started;
 #endif
 #ifdef TARGET_FD_ALIGN_SETTLE
-    fdAlignBegin(&fd_align_observe, fd_power_bench.active_id);
+    FD_M1_DIAG(fdAlignBegin(&fd_align_observe, fd_power_bench.active_id));
 #endif
     fdSectorBegin(fd_power_bench.active_id, fd_power_policy.started);
     fdEdgeBegin(fd_power_bench.active_id, fd_power_policy.started);
@@ -1409,7 +1429,7 @@ static void fdRevTick(void)
         return;
     }
     uint32_t now = DWT->CYCCNT;
-#ifdef TARGET_FD_SECTOR_DIAG
+#if defined(TARGET_FD_SECTOR_DIAG) && !defined(TARGET_FD_M1_PURE)
     uint8_t was_align = fd_rev.stage == FD_REV_ALIGN;
 #endif
     uint8_t action = fdRevAdvancePolicy(&fd_rev, now);
@@ -1417,7 +1437,7 @@ static void fdRevTick(void)
     if (action != FD_REV_NONE) fdStartRetryRecord(now, action);
     if (action == FD_REV_START_STOP) {
         allOff();
-        fd_start_retry_diag.rows[fd_rev.sr_attempts - 1u].off_at = DWT->CYCCNT - fd_power_policy.started;
+        FD_M1_DIAG(fd_start_retry_diag.rows[fd_rev.sr_attempts - 1u].off_at = DWT->CYCCNT - fd_power_policy.started);
         bemf_timeout_happened++;
         adcZcdResetAcquisition(ADC_ZCD_RESET_TIMEOUT);
         if (stuckRotorGuardInput()) fdBenchService();
@@ -1450,7 +1470,7 @@ static void fdRevTick(void)
         SET_HELI_COAST_HIGH_Z_SAMPLE(tim1_arr);
         fdEdgeHiZBegin(off_at, DWT->CYCCNT);
         fd_rev.sector_at = off_at;
-        fd_align_observe.frozen = 1u;
+        FD_M1_DIAG(fd_align_observe.frozen = 1u);
         adcZcdResetAcquisition(ADC_ZCD_RESET_COUNT);
 #ifdef TARGET_FD_SCOPE_PB7
         GPIOB->BSRR = (1u << 7); /* off-boundary service marker; not sample time */
@@ -1474,14 +1494,14 @@ static void fdRevTick(void)
     if (action == FD_REV_ALIGN_MARK) {
         /* Marker only: no comStep, no launch gap, no ADC acquisition. */
         GPIOB->BSRR = (1u << 7);
-        fd_align_observe.frozen = 1u;
+        FD_M1_DIAG(fd_align_observe.frozen = 1u);
     }
 #endif
     if (action != FD_REV_NONE) fdEdgeClose(now);
 #ifdef TARGET_FD_ALIGN_SETTLE
-    if (fd_rev.stage != FD_REV_ALIGN) fd_align_observe.frozen = 1u;
+    if (fd_rev.stage != FD_REV_ALIGN) FD_M1_DIAG(fd_align_observe.frozen = 1u);
 #endif
-#ifdef TARGET_FD_SECTOR_DIAG
+#if defined(TARGET_FD_SECTOR_DIAG) && !defined(TARGET_FD_M1_PURE)
     if (action != FD_REV_NONE)
         fdSectorClose(now, was_align ? 1u : action == FD_REV_RETRY ? 3u :
             action == FD_REV_HANDOFF ? 4u : action == FD_REV_PLANNED ? 6u :
@@ -1490,13 +1510,13 @@ static void fdRevTick(void)
 #endif
     if (action == FD_REV_HANDOFF) {
 #ifdef TARGET_FD_REPOSITION
-        fd_reposition_diag[5] = now-fd_power_policy.started;
+        FD_M1_DIAG(fd_reposition_diag[5] = now-fd_power_policy.started);
 #endif
         fdLightHandoff(now);
         fd_rev_acquiring = 0u;
 #ifdef TARGET_FD_START_RETRY
-        fd_start_retry_diag.rows[fd_rev.sr_attempts - 1u].end_at = now - fd_power_policy.started;
-        fd_start_retry_diag.finished_at = now - fd_power_policy.started;
+        FD_M1_DIAG(fd_start_retry_diag.rows[fd_rev.sr_attempts - 1u].end_at = now - fd_power_policy.started);
+        FD_M1_DIAG(fd_start_retry_diag.finished_at = now - fd_power_policy.started);
 #endif
         commutation_interval = fd_rev.measured / 80u; /* TIM2: 0.5 us/tick */
         thiszctime = commutation_interval;
@@ -1518,7 +1538,7 @@ static void fdRevTick(void)
     }
 #ifdef TARGET_FD_REPOSITION
     else if (action == FD_REV_RELEASE) {
-        fd_reposition_diag[2] = now-fd_power_policy.started;
+        FD_M1_DIAG(fd_reposition_diag[2] = now-fd_power_policy.started);
         /* Stage already blocks PWM/JEOS. Publish high-Z and cancel all
          * scheduled commutations before the release dwell starts. */
         allOff();
@@ -1529,9 +1549,9 @@ static void fdRevTick(void)
         fd_rev.sector_at = DWT->CYCCNT; /* dwell starts AFTER bridge release */
 #ifdef TARGET_FD_START_RETRY
         fd_power_bench.floor = 0u;
-        unsigned i = fd_rev.sr_attempts - 1u;
-        fd_start_retry_diag.rows[i].off_at = fd_rev.sector_at - fd_power_policy.started;
-        fd_start_retry_diag.rows[i].end_at = fd_start_retry_diag.rows[i].off_at;
+        FD_M1_DIAG(unsigned i = fd_rev.sr_attempts - 1u;
+            fd_start_retry_diag.rows[i].off_at = fd_rev.sector_at - fd_power_policy.started;
+            fd_start_retry_diag.rows[i].end_at = fd_start_retry_diag.rows[i].off_at);
         /* Count genuine missing-feedback attempts, never positioning or an
          * accepted event; retain native counters/latches across restarts. */
         bemf_timeout_happened++;
@@ -1569,7 +1589,7 @@ static void fdRevTick(void)
             /* Full release was100ms. Repeat original positioning, no rotated retry seed. */
             step=fdDoubleAlignSeed(forward);commutation_interval=10000u;zero_crosses=0u;
             adcZcdResetAcquisition(ADC_ZCD_RESET_COUNT);
-            fdAlignBegin(&fd_align_observe,fd_power_bench.active_id);
+            FD_M1_DIAG(fdAlignBegin(&fd_align_observe,fd_power_bench.active_id));
             fdEdgeBegin(fd_power_bench.active_id,fd_power_policy.started);
         }
         if(action==FD_REV_BLUE_FORCED) {
@@ -1579,7 +1599,7 @@ static void fdRevTick(void)
 #endif
 #ifdef TARGET_FD_REPOSITION
         if (action == FD_REV_REALIGN) {
-            fd_reposition_diag[3] = now-fd_power_policy.started;
+            FD_M1_DIAG(fd_reposition_diag[3] = now-fd_power_policy.started);
             /* Entire bridge has been high-Z >=20ms. Rotate both positioning
              * vectors by two sectors; never change the requested direction. */
             step = 6u; /* forward1 / reverse5 */
@@ -1741,8 +1761,8 @@ static void fdRevObserveEdge(void)
         fdStartRetryEdgeRecord(sr_at);
 #endif
 #ifdef TARGET_FD_REPOSITION
-        if (fd_rev.reposition_used && fd_rev.observed_once && fd_reposition_diag[4] == UINT32_MAX)
-            fd_reposition_diag[4] = DWT->CYCCNT-fd_power_policy.started;
+        FD_M1_DIAG(if (fd_rev.reposition_used && fd_rev.observed_once && fd_reposition_diag[4] == UINT32_MAX)
+            fd_reposition_diag[4] = DWT->CYCCNT-fd_power_policy.started);
 #endif
 #ifdef TARGET_FD_STARTUP_LEVEL
         if (crossing)
@@ -2131,7 +2151,11 @@ void getBemfState()
 
 #ifdef TARGET_FD_ASYNC_COMM
 #include "fd6288_async.h"
+#ifdef TARGET_FD_M1_PURE
+volatile FdAsyncDiagnostics fd_async_diag;
+#else
 volatile FdAsyncDiagnostics fd_async_diag = { .abi = 1u };
+#endif
 
 void fdAsyncCancel(void)
 {
@@ -2287,11 +2311,11 @@ static void fdAlignmentPairSample(const uint16_t v[3], uint32_t at, uint32_t cnt
     if(fd_edge_observe.abi==4u) {fdAlignmentPairReset();return;}
 #endif
 #endif
-    if(fd_pair_trial!=fd_edge_observe.trial) {
-        fd_pair_trial=fd_edge_observe.trial;fdAlignmentPairReset();
+    if(fd_pair_trial!=FD_ALIGN_PAIR_TRIAL) {
+        fd_pair_trial=FD_ALIGN_PAIR_TRIAL;fdAlignmentPairReset();
     }
     uint32_t age=at-fd_rev.sector_at;
-    if(fd_rev.align_left!=1u || age<10000u*160u || age>=55000u*160u || duty!=1200u || fd_edge_observe.first_samples>=512u) {
+    if(fd_rev.align_left!=1u || age<10000u*160u || age>=55000u*160u || duty!=1200u || FD_ALIGN_PAIR_SAMPLES>=512u) {
         fdAlignmentPairReset();return;
     }
     if(!fd_pair_started) {fd_pair_started=1;fd_pair_discard=1;fd_align_sample_late=0;TIM1->CCR4=600u;return;}
@@ -2300,12 +2324,15 @@ static void fdAlignmentPairSample(const uint16_t v[3], uint32_t at, uint32_t cnt
     if(fd_pair_discard) {fd_pair_discard=0;return;}
     uint16_t expected=fd_align_sample_late?900u:600u;
     if(trigger!=expected) {fdAlignmentPairReset();return;}
-    uint32_t index=fd_edge_observe.first_samples++;
+    uint32_t index=FD_ALIGN_PAIR_SAMPLES++;
+#ifdef TARGET_FD_M1_PURE
+    (void)index; (void)v; (void)cnt;
+#endif
     fdEdgeStore(2u+index,(FdEdgeSample){.at=at,.a=v[0],.b=v[1],.c=v[2],
         .margin=(int16_t)((int32_t)v[1]-((int32_t)v[0]+v[2])/2),
         .cnt=cnt,.duty=duty,.trigger=trigger,.reason=254,.step=step,
         .flags=(uint8_t)(4u|(fd_align_sample_late?8u:0u)),.reserved=(uint16_t)(index/2u)});
-    if(fd_edge_observe.first_samples==512u) {fdAlignmentPairReset();return;}
+    if(FD_ALIGN_PAIR_SAMPLES==512u) {fdAlignmentPairReset();return;}
     fd_align_sample_late^=1u;fd_pair_discard=1;
     TIM1->CCR4=fd_align_sample_late?900u:600u;
 }
@@ -2319,6 +2346,9 @@ static void fdObserveAlignmentAdc(void)
         LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_2),
         LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_3)};
     uint32_t cnt=TIM1->CNT, trigger=TIM1->CCR4, duty=TIM1->CCR1;
+#ifdef TARGET_FD_M1_PURE
+    (void)cnt;
+#endif
 #ifdef TARGET_FD_ALIGN_SAMPLE_PAIR
     uint32_t pair_at=DWT->CYCCNT;
     fdAlignmentPairSample(v,pair_at,cnt,duty,trigger);
@@ -2326,11 +2356,13 @@ static void fdObserveAlignmentAdc(void)
 #endif
     /* Conservative ON-window/readout screen; no claim of analog settling.
      * This observer never calls getBemfState or modifies its qualification. */
+#ifndef TARGET_FD_M1_PURE
     uint8_t usable=!LL_ADC_IsActiveFlag_JEOS(ADC1) && trigger>=ZCD_SAMPLE_FLOOR &&
         trigger+244u<=duty && cnt>=trigger+244u && cnt<duty;
     fdAlignSample(&fd_align_observe,fd_rev.align_left,
         DWT->CYCCNT-fd_rev.sector_at,v,usable);
-#ifdef TARGET_FD_EDGE_OBSERVE
+#endif
+#if defined(TARGET_FD_EDGE_OBSERVE) && !defined(TARGET_FD_M1_PURE)
     unsigned slot=fdEdgeAlignSlot(fd_rev.align_left,DWT->CYCCNT-fd_rev.sector_at);
     if(slot<2u){
         uint32_t at=DWT->CYCCNT;
@@ -2493,11 +2525,11 @@ void commutate()
     __enable_irq();
 #endif
     changeCompInput();
-#ifdef TARGET_FD_SECTOR_DIAG
+#if defined(TARGET_FD_SECTOR_DIAG) && !defined(TARGET_FD_M1_PURE)
     if (fd_rev_acquiring)
         fdSectorStep(DWT->CYCCNT, step, fd_rev.stage, rising, forward);
 #endif
-#ifdef TARGET_FD_EDGE_OBSERVE
+#if defined(TARGET_FD_EDGE_OBSERVE) && !defined(TARGET_FD_M1_PURE)
     if (fd_rev_acquiring) fdEdgeStep(DWT->CYCCNT,fd_rev.stage);
 #endif
 #ifndef NO_POLLING_START

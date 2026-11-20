@@ -15,6 +15,11 @@ static inline uint8_t fdAsyncTooLate(uint32_t now, uint32_t deadline)
      * validated timing-error tolerance. Never silently roll to next sector. */
     return (int32_t)(now - deadline) > 8000; /* 50us */
 }
+#ifdef TARGET_FD_M1_PURE
+typedef struct {
+    uint32_t deadline, epoch, request_epoch, pending, request_coast, request_forward;
+} FdAsyncDiagnostics;
+#else
 typedef struct {
     uint32_t abi, irq_count, irq_last_at, irq_max_cycles;
     uint32_t accepted_at, deadline, executed_at, late_max_cycles;
@@ -22,6 +27,7 @@ typedef struct {
     uint32_t epoch, request_epoch, sample_collisions;
     uint32_t pending, request_coast, request_forward;
 } FdAsyncDiagnostics;
+#endif
 extern volatile FdAsyncDiagnostics fd_async_diag;
 void fdAsyncCancel(void);
 void fdAdcJeosService(void);

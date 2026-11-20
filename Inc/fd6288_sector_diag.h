@@ -19,7 +19,7 @@ typedef struct {
 } FdSectorDiagnostics;
 _Static_assert(sizeof(FdSectorRecord)==60u,"sector record ABI");
 _Static_assert(sizeof(FdSectorDiagnostics)==1472u,"sector diagnostic ABI");
-#ifdef TARGET_FD_SECTOR_DIAG
+#if defined(TARGET_FD_SECTOR_DIAG) && !defined(TARGET_FD_M1_PURE)
 extern volatile FdSectorDiagnostics fd_sector_diag;
 static inline void fdSectorBegin(uint32_t id,uint32_t now)
 {
@@ -77,6 +77,7 @@ static inline __attribute__((always_inline)) void fdSectorSample(int16_t margin,
     }
 }
 #else
+#define fdSectorSample(...) ((void)0)
 #define fdSectorBegin(id,now) ((void)0)
 #define fdSectorClose(now,why) ((void)0)
 #define fdSectorStep(now,step,stage,rising,forward) ((void)0)

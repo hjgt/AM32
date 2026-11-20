@@ -3082,8 +3082,13 @@
 #endif
 
  #ifdef CUSTOM_FD6288_G431
- #define FIRMWARE_NAME "FD6288-G431"
+#if defined(FD6288_M1_PURE) && FD6288_M1_PURE
+#define FIRMWARE_NAME "M1 PURE G431"
+#define FILE_NAME "M1_PURE_FD6288_G431"
+#else
+#define FIRMWARE_NAME "FD6288-G431"
 #define FILE_NAME "CUSTOM_FD6288_G431"
+#endif
 #define MCU_G431
 // Input: PB5 = TIM3_CH2 (AF2), telemetry: PB6 = USART1 (AF7)
 #define USE_TIMER_3_CHANNEL_2
@@ -6273,4 +6278,19 @@
 #error "START_RETRY excludes other startup/recovery experiments"
 #endif
 #define TARGET_FD_START_RETRY
+#endif
+
+/* M1 PURE is a build-time observer switch; all original control flags remain. */
+#ifndef FD6288_M1_PURE
+#define FD6288_M1_PURE 0
+#endif
+#if FD6288_M1_PURE != 0 && FD6288_M1_PURE != 1
+#error "FD6288_M1_PURE must be boolean"
+#endif
+#if FD6288_M1_PURE
+#if !defined(CUSTOM_FD6288_G431) || !defined(TARGET_FD_START_RETRY) || !defined(TARGET_FD_NO_DIAGNOSTICS) || !defined(TARGET_FD_QUIET_LOG) || !defined(TARGET_FD_ALIGN_SAMPLE_PAIR) || defined(TARGET_FD_LAUNCH_RAW) || defined(TARGET_FD_NATIVE_SINE) || defined(TARGET_FD_ALIGN_ONLY)
+#error "M1 PURE requires the November 11 M1 retry/pair/quiet control profile"
+#endif
+#define TARGET_FD_M1_PURE
+#undef TARGET_FD_SCOPE_PB7
 #endif

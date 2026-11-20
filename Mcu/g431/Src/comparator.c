@@ -318,7 +318,7 @@ uint8_t getCompOutputSample(uint8_t *level)
     LL_ADC_ClearFlag_JEOS(ADC1);
     FD_DECISION(FD_SAMPLE_INVALID);
 
-#ifdef TARGET_FD_EDGE_RAW
+#if defined(TARGET_FD_EDGE_RAW) && !defined(TARGET_FD_M1_PURE)
     uint32_t edge_read_at = DWT->CYCCNT;
 #endif
     uint16_t va = (uint16_t)LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_1);
@@ -459,7 +459,7 @@ uint8_t getCompOutputSample(uint8_t *level)
         fdPinSyncPush(&fd_pin_sync,&pin_sample,running&&!heli_coast_active,fd_rev_acquiring);
     }
 #endif
-#ifdef TARGET_FD_SECTOR_DIAG
+#if defined(TARGET_FD_SECTOR_DIAG) && !defined(TARGET_FD_M1_PURE)
     if (fd_rev_acquiring && !heli_coast_active) {
         int16_t directed = rising ? (int32_t)bemf-neutral : (int32_t)neutral-bemf;
         fdSectorSample(directed, adc_zcd_decision,

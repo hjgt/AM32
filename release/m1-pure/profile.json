@@ -1,0 +1,22 @@
+{
+  "model": "M1",
+  "profile": "PURE",
+  "branch": "m1-main",
+  "tag": "m1-fd6288-g431-pure-2026-11-20",
+  "application_basename": "M1_PURE_FD6288_G431_2.20_20261120",
+  "application_build_dir": "obj-fd6288-m1-pure-20261120",
+  "application_build_name": "AM32_CUSTOM_FD6288_G431_2.20",
+  "bootloader_basename": "M1_BOOTLOADER_PB5_V17",
+  "settings_basename": "M1_SETTINGS_NOV11",
+  "bootloader_start": "0x08000000",
+  "application_start": "0x08001000",
+  "settings_start": "0x0800f800",
+  "bootloader_sha256": "4c7ac760fdf9275f0b9a9f56b844a5f509eac17d17c0cd2ab9636519f804ba6d",
+  "settings_sha256": "4f426d535486cb0d9b9c8b7bc0b74cd390efb56c73e9116e3a64f6c5a7baf7f3",
+  "hardware_retest": "pending",
+  "programming": "not performed at operator request",
+  "diagnostic_switch": "FD6288_M1_PURE",
+  "diagnostic_switch_off_matches_nov11": true,
+  "static_ram_bytes": 3864,
+  "retained_alignment_pair_control_bytes": 8
+}

@@ -4,10 +4,12 @@
 #include "common.h"
 #include "peripherals.h"
 #include "fd6288_sector_diag.h"
-#ifdef TARGET_FD_SECTOR_DIAG
+#if defined(TARGET_FD_SECTOR_DIAG) && !defined(TARGET_FD_M1_PURE)
 volatile FdSectorDiagnostics fd_sector_diag;
 #endif
-#ifdef TARGET_FD_EDGE_OBSERVE
+#if defined(TARGET_FD_M1_PURE)
+volatile FdM1PairControl fd_m1_pair_control;
+#elif defined(TARGET_FD_EDGE_OBSERVE)
 volatile FdEdgeObserve fd_edge_observe;
 #endif
 #ifdef TARGET_FD_QUIET_LOG
