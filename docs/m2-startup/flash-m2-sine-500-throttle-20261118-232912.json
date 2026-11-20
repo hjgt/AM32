@@ -1,0 +1,25 @@
+[
+  {
+    "at": "2026-11-18T15:29:09.069913+00:00",
+    "stage": "stopped",
+    "result": {
+      "input": 0,
+      "adjusted_input": 0,
+      "newinput": 0,
+      "running": 0,
+      "duty_cycle": 0,
+      "heli_coast_active": 0,
+      "ccr": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "at": "2026-11-18T15:29:09.645841+00:00",
+    "stage": "reset_init",
+    "result": ""
+  }
+]

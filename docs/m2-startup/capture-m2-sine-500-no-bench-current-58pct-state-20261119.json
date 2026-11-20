@@ -1,0 +1,10 @@
+{
+  "armed": 1,
+  "running": 0,
+  "desync_happened": 1,
+  "LOW_VOLTAGE_CUTOFF": 0,
+  "stuck_rotor_inhibit": 0,
+  "drive_safety_limit_inhibit": 0,
+  "use_current_limit": 0,
+  "degrees_celsius": 36
+}

@@ -12,6 +12,12 @@ typedef struct {
     uint8_t reason,step,flags,present;
     uint16_t reserved;
 } FdEdgeSample;
+#ifdef TARGET_FD_M2_HANDOFF_CAPTURE
+#include "fd6288_m2_handoff_capture.h"
+#endif
+#ifdef TARGET_FD_M2_RUNUP_ADC_CAPTURE
+#include "fd6288_m2_runup_adc.h"
+#endif
 #ifdef TARGET_FD_EDGE_RAW
 #include "fd6288_edge_raw.h"
 #else

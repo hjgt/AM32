@@ -1,0 +1,74 @@
+[
+  [
+    "[target current] curstate",
+    "OK:running"
+  ],
+  [
+    "read_memory 0xe0042000 32 1",
+    "OK:0x20036468"
+  ],
+  [
+    "read_memory 0xe000ed08 32 1",
+    "OK:0x8001000"
+  ],
+  [
+    "read_memory 0x20004b54 8 2",
+    "OK:0x0 0x0"
+  ],
+  [
+    "read_memory 0x20004b56 8 2",
+    "OK:0x0 0x0"
+  ],
+  [
+    "read_memory 0x20004d34 8 2",
+    "OK:0x0 0x0"
+  ],
+  [
+    "read_memory 0x20003c80 8 1",
+    "OK:0x0"
+  ],
+  [
+    "read_memory 0x20003c84 8 2",
+    "OK:0x0 0x0"
+  ],
+  [
+    "read_memory 0x20004b50 8 1",
+    "OK:0x0"
+  ],
+  [
+    "read_memory 0x48000010 32 1",
+    "OK:0x4000"
+  ],
+  [
+    "read_memory 0x48001410 32 1",
+    "OK:0x0"
+  ],
+  [
+    "read_memory 0x40012c34 32 4",
+    "OK:0x0 0x0 0x0 0x0"
+  ],
+  [
+    "reset init",
+    "OK:"
+  ],
+  [
+    "stm32g4x.cpu configure -work-area-size 0",
+    "OK:0"
+  ],
+  [
+    "mmw 0xe0042008 0x1800 0",
+    "OK:"
+  ],
+  [
+    "flash write_image erase {M2_SOURCE_ROOT/test-firmware/fd6288-M2-SINE-500-ADC-APERTURE-20261119/AM32_CUSTOM_FD6288_G431_2.20.hex}",
+    "OK:auto erase enabled\nwrote 59392 bytes from file M2_SOURCE_ROOT/test-firmware/fd6288-M2-SINE-500-ADC-APERTURE-20261119/AM32_CUSTOM_FD6288_G431_2.20.hex in 52.564030s (1.103 KiB/s)\n"
+  ],
+  [
+    "reset run",
+    "OK:"
+  ],
+  [
+    "[target current] curstate",
+    "OK:running"
+  ]
+]

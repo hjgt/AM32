@@ -908,6 +908,88 @@ static uint32_t fd_power_accepted_start, fd_power_timeouts_start;
 static uint8_t fd_power_starting;
 #ifdef TARGET_STARTUP_SEQUENCE
 static FdRevPolicy fd_rev;
+#ifdef TARGET_FD_M2_LOW_SPEED_PICKUP
+static FdM2Pickup fd_pickup;
+typedef struct {
+    uint32_t trial, coast_at, resume_at, sector_ticks, sector, duty;
+} FdM2PickupCapture;
+_Static_assert(sizeof(FdM2PickupCapture) == 24u, "M2 pickup capture ABI");
+volatile FdM2PickupCapture fd_m2_pickup_capture;
+#ifdef TARGET_FD_M2_TIMED_RUNUP
+typedef struct {
+    uint32_t at, period, adc_at;
+    uint8_t step, qualified, streak, phase_anchored;
+} FdM2RunupSector;
+typedef struct {
+    uint32_t trial, sectors;
+    FdM2RunupSector sector[FD_M2_RUNUP_SECTORS];
+} FdM2RunupCapture;
+_Static_assert(sizeof(FdM2RunupCapture) == 104u, "M2 timed run-up capture ABI");
+volatile FdM2RunupCapture fd_m2_runup;
+#ifdef TARGET_FD_M2_RUNUP_ADC_CAPTURE
+volatile FdM2RunupAdcCapture fd_m2_runup_adc;
+#endif
+#endif
+#ifdef TARGET_FD_M2_STEP5_LATE_ADC
+volatile uint8_t fd_m2_startup_late_adc;
+static uint8_t fd_m2_aperture_discard;
+#endif
+#if defined(TARGET_FD_M2_STEP5_COAST_COMPARE) || defined(TARGET_FD_M2_STEP5_DELAY_4900)
+enum { FD_M2_STEP4_EARLY_US = 500u };
+#endif
+#ifdef TARGET_FD_M2_STEP5_COAST_COMPARE
+typedef struct {
+    uint32_t trial, pulse_us, edge_at, step5_at, off_at;
+} FdM2Step5CoastCapture;
+_Static_assert(sizeof(FdM2Step5CoastCapture) == 20u, "M2 step 5 coast ABI");
+volatile FdM2Step5CoastCapture fd_m2_step5_coast;
+/* Profiles 1, 2 and 3 release immediately, after 4 ms, and after 9 ms. */
+enum {
+    FD_M2_STEP5_COAST_PULSE_US = FD6288_M2_STEP5_COAST_COMPARE == 1 ? 0u :
+        FD6288_M2_STEP5_COAST_COMPARE == 2 ? 4000u : 9000u
+};
+#endif
+#ifdef TARGET_FD_M2_POWERED_CAPTURE
+volatile FdM2PoweredCapture fd_m2_powered_capture;
+#endif
+#ifdef TARGET_FD_M2_HANDOFF_CAPTURE
+volatile FdM2HandoffCapture fd_m2_handoff;
+#endif
+#ifdef TARGET_FD_M2_ON_ADC_PAIR
+#ifndef TARGET_FD_M2_RUNUP_STEP4_PAIR
+enum { FD_ON_ADC_PAIR_CAPACITY = 96u };
+typedef struct {
+    uint32_t trial, count, max_cycles;
+    FdEdgeSample samples[FD_ON_ADC_PAIR_CAPACITY];
+} FdM2OnAdcPair;
+_Static_assert(sizeof(FdM2OnAdcPair) == 12u + 24u * FD_ON_ADC_PAIR_CAPACITY, "M2 PWM-on pair ABI");
+volatile FdM2OnAdcPair fd_m2_on_adc_pair;
+#endif
+volatile uint16_t fd_m2_on_adc_late;
+static uint8_t fd_m2_on_adc_step, fd_m2_on_adc_discard;
+#endif
+#endif
+#ifdef TARGET_FD_M2_STEP4_ADC_PAIR
+enum { FD_STEP4_PAIR_CAPACITY = FD_M2_HIZ_STEP4_MS == 11u ? 128u : 64u };
+typedef struct {
+    uint32_t trial, started, count, max_cycles;
+    FdEdgeSample samples[FD_STEP4_PAIR_CAPACITY];
+} FdStep4PairCapture;
+_Static_assert(sizeof(FdStep4PairCapture) == 16u + 24u * FD_STEP4_PAIR_CAPACITY, "Step 4 pair ABI");
+volatile FdStep4PairCapture fd_step4_pair;
+volatile uint16_t fd_step4_pair_compare;
+static uint8_t fd_step4_pair_discard;
+
+static void fdStep4PairBegin(uint32_t now, uint32_t trial)
+{
+    fd_step4_pair.trial = trial;
+    fd_step4_pair.started = now;
+    fd_step4_pair.count = fd_step4_pair.max_cycles = 0u;
+    fd_step4_pair_discard = 2u;
+    fd_step4_pair_compare = FD_STEP4_PAIR_EARLY;
+    TIM1->CCR4 = zcd_ccr4_from_duty(TIM1->CCR1);
+}
+#endif
 #ifdef TARGET_FD_START_RETRY
 #include "fd6288_start_retry_diag.h"
 volatile FdStartRetryDiagnostics fd_start_retry_diag = { .magic = 0x46535231u, .abi = FD_SR_DIAG_ABI };
@@ -1031,6 +1113,9 @@ static uint8_t fdBenchConfigOk(void)
 
 static void fdBenchObserve(uint32_t now)
 {
+#ifdef TARGET_FD_M2_POWERED_CAPTURE
+    fdM2PoweredSupply(now, actual_current, battery_voltage);
+#endif
 #ifdef TARGET_FD_NO_DIAGNOSTICS
     (void)now;
 #else
@@ -1061,6 +1146,24 @@ static void fdBenchObserve(uint32_t now)
 static void fdBenchFinish(uint8_t reason)
 {
     if (!fd_power_bench.active_id) return;
+#ifdef TARGET_FD_M2_RUNUP_ADC_CAPTURE
+    fd_m2_runup_adc.active_step = 0u;
+#endif
+#ifdef TARGET_FD_M2_HANDOFF_CAPTURE
+    fdM2HandoffFinish(DWT->CYCCNT, reason, step, INTERVAL_TIMER_COUNT);
+#endif
+#ifdef TARGET_FD_M2_STEP5_LATE_ADC
+    fd_m2_startup_late_adc = fd_m2_aperture_discard = 0u;
+#endif
+#ifdef TARGET_FD_M2_ON_ADC_PAIR
+    fd_m2_on_adc_late = fd_m2_on_adc_step = 0u;
+#endif
+#ifdef TARGET_FD_M2_POWERED_CAPTURE
+    fdM2PoweredFinish(DWT->CYCCNT);
+#endif
+#ifdef TARGET_FD_M2_STEP4_ADC_PAIR
+    fd_step4_pair_compare = 0u;
+#endif
     fdEdgeFinish(DWT->CYCCNT);
 #ifdef TARGET_FD_START_RETRY
     fdStartRetryFinish(DWT->CYCCNT, reason);
@@ -1114,7 +1217,13 @@ static void fdBenchStop(uint8_t reason)
         fd_power_bench.inhibit = 1u; /* publish before canceling pending work */
 #ifdef TARGET_STARTUP_SEQUENCE
 #ifdef TARGET_FD_HIZ_OBSERVE
-        if (reason == FD_BENCH_WINDOW) reason = FD_BENCH_HIZ_DONE;
+        if (reason == FD_BENCH_WINDOW) {
+#ifdef TARGET_FD_M2_LOW_SPEED_PICKUP
+            reason = fd_rev.pickup_started ? FD_BENCH_NO_LOCK : FD_BENCH_HIZ_DONE;
+#else
+            reason = FD_BENCH_HIZ_DONE;
+#endif
+        }
 #elif defined(TARGET_FD_ALIGN_ONLY)
         if (reason == FD_BENCH_WINDOW) reason = FD_BENCH_ALIGN_DONE;
 #elif defined(TARGET_FD_LAUNCH_HOLD)
@@ -1169,7 +1278,11 @@ static void fdBenchService(void)
         else if (drive_safety_limit_inhibit) fdBenchStop(FD_BENCH_SAFETY_CAP);
         else if (!adjusted_input) {
 #ifdef TARGET_FD_HIZ_OBSERVE
-            if (fd_hiz_active) {
+            if (fd_hiz_active
+#ifdef TARGET_FD_M2_LOW_SPEED_PICKUP
+                || (fd_rev_acquiring && fd_rev.pickup_started)
+#endif
+            ) {
                 fdBenchStop(FD_BENCH_OPERATOR_ZERO);
                 __set_PRIMASK(mask);
                 return;
@@ -1250,6 +1363,11 @@ static void fdBenchService(void)
 #endif
 #ifdef TARGET_FD_HIZ_OBSERVE
                 if (fd_hiz_active) requested = 0u;
+#endif
+#ifdef TARGET_FD_M2_FEEDBACK_DUTY_450
+                if (fd_rev_acquiring &&
+                    (fd_rev.stage == FD_REV_OPEN || fd_rev.stage == FD_REV_PENDING))
+                    requested = 450u;
 #endif
                 uint16_t cap = driveEffectiveDutyLimit();
                 fd_power_bench.floor = requested < cap ? requested : cap;
@@ -1335,6 +1453,37 @@ static uint8_t fdBenchBegin(void)
 #endif
 #ifdef TARGET_STARTUP_SEQUENCE
     fdRevBeginPolicy(&fd_rev, DWT->CYCCNT);
+#ifdef TARGET_FD_M2_LOW_SPEED_PICKUP
+    fd_m2_pickup_capture = (FdM2PickupCapture){.trial=fd_power_bench.active_id};
+#ifdef TARGET_FD_M2_TIMED_RUNUP
+    fd_m2_runup = (FdM2RunupCapture){.trial=fd_power_bench.active_id};
+#ifdef TARGET_FD_M2_RUNUP_ADC_CAPTURE
+    fdM2RunupAdcReset(fd_power_bench.active_id);
+#endif
+#endif
+#ifdef TARGET_FD_M2_HANDOFF_CAPTURE
+    fdM2HandoffReset(fd_power_bench.active_id);
+#endif
+#ifdef TARGET_FD_M2_STEP5_LATE_ADC
+    fd_m2_startup_late_adc = fd_m2_aperture_discard = 0u;
+#endif
+#ifdef TARGET_FD_M2_ON_ADC_PAIR
+#ifndef TARGET_FD_M2_RUNUP_STEP4_PAIR
+    fd_m2_on_adc_pair.trial = fd_power_bench.active_id;
+    fd_m2_on_adc_pair.count = fd_m2_on_adc_pair.max_cycles = 0u;
+#endif
+    fd_m2_on_adc_late = fd_m2_on_adc_step = 0u;
+#endif
+#ifdef TARGET_FD_M2_STEP5_COAST_COMPARE
+    fd_m2_step5_coast = (FdM2Step5CoastCapture){
+        .trial = fd_power_bench.active_id,
+        .pulse_us = FD_M2_STEP5_COAST_PULSE_US
+    };
+#endif
+#ifdef TARGET_FD_M2_POWERED_CAPTURE
+    fdM2PoweredReset(fd_power_bench.active_id);
+#endif
+#endif
 #ifdef TARGET_FD_START_RETRY
     fdStartRetryBegin(DWT->CYCCNT);
 #endif
@@ -1398,6 +1547,103 @@ static void fdAsyncScheduleDeadline(uint32_t accepted_at, uint32_t deadline);
 #ifdef TARGET_FD_HIZ_OBSERVE
 static void fdAlignmentPairReset(void);
 #endif
+#ifdef TARGET_FD_M2_LOW_SPEED_PICKUP
+static void fdM2PickupStart(uint32_t now, uint8_t sector)
+{
+    uint16_t cap = driveEffectiveDutyLimit();
+    uint16_t duty = cap < 400u ? cap : 400u;
+    if (duty < driveZcdMinimumDuty()) {
+        fdBenchStop(FD_BENCH_SAFETY_CAP);
+        return;
+    }
+
+    /* Transfer the drive compares while the bridge is still locked off. */
+    uint16_t compare = (uint16_t)(((uint32_t)duty * tim1_arr) / 2000u + 1u);
+    SET_DUTY_CYCLE_ALL(compare);
+    generatePwmTimerEvent();
+    duty_cycle_setpoint = duty_cycle = last_duty_cycle = duty;
+    adjusted_duty_cycle = compare;
+    prop_brake_active = 0u;
+    commutation_interval = 10000u; /* feedback startup seed, not a measured edge */
+    adcZcdResetAcquisition(ADC_ZCD_RESET_COUNT);
+    SET_INTERVAL_TIMER_COUNT(0u);
+
+    fdEdgeFinish(now);
+    fd_rev.stage = FD_REV_OPEN;
+    fd_rev.period = FD_REV_RETRY_TICKS;
+    fd_rev.pickup_started = 1u;
+    fd_rev.pickup_at = now;
+    fd_m2_pickup_capture.resume_at = now - fd_power_policy.started;
+    fd_m2_pickup_capture.sector_ticks = fd_pickup.period;
+    fd_m2_pickup_capture.sector = sector;
+    fd_m2_pickup_capture.duty = duty;
+
+    /* commutate() advances the logical step before enabling the bridge. */
+    step = forward ? (sector == 1u ? 6u : sector - 1u)
+                   : (sector == 6u ? 1u : sector + 1u);
+    fd_hiz_active = 0u;
+    commutate();
+    fd_rev.sector_at = DWT->CYCCNT;
+#ifdef TARGET_FD_M2_POWERED_CAPTURE
+    fd_m2_powered_capture.started = now;
+    fd_m2_powered_capture.active = 1u;
+    fdM2PoweredMark(fd_rev.sector_at, step, TIM1->CCR1, actual_current, battery_voltage);
+#endif
+}
+#endif
+#ifdef TARGET_FD_HIZ_OBSERVE
+static void fdRevEnterHiZ(void)
+{
+    fd_hiz_active = 1u; /* lock every bridge enable before six gates go off */
+    allOff(); /* also cancels TIM16 and lowers PB7 */
+    uint32_t off_at = DWT->CYCCNT;
+#ifdef TARGET_FD_M2_ON_ADC_PAIR
+    fd_m2_on_adc_late = fd_m2_on_adc_step = 0u;
+#endif
+#ifdef TARGET_FD_M2_STEP5_COAST_COMPARE
+    if (fd_rev.pickup_started) fdM2PoweredFinish(off_at);
+#endif
+#ifdef TARGET_FD_M2_STEP4_ADC_PAIR
+    fd_step4_pair_compare = 0u;
+#endif
+    duty_cycle_setpoint = duty_cycle = adjusted_duty_cycle = last_duty_cycle = 0u;
+    fd_power_bench.floor = 0u;
+    fdAlignmentPairReset();
+    SET_HELI_COAST_HIGH_Z_SAMPLE(tim1_arr);
+    fdEdgeHiZBegin(off_at, DWT->CYCCNT);
+#ifdef TARGET_FD_M2_LOW_SPEED_PICKUP
+#ifdef TARGET_FD_M2_STEP5_COAST_COMPARE
+    if (fd_rev.pickup_started)
+        fd_m2_step5_coast.off_at = off_at - fd_power_policy.started;
+    else
+#endif
+    {
+        fd_pickup = (FdM2Pickup){.off_at=off_at};
+        fd_m2_pickup_capture.coast_at = off_at - fd_power_policy.started;
+    }
+#endif
+#ifdef TARGET_FD_M2_HIZ_AFTER_TWO
+    fd_start_retry_diag.rows[0].off_at = off_at - fd_power_policy.started;
+#endif
+    fd_rev.sector_at = off_at;
+    fd_align_observe.frozen = 1u;
+    adcZcdResetAcquisition(ADC_ZCD_RESET_COUNT);
+#ifdef TARGET_FD_SCOPE_PB7
+    GPIOB->BSRR = (1u << 7); /* off-boundary service marker; not sample time */
+#endif
+}
+#endif
+
+#ifdef TARGET_FD_M2_STEP5_LATE_ADC
+static void fdM2SetStartupAperture(uint8_t late)
+{
+    if (late == fd_m2_startup_late_adc) return;
+    fd_m2_startup_late_adc = late;
+    fd_m2_aperture_discard = 2u;
+    TIM1->CCR4 = zcd_ccr4_from_duty(TIM1->CCR1);
+}
+#endif
+
 static void fdRevTick(void)
 {
     uint32_t mask = __get_PRIMASK();
@@ -1409,8 +1655,29 @@ static void fdRevTick(void)
         return;
     }
     uint32_t now = DWT->CYCCNT;
+#ifdef TARGET_FD_M2_LOW_SPEED_PICKUP
+    if (fd_rev.stage == FD_REV_HIZ && !fd_rev.pickup_started &&
+        (uint32_t)(now - fd_rev.sector_at) < FD_HIZ_TICKS) {
+        uint8_t sector = fdM2PickupReady(&fd_pickup, now);
+        if (sector) {
+            fdM2PickupStart(now, sector);
+            __set_PRIMASK(mask);
+            return;
+        }
+    }
+#endif
 #ifdef TARGET_FD_SECTOR_DIAG
     uint8_t was_align = fd_rev.stage == FD_REV_ALIGN;
+#endif
+#if defined(TARGET_FD_M2_STEP5_COAST_COMPARE) && FD6288_M2_STEP5_COAST_COMPARE != 1
+    if (fd_m2_step5_coast.step5_at && !fd_m2_step5_coast.off_at &&
+        (uint32_t)(now - fd_power_policy.started - fd_m2_step5_coast.step5_at) >=
+            FD_M2_STEP5_COAST_PULSE_US * FD_REV_US) {
+        fd_rev.stage = FD_REV_HIZ;
+        fdRevEnterHiZ();
+        __set_PRIMASK(mask);
+        return;
+    }
 #endif
     uint8_t action = fdRevAdvancePolicy(&fd_rev, now);
 #ifdef TARGET_FD_START_RETRY
@@ -1441,20 +1708,7 @@ static void fdRevTick(void)
         __set_PRIMASK(mask); return;
     }
     if (action == FD_REV_HIZ_RELEASE) {
-        fd_hiz_active = 1u; /* lock every bridge enable before six gates go off */
-        allOff(); /* also cancels TIM16 and lowers PB7 */
-        uint32_t off_at = DWT->CYCCNT;
-        duty_cycle_setpoint = duty_cycle = adjusted_duty_cycle = last_duty_cycle = 0u;
-        fd_power_bench.floor = 0u;
-        fdAlignmentPairReset();
-        SET_HELI_COAST_HIGH_Z_SAMPLE(tim1_arr);
-        fdEdgeHiZBegin(off_at, DWT->CYCCNT);
-        fd_rev.sector_at = off_at;
-        fd_align_observe.frozen = 1u;
-        adcZcdResetAcquisition(ADC_ZCD_RESET_COUNT);
-#ifdef TARGET_FD_SCOPE_PB7
-        GPIOB->BSRR = (1u << 7); /* off-boundary service marker; not sample time */
-#endif
+        fdRevEnterHiZ();
         __set_PRIMASK(mask); return;
     }
 #endif
@@ -1478,6 +1732,9 @@ static void fdRevTick(void)
     }
 #endif
     if (action != FD_REV_NONE) fdEdgeClose(now);
+#ifdef TARGET_FD_M2_START_CAPTURE
+    if (action == FD_REV_RELEASE || action == FD_REV_HANDOFF) fdEdgeFinish(now);
+#endif
 #ifdef TARGET_FD_ALIGN_SETTLE
     if (fd_rev.stage != FD_REV_ALIGN) fd_align_observe.frozen = 1u;
 #endif
@@ -1489,6 +1746,12 @@ static void fdRevTick(void)
     if (action == FD_REV_HANDOFF) fdSectorFinish(now, 0u);
 #endif
     if (action == FD_REV_HANDOFF) {
+#ifdef TARGET_FD_M2_RUNUP_ADC_CAPTURE
+        fd_m2_runup_adc.active_step = 0u;
+#endif
+#ifdef TARGET_FD_M2_POWERED_CAPTURE
+        fdM2PoweredFinish(now);
+#endif
 #ifdef TARGET_FD_REPOSITION
         fd_reposition_diag[5] = now-fd_power_policy.started;
 #endif
@@ -1514,6 +1777,12 @@ static void fdRevTick(void)
 #endif
         SET_INTERVAL_TIMER_COUNT((now - fd_rev.edge_at) / 80u);
         fdTraceEvent(FD_EVENT_REV_HANDOFF, fd_rev.confidence);
+#ifdef TARGET_FD_M2_STEP6_LATE_ADC
+        fdM2SetStartupAperture(0u);
+#endif
+#ifdef TARGET_FD_M2_HANDOFF_CAPTURE
+        fdM2HandoffBegin(DWT->CYCCNT, commutation_interval, fd_rev.last_real_period / 80u);
+#endif
         commutate();
     }
 #ifdef TARGET_FD_REPOSITION
@@ -1641,6 +1910,21 @@ static void fdRevTick(void)
         SET_INTERVAL_TIMER_COUNT(0u);
         fdTraceEvent(FD_EVENT_REV_STEP, fd_rev.period / FD_REV_US);
         commutate();
+#ifdef TARGET_FD_M2_RUNUP_STEP4_PAIR
+        if (fd_rev.runup_left && step == 5u)
+            fd_m2_on_adc_late = fd_m2_on_adc_step = 0u;
+#endif
+#ifdef TARGET_FD_M2_STEP5_LATE_ADC
+        uint8_t late_step = step == 5u && fd_rev.confidence == 4u;
+#ifdef TARGET_FD_M2_STEP6_LATE_ADC
+        late_step = late_step || (step == 6u && fd_rev.confidence == 5u);
+#endif
+#ifdef TARGET_FD_M2_TIMED_RUNUP
+        late_step = late_step || (fd_rev.runup_left && (step == 5u || step == 6u));
+#endif
+        fdM2SetStartupAperture(late_step && !fd_power_bench.inhibit && fd_rev.pickup_started &&
+                               fd_m2_pickup_capture.sector == 1u && forward);
+#endif
 #ifdef TARGET_FD_LAUNCH_HOLD
 #ifdef TARGET_FD_LAUNCH_TWO
         if(action==FD_REV_LAUNCH || (action==FD_REV_STEP && fd_rev.launch_vectors==2u))
@@ -1656,6 +1940,36 @@ static void fdRevTick(void)
         if(action==FD_REV_LAUNCH || action==FD_REV_RK_LAUNCH) {
             fd_rev.sector_at=DWT->CYCCNT;fdRkRecord(fd_rev.sector_at,action);
         }
+#endif
+#ifdef TARGET_FD_M2_START_RAMP
+        if (action == FD_REV_PLANNED) fd_rev.sector_at = DWT->CYCCNT;
+#ifdef TARGET_FD_M2_TIMED_RUNUP
+        if (action == FD_REV_PLANNED && fd_rev.runup_left && !fd_power_bench.inhibit) {
+            unsigned i = FD_M2_RUNUP_SECTORS - fd_rev.runup_left;
+            if (!i) fdM2PoweredFinish(fd_rev.sector_at);
+            fd_m2_runup.sector[i] = (FdM2RunupSector){
+                .at=fd_rev.sector_at-fd_power_policy.started, .period=fd_rev.period, .step=step
+            };
+            fd_m2_runup.sectors = i + 1u;
+#ifdef TARGET_FD_M2_RUNUP_ADC_CAPTURE
+            if (i >= 3u) fdM2RunupAdcBegin(step, fd_rev.sector_at);
+#endif
+        }
+#endif
+#ifdef TARGET_FD_M2_POWERED_CAPTURE
+#ifdef TARGET_FD_M2_STEP5_COAST_COMPARE
+        if (action == FD_REV_STEP && step == 5u && fd_m2_step5_coast.edge_at &&
+            !fd_m2_step5_coast.step5_at && !fd_power_bench.inhibit)
+            fd_m2_step5_coast.step5_at = DWT->CYCCNT - fd_power_policy.started;
+#endif
+        if (action == FD_REV_STEP && fd_rev.pickup_started)
+            fdM2PoweredMark(DWT->CYCCNT, step, TIM1->CCR1, actual_current, battery_voltage);
+#endif
+#ifdef TARGET_FD_M2_STEP4_ADC_PAIR
+        if (action == FD_REV_PLANNED && fd_rev.ramp_sector == 3u)
+            fdStep4PairBegin(fd_rev.sector_at, fd_power_bench.active_id);
+#endif
+        if (action == FD_REV_LAUNCH) fd_rev.ramp_at = DWT->CYCCNT;
 #endif
 #ifdef TARGET_FD_START_RETRY
         if (action == FD_REV_START_RESTART || action == FD_REV_LAUNCH) {
@@ -1677,7 +1991,30 @@ static void fdRevObserveEdge(void)
     __disable_irq();
     if (!fd_power_bench.inhibit && fd_rev_acquiring) {
 #ifdef TARGET_FD_START_RETRY
+#ifdef TARGET_FD_M2_STEP5_COAST_COMPARE
+        if (fd_m2_step5_coast.edge_at) {
+            __set_PRIMASK(mask);
+            return; /* The bounded step 5 pulse cannot schedule another step. */
+        }
+#endif
         uint32_t sr_at = DWT->CYCCNT;
+#ifdef TARGET_FD_M2_TIMED_RUNUP
+        if (fd_rev.runup_left) {
+            unsigned i = FD_M2_RUNUP_SECTORS - fd_rev.runup_left;
+            uint8_t qualified = fdM2RunupObserve(&fd_rev, sr_at);
+            fd_m2_runup.sector[i].adc_at = sr_at - fd_power_policy.started;
+            fd_m2_runup.sector[i].qualified = qualified;
+            fd_m2_runup.sector[i].streak = fd_rev.runup_streak;
+#ifdef TARGET_FD_M2_RUNUP_STEP4_ANCHOR
+            if (qualified && i == 2u) {
+                uint8_t timing = eepromBuffer.auto_advance ? auto_advance_level : temp_advance;
+                fd_m2_runup.sector[i].phase_anchored = fdM2RunupAnchorStep4(&fd_rev, timing);
+            }
+#endif
+            __set_PRIMASK(mask);
+            return;
+        }
+#endif
         if (fd_rev.stage != FD_REV_OPEN || fd_rev.seen ||
             (uint32_t)(sr_at - fd_rev.sector_at) >= fdRevRetryTicks(&fd_rev) ||
             (uint32_t)(sr_at - fd_rev.sr_attempt_at) >= FD_SR_ATTEMPT_TICKS ||
@@ -1738,7 +2075,63 @@ static void fdRevObserveEdge(void)
 #endif
 #ifdef TARGET_FD_START_RETRY
         if (fd_rev.confidence == sr_previous) { __set_PRIMASK(mask); return; }
+#ifdef TARGET_FD_M2_STEP4_DELAY_2200
+        /* Single-variable probe on the third feedback edge leading into step 4. */
+        if (fd_rev.pickup_started && fd_rev.confidence == 3u &&
+            step == (forward ? 3u : 5u))
+            fd_rev.delay = 2200u * FD_REV_US;
+#endif
+#ifdef TARGET_FD_M2_PICKUP_FIRST_DWELL_4000
+        if (fd_rev.pickup_started && fd_rev.confidence == 1u && forward && step == 1u) {
+            uint32_t age = fd_rev.edge_at - fd_rev.pickup_at;
+            const uint32_t minimum_dwell = 4000u * FD_REV_US;
+            if (age < minimum_dwell && fd_rev.delay < minimum_dwell - age)
+                fd_rev.delay = minimum_dwell - age;
+        }
+#endif
+#ifdef TARGET_FD_M2_PICKUP_SECOND_DELAY_2000
+        /* Forward step 1 pickup: hold step 2 for 2 ms after its accepted edge.
+         * The recorded 5.1–5.8 ms edge interval gives a 1.9–2.2 ms target
+         * when scaled by (30 - 7.5) / 60. */
+        if (fd_rev.pickup_started && fd_m2_pickup_capture.sector == 1u &&
+            forward && step == 2u && fd_rev.confidence == 2u)
+            fd_rev.delay = 2000u * FD_REV_US;
+#endif
+#ifdef TARGET_FD_M2_EARLY_STEP5_DWELL
+        /* A very early fifth edge still counts. Hold the fifth drive vector
+         * through a minimum dwell before letting it trigger step 6. */
+        if (fd_rev.pickup_started && fd_m2_pickup_capture.sector == 1u &&
+            forward && step == 5u && fd_rev.confidence == 5u) {
+            uint32_t age = fd_rev.edge_at - fd_rev.sector_at;
+            if (age < 1000u * FD_REV_US && fd_rev.delay < 2500u * FD_REV_US - age)
+                fd_rev.delay = 2500u * FD_REV_US - age;
+        }
+#endif
         fdStartRetryEdgeRecord(sr_at);
+#ifdef TARGET_FD_M2_TIMED_RUNUP
+        if (fd_rev.pickup_started && fd_m2_pickup_capture.sector == 1u &&
+            forward && step == 6u && fd_rev.confidence == FD_REV_REQUIRED_EDGES)
+            fd_rev.runup_requested = 1u;
+#endif
+#if defined(TARGET_FD_M2_STEP5_COAST_COMPARE) || defined(TARGET_FD_M2_STEP5_DELAY_4900)
+        if (fd_rev.pickup_started && fd_m2_pickup_capture.sector == 1u &&
+            forward && step == 4u && fd_rev.confidence == 4u &&
+            (uint32_t)(sr_at - fd_rev.sector_at) < FD_M2_STEP4_EARLY_US * FD_REV_US) {
+#ifdef TARGET_FD_M2_STEP5_DELAY_4900
+            /* A coast trial places the C−A boundary about 5.5 ms later.
+             * Advance by 7.5 electrical degrees at the observed 4.7 ms/sector. */
+            fd_rev.delay = 4900u * FD_REV_US;
+#else
+            fd_m2_step5_coast.edge_at = sr_at - fd_power_policy.started;
+            if (FD6288_M2_STEP5_COAST_COMPARE == 1) {
+                fd_rev.stage = FD_REV_HIZ;
+                fdRevEnterHiZ();
+                __set_PRIMASK(mask);
+                return;
+            }
+#endif
+        }
+#endif
 #endif
 #ifdef TARGET_FD_REPOSITION
         if (fd_rev.reposition_used && fd_rev.observed_once && fd_reposition_diag[4] == UINT32_MAX)
@@ -1847,7 +2240,7 @@ void loadEEpromSettings()
 #ifdef TARGET_FD_NATIVE_SINE
     /* Trial-only RAM overrides; the existing settings page remains untouched. */
     eepromBuffer.startup_power = FD_NATIVE_SINE_STARTUP_POWER;
-    eepromBuffer.motor_kv = FD_NATIVE_SINE_MOTOR_KV_CODE; /* 22*40+20 = 900 KV */
+    eepromBuffer.motor_kv = FD_NATIVE_SINE_MOTOR_KV_CODE;
     eepromBuffer.motor_poles = FD_NATIVE_SINE_MOTOR_POLES;
     /* Keep the stored timing and automatic/manual timing selection. */
     eepromBuffer.use_sine_start = 1u;
@@ -1859,6 +2252,10 @@ void loadEEpromSettings()
     eepromBuffer.minimum_duty_cycle = 1u;
     eepromBuffer.bi_direction = 0u;
     eepromBuffer.rc_car_reverse = 0u;
+#ifdef TARGET_FD_M2_SINE_COAST
+    eepromBuffer.input_type = DSHOT_IN;
+    eepromBuffer.stuck_rotor_protection = 1u;
+#endif
 #endif
     // eepromBuffer.advance_level can either be set to 0-3 with config tools less than 1.90 or 10-42 with 1.90 or above 
     if (eepromBuffer.advance_level > 42 || (eepromBuffer.advance_level < 10 && eepromBuffer.advance_level > 3)){
@@ -2068,7 +2465,9 @@ void loadEEpromSettings()
 
 void saveEEpromSettings()
 {
+#ifndef TARGET_FD_M2_SINE_COAST
     save_flash_nolib(eepromBuffer.buffer, sizeof(eepromBuffer.buffer), eeprom_address);
+#endif
 }
 
 uint16_t getSmoothedCurrent()
@@ -2131,7 +2530,11 @@ void getBemfState()
 
 #ifdef TARGET_FD_ASYNC_COMM
 #include "fd6288_async.h"
+#ifdef TARGET_FD_M2_PURE
+volatile FdAsyncDiagnostics fd_async_diag;
+#else
 volatile FdAsyncDiagnostics fd_async_diag = { .abi = 1u };
+#endif
 
 void fdAsyncCancel(void)
 {
@@ -2274,7 +2677,9 @@ static void fdAlignmentPairSample(const uint16_t v[3], uint32_t at, uint32_t cnt
 #ifdef TARGET_FD_LAUNCH_RAW
     /* Do not reuse drive counters as a fresh pair budget during retries. */
 #ifdef TARGET_FD_ALIGN_TAIL
-#ifdef TARGET_FD_EARLY_REKICK
+#ifdef TARGET_FD_M2_START_CAPTURE
+    if(fd_edge_observe.abi==10u || fd_edge_observe.frozen) {fdAlignmentPairReset();return;}
+#elif defined(TARGET_FD_EARLY_REKICK)
     if(fd_edge_observe.abi==9u) {fdAlignmentPairReset();return;}
 #elif defined(TARGET_FD_BLUE_START)
     if(fd_edge_observe.abi==8u) {fdAlignmentPairReset();return;}
@@ -2353,16 +2758,170 @@ static void fdObserveHiZAdc(void)
     uint16_t v[3] = {LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_1),
         LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_2),
         LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_3)};
+    uint8_t coherent = !LL_ADC_IsActiveFlag_JEOS(ADC1);
     fdEdgeHiZSample((FdEdgeSample){.at=at,.a=v[0],.b=v[1],.c=v[2],
         .cnt=TIM1->CNT,.duty=TIM1->CCR1,.trigger=TIM1->CCR4,.step=step,
-        .reason=253,.flags=(uint8_t)(32u|(!LL_ADC_IsActiveFlag_JEOS(ADC1)?1u:0u))});
+        .reason=253,.flags=(uint8_t)(32u | coherent)});
+#ifdef TARGET_FD_M2_LOW_SPEED_PICKUP
+    if (coherent && !fd_rev.pickup_started &&
+        (uint32_t)(at - fd_rev.sector_at) < FD_HIZ_TICKS)
+        fdM2PickupObserve(&fd_pickup, at, v, forward);
+#endif
     fdEdgeCost(DWT->CYCCNT-at);
 }
 #endif
+#ifdef TARGET_FD_M2_STEP4_ADC_PAIR
+static void fdObserveStep4PairAdc(void)
+{
+    uint32_t at = DWT->CYCCNT;
+    LL_ADC_ClearFlag_JEOS(ADC1);
+    uint16_t trigger = fd_step4_pair_compare;
+    uint16_t duty = TIM1->CCR1;
+    if (TIM1->CCR4 != trigger || duty < FD_STEP4_PAIR_LATE + ZCD_ADC_WINDOW_TICKS) {
+        fd_step4_pair_discard = 2u;
+        return;
+    }
+    /* Wait for the compare preload and discard any queued conversion. */
+    if (fd_step4_pair_discard) {
+        fd_step4_pair_discard--;
+        return;
+    }
+    uint32_t index = fd_step4_pair.count;
+    uint32_t age = at - fd_step4_pair.started;
+    if (age >= FD_M2_HIZ_STEP4_MS * 1000u * FD_REV_US ||
+        index >= FD_STEP4_PAIR_CAPACITY) return;
+
+    uint16_t cnt = TIM1->CNT;
+    uint16_t a = LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_1);
+    uint16_t b = LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_2);
+    uint16_t c = LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_3);
+    int16_t margin = (int16_t)c - (int16_t)(((uint32_t)a + b + c) / 3u);
+    uint8_t usable = !LL_ADC_IsActiveFlag_JEOS(ADC1) &&
+        cnt >= trigger + ZCD_ADC_WINDOW_TICKS && cnt < duty && b >= a + 64u;
+    fd_step4_pair.samples[index] = (FdEdgeSample){
+        .at=age, .a=a, .b=b, .c=c, .margin=rising ? margin : -margin,
+        .cnt=cnt, .duty=duty, .trigger=trigger, .step=step, .present=1u,
+        .flags=(uint8_t)(usable | (rising ? 2u : 0u))
+    };
+    fd_step4_pair.count = index + 1u;
+    fd_step4_pair_compare = trigger == FD_STEP4_PAIR_EARLY ? FD_STEP4_PAIR_LATE : FD_STEP4_PAIR_EARLY;
+    fd_step4_pair_discard = 2u;
+    TIM1->CCR4 = zcd_ccr4_from_duty(TIM1->CCR1);
+    uint32_t cycles = DWT->CYCCNT - at;
+    if (cycles > fd_step4_pair.max_cycles) fd_step4_pair.max_cycles = cycles;
+}
+#endif
+#ifdef TARGET_FD_M2_ON_ADC_PAIR
+static uint8_t fdObserveOnAdcPair(void)
+{
+    uint32_t at = DWT->CYCCNT;
+#ifdef TARGET_FD_M2_RUNUP_STEP4_PAIR
+    uint8_t observe = step == 4u && fd_rev.runup_left &&
+        fd_m2_runup_adc.active_step == 4u;
+#elif defined(TARGET_FD_M2_STEP6_ADC_PAIR)
+    uint8_t observe = step == 6u && fd_rev.stage == FD_REV_OPEN && fd_rev.confidence == 5u;
+#else
+    /* Step 3 has already qualified its edge. Restore the normal aperture
+     * at least 0.5 ms before TIM16 switches into step 4. */
+    uint8_t step3 = step == 3u && fd_rev.stage == FD_REV_PENDING &&
+        fd_rev.confidence == 3u && fd_rev.delay >= 500u * FD_REV_US &&
+        (uint32_t)(at - fd_rev.edge_at) < fd_rev.delay - 500u * FD_REV_US;
+    uint8_t step5 = step == 5u && fd_m2_step5_coast.step5_at && !fd_m2_step5_coast.off_at;
+    uint8_t observe = step3 || step5;
+#endif
+    if (!fd_rev_acquiring || !running || !armed || fd_power_bench.inhibit ||
+        stuck_rotor_inhibit || drive_safety_limit_inhibit ||
+        fd_m2_pickup_capture.sector != 1u || !forward || !observe) {
+        if (fd_m2_on_adc_step) {
+            fd_m2_on_adc_late = fd_m2_on_adc_step = 0u;
+            TIM1->CCR4 = zcd_ccr4_from_duty(TIM1->CCR1);
+            LL_ADC_ClearFlag_JEOS(ADC1);
+            return 1u;
+        }
+        return 0u;
+    }
+
+    LL_ADC_ClearFlag_JEOS(ADC1);
+    uint16_t duty = TIM1->CCR1;
+    if (fd_m2_on_adc_step != step || duty < FD_M2_LATE_ADC_TICKS + ZCD_ADC_WINDOW_TICKS) {
+        fd_m2_on_adc_step = step;
+        fd_m2_on_adc_late = 0u;
+        fd_m2_on_adc_discard = 2u;
+        TIM1->CCR4 = zcd_ccr4_from_duty(duty);
+        return 1u;
+    }
+    if (fd_m2_on_adc_discard) {
+        fd_m2_on_adc_discard--;
+        return 1u; /* Allow the CCR preload and queued conversions to settle. */
+    }
+#ifdef TARGET_FD_M2_RUNUP_STEP4_PAIR
+    unsigned i = fd_m2_runup_adc.counts[0];
+    if (i == FD_M2_RUNUP_ADC_SAMPLES) return 1u;
+#else
+    unsigned i = fd_m2_on_adc_pair.count;
+    if (i == FD_ON_ADC_PAIR_CAPACITY) return 1u;
+#endif
+
+    uint16_t cnt = TIM1->CNT, trigger = TIM1->CCR4;
+    uint16_t a = LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_1);
+    uint16_t b = LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_2);
+    uint16_t c = LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_3);
+    uint8_t late = fd_m2_on_adc_late != 0u;
+    uint16_t neutral = ((uint32_t)a + b + c) / 3u;
+#ifdef TARGET_FD_M2_RUNUP_STEP4_PAIR
+    uint16_t high = b, low = a;
+    int16_t margin = (int16_t)neutral - (int16_t)c;
+#elif defined(TARGET_FD_M2_STEP6_ADC_PAIR)
+    uint16_t high = a, low = c;
+    int16_t margin = (int16_t)neutral - (int16_t)b; /* B falls through neutral. */
+#else
+    uint16_t high = step3 ? c : b, low = step3 ? a : c;
+    uint16_t floating = step3 ? b : a;
+    int16_t margin = (int16_t)floating - (int16_t)neutral;
+#endif
+    uint8_t valid = !LL_ADC_IsActiveFlag_JEOS(ADC1) &&
+        trigger == zcd_ccr4_from_duty(duty) && trigger >= ZCD_SAMPLE_FLOOR &&
+        trigger + ZCD_ADC_WINDOW_TICKS <= duty &&
+        cnt >= trigger + ZCD_ADC_WINDOW_TICKS && high >= low + 64u;
+    FdEdgeSample sample = {
+        .at=at, .a=a, .b=b, .c=c, .margin=margin,
+        .cnt=cnt, .duty=duty, .trigger=trigger, .step=step, .present=1u, .reason=254u,
+        .flags=(uint8_t)(valid | (late ? 8u : 0u))
+    };
+    fd_m2_on_adc_late = !late;
+#ifdef TARGET_FD_M2_RUNUP_STEP4_PAIR
+    fdM2RunupAdcStore(sample);
+    fd_m2_on_adc_discard = late && i >= 3u ? 14u : 2u;
+#else
+    sample.at -= fd_power_policy.started;
+    sample.reason = 0u;
+    fd_m2_on_adc_pair.samples[i] = sample;
+    fd_m2_on_adc_pair.count = i + 1u;
+#ifdef TARGET_FD_M2_STEP6_ADC_PAIR
+    /* One pair per twelve PWM conversions keeps the entire sector in RAM. */
+    fd_m2_on_adc_discard = late ? 8u : 2u;
+#else
+    fd_m2_on_adc_discard = 2u;
+#endif
+#endif
+    TIM1->CCR4 = zcd_ccr4_from_duty(duty);
+#ifndef TARGET_FD_M2_RUNUP_STEP4_PAIR
+    uint32_t cycles = DWT->CYCCNT - at;
+    if (cycles > fd_m2_on_adc_pair.max_cycles) fd_m2_on_adc_pair.max_cycles = cycles;
+#endif
+    return 1u;
+}
+#endif
+
 void fdAdcJeosService(void)
 {
 #ifdef TARGET_FD_ADC_COHERENT
     if (!LL_ADC_IsActiveFlag_JEOS(ADC1)) return;
+#endif
+#ifdef TARGET_FD_M2_SINE_ADC_CAPTURE
+    uint8_t capture_irq = fd_m2_sine_adc_enabled;
+    uint32_t capture_irq_at = capture_irq ? DWT->CYCCNT : 0u;
+    fd_m2_sine_adc_pending_valid = 0u;
 #endif
     /* Same priority as TIM6/TIM16: no nested ownership of the rev-up state.
      * This timestamp is software IRQ arrival, NOT hardware sample time. */
@@ -2371,12 +2930,44 @@ void fdAdcJeosService(void)
     fd_async_diag.irq_count++;
     fd_async_diag.irq_last_at = started;
 #endif
+#ifdef TARGET_FD_M2_SINE_COAST
+    if (fd_m2_sine_run.coast) {
+        fdM2SineObserveCoast();
+#ifdef TARGET_FD_M2_SINE_SIXSTEP
+    } else if (fd_m2_sine_timed) {
+        fdM2SineObserveSixstep();
+#endif
+    } else
+#endif
 #ifdef TARGET_FD_HIZ_OBSERVE
     if (fd_hiz_active) {
         if (fd_rev_acquiring && fd_rev.stage == FD_REV_HIZ && armed && running &&
             !fd_power_bench.inhibit && !stuck_rotor_inhibit && !drive_safety_limit_inhibit)
             fdObserveHiZAdc();
         else LL_ADC_ClearFlag_JEOS(ADC1);
+    } else
+#endif
+#ifdef TARGET_FD_M2_STEP4_ADC_PAIR
+    if (fd_step4_pair_compare && fd_rev_acquiring && fd_rev.stage == FD_REV_OPEN &&
+        fd_rev.ramp_sector == 3u && armed && running && !fd_power_bench.inhibit &&
+        !stuck_rotor_inhibit && !drive_safety_limit_inhibit) {
+        fdObserveStep4PairAdc();
+    } else
+#endif
+#ifdef TARGET_FD_M2_ON_ADC_PAIR
+    if (fdObserveOnAdcPair()) {
+        /* The diagnostic owns this conversion. Rearm the injected queue below. */
+    } else
+#endif
+#ifdef TARGET_FD_M2_STEP5_LATE_ADC
+    if (fd_m2_startup_late_adc && (TIM1->CCR4 != FD_M2_LATE_ADC_TICKS ||
+        TIM1->CCR1 < FD_M2_LATE_ADC_TICKS + ZCD_ADC_WINDOW_TICKS)) {
+        fd_m2_aperture_discard = 2u;
+        LL_ADC_ClearFlag_JEOS(ADC1);
+    } else if (fd_m2_aperture_discard) {
+        /* Discard queued and preload-boundary conversions at both apertures. */
+        fd_m2_aperture_discard--;
+        LL_ADC_ClearFlag_JEOS(ADC1);
     } else
 #endif
 #ifdef TARGET_FD_ALIGN_SETTLE
@@ -2411,6 +3002,9 @@ void fdAdcJeosService(void)
 #ifdef TARGET_FD_ADC_COHERENT
     /* Queue stayed empty throughout all readers and any commutation. */
     adcZcdRearmInjected();
+#endif
+#ifdef TARGET_FD_M2_SINE_ADC_CAPTURE
+    if (capture_irq) fdM2SineAdcFinishIrq(capture_irq_at);
 #endif
 #ifndef TARGET_FD_NO_DIAGNOSTICS
     uint32_t spent = DWT->CYCCNT - started;
@@ -2484,6 +3078,10 @@ void commutate()
 #endif
     ) {
         comStep(step);
+#ifdef TARGET_FD_M2_HANDOFF_CAPTURE
+        if (!fd_rev_acquiring && fd_m2_handoff.active)
+            fdM2HandoffSwitch(DWT->CYCCNT, step, INTERVAL_TIMER_COUNT, TIM1->CCR1, TIM1->CCR4);
+#endif
 #ifdef TARGET_FD_SCOPE_PB7
         GPIOB->BSRR = fd_scope_launch ? (1u << 7) : (1u << 23);
         fd_scope_launch = 0u;
@@ -2493,11 +3091,16 @@ void commutate()
     __enable_irq();
 #endif
     changeCompInput();
+#ifdef TARGET_FD_M2_SINE_ADAPTIVE
+    if (fd_m2_sine_closed_late)
+        TIM1->CCR4 = zcd_ccr4_from_duty((uint16_t)TIM1->CCR1);
+    fdM2SineClosedEvent(0u);
+#endif
 #ifdef TARGET_FD_SECTOR_DIAG
     if (fd_rev_acquiring)
         fdSectorStep(DWT->CYCCNT, step, fd_rev.stage, rising, forward);
 #endif
-#ifdef TARGET_FD_EDGE_OBSERVE
+#if defined(TARGET_FD_EDGE_OBSERVE) && !defined(TARGET_FD_M2_HIZ_AFTER_TWO)
     if (fd_rev_acquiring) fdEdgeStep(DWT->CYCCNT,fd_rev.stage);
 #endif
 #ifndef NO_POLLING_START
@@ -2609,7 +3212,11 @@ static void fd6288TimeoutStep(void)
             heliCoastTrackingLost((input >= 47u) ? 1u : 0u);
         } else {
 #ifdef TARGET_FD_NATIVE_SINE
+#ifdef TARGET_FD_M2_SINE_SIXSTEP
+            if (fd_native_sine.phase >= 2u) {
+#else
             if (fd_native_sine.edges >= 6u) {
+#endif
                 fdBenchStop(FD_BENCH_LOST_FEEDBACK);
                 __set_PRIMASK(mask);
                 return;
@@ -3107,6 +3714,12 @@ if (!stepper_sine && armed) {
                     2000u : (uint16_t)boosted_duty;
             }
 
+            /* FD_M2_SINE_TORQUE_BEGIN */
+#if defined(TARGET_FD_M2_SINE_SIXSTEP) && !defined(TARGET_FD_M2_SINE_CONTINUOUS)
+            if (running && fd_native_sine.phase >= 2u && input >= FD_M2_SINE_EXIT_INPUT)
+                duty_cycle_setpoint = FD_M2_SINE_SIXSTEP_DUTY;
+#endif
+            /* FD_M2_SINE_TORQUE_END */
             /* All torque-producing adjustments precede the protection caps. */
             if (duty_cycle_setpoint > duty_cycle_maximum) {
                 duty_cycle_setpoint = duty_cycle_maximum;
@@ -3331,6 +3944,18 @@ void tenKhzRoutine()
                 }
             }
         }
+        /* FD_M2_HELI_OUTPUT_BEGIN */
+#ifdef TARGET_FD_M2_HELI_START
+        if (running && fd_native_sine.phase>=2u && fd_native_sine.phase<4u) {
+            uint32_t heli_mask=__get_PRIMASK();
+            __disable_irq();
+            duty_cycle=fdM2HeliDuty(&fd_m2_heli,DWT->CYCCNT,
+                duty_cycle,last_duty_cycle);
+            __set_PRIMASK(heli_mask);
+            ramp_count=0u;
+        } else
+#endif
+        /* FD_M2_HELI_OUTPUT_END */
         if (ramp_count > ramp_divider) {
           ramp_count = 0;
 #ifdef VOLTAGE_BASED_RAMP
@@ -3483,7 +4108,7 @@ void advanceincrement()
         __set_PRIMASK(sine_mask);
         return;
     }
-    fd_native_sine.sine_steps++;
+    FD_M2_DIAG(fd_native_sine.sine_steps++);
 #endif
 #ifndef TARGET_FD_SINE_FIXED_PROBE
     if (!forward) {
@@ -3574,6 +4199,9 @@ void zcfoundroutine()
 #ifdef TARGET_FD_ASYNC_COMM
     uint32_t accepted_at = DWT->CYCCNT;
 #endif
+#ifdef TARGET_FD_M2_HELI_START
+    fdM2HeliEdge(&fd_m2_heli,accepted_at,step,forward);
+#endif
 #ifdef TARGET_FD_NATIVE_SINE
     fdNativeSineEdge();
 #endif
@@ -3599,8 +4227,25 @@ void zcfoundroutine()
     }
     waitTime = commutation_interval / 2 - advance;
     fdTraceEvent(FD_EVENT_ZC, (zero_crosses < 5u) ? 1u : 0u);
+#ifdef TARGET_FD_M2_HANDOFF_CAPTURE
+    if (fd_m2_handoff.active)
+        fdM2HandoffFeedback(accepted_at, step, thiszctime, commutation_interval,
+                            zero_crosses < 5u ? 0u : waitTime);
+#endif
 #ifdef TARGET_FD_ASYNC_COMM
+#ifdef TARGET_FD_M2_RUN_FIX
+    uint32_t correction=adcZcdDelayCorrection(accepted_at,waitTime);
+    if (zero_crosses < 5u) correction=0u;
+    if (correction) {
+FD_M2_DIAG(
+        fd_m2_wire.corrected_edges++;
+        if (correction>fd_m2_wire.max_correction) fd_m2_wire.max_correction=correction;
+);
+    }
+    fdAsyncSchedule(accepted_at-correction, zero_crosses < 5u ? 0u : waitTime);
+#else
     fdAsyncSchedule(accepted_at, zero_crosses < 5u ? 0u : waitTime);
+#endif
     return;
 #endif
     while ((INTERVAL_TIMER_COUNT) < (waitTime)) {
@@ -4103,8 +4748,8 @@ if(zero_crosses < 5){
             if (actual_current < 0) {
                 actual_current = 0;
             }
-#if defined(TARGET_FD_SINE_FIXED_12KHZ) || defined(TARGET_FD_SIXSTEP_ALIGN_CONTROL)
-            fdSineRecordSensors();
+#if defined(TARGET_FD_SINE_FIXED_12KHZ) || defined(TARGET_FD_SIXSTEP_ALIGN_CONTROL) || defined(TARGET_FD_M2_SINE_COAST)
+            FD_M2_DIAG(fdSineRecordSensors());
 #endif
             if (eepromBuffer.low_voltage_cut_off == 1) {  
                 if (battery_voltage < (cell_count * low_cell_volt_cutoff)) {
@@ -4279,6 +4924,9 @@ if(zero_crosses < 5){
 #else
 
 #ifdef TARGET_FD_NATIVE_SINE_ONLY
+#ifdef TARGET_FD_M2_SINE_COAST
+            fdM2SineCoastTick();
+#else
             /* Same native sine output and input->speed mapping. The map
              * saturates at input120: fastest degree delay810/poles, even if
              * throttle passes the former six-step changeover threshold. */
@@ -4318,6 +4966,7 @@ if(zero_crosses < 5){
                 allOff();
                 e_rpm = 0u;
             }
+#endif
 #else
             if (input > 48 && armed) {
 

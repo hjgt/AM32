@@ -1,0 +1,14 @@
+[
+  {
+    "command": "[target current] curstate",
+    "reply": "OK:halted"
+  },
+  {
+    "command": "reset init",
+    "reply": "OK:"
+  },
+  {
+    "command": "flash write_image erase {M2_SOURCE_ROOT/test-firmware/fd6288-M2-SINE-500-THROTTLE-20261118/AM32_CUSTOM_FD6288_G431_2.20.hex}",
+    "reply": "ERR:auto erase enabled\n"
+  }
+]

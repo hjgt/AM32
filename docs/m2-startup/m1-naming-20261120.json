@@ -1,0 +1,150 @@
+{
+  "repo": "hjgt/AM32",
+  "branches": [
+    {
+      "old": "codex/c04-heli-coast",
+      "new": "codex/m1-c04-heli-coast",
+      "sha": "9880d2c3f3d9a3b7c5f097429b5b94a33c34cf37"
+    },
+    {
+      "old": "codex/c05-c06-bailout-safety",
+      "new": "codex/m1-c05-c06-bailout-safety",
+      "sha": "204b6a041d74bb984c18964be905cfcd4403d34e"
+    },
+    {
+      "old": "codex/c07-c11-sensors-protection",
+      "new": "codex/m1-c07-c11-sensors-protection",
+      "sha": "abf97ffd6714346936cee3c2586a4d5feed0abdc"
+    },
+    {
+      "old": "codex/c10-adc-pin-discovery",
+      "new": "codex/m1-c10-adc-pin-discovery",
+      "sha": "e7bfe34b270774dc61e29a9884a7ace641038502"
+    },
+    {
+      "old": "codex/fd6288-align-retry-300ms-good-20261109",
+      "new": "codex/m1-fd6288-align-retry-300ms-good-20261109",
+      "sha": "ba2496c1099a0045172aae9ef893cc87c0256c11"
+    },
+    {
+      "old": "codex/fd6288-align-retry-20261109",
+      "new": "codex/m1-fd6288-align-retry-20261109",
+      "sha": "44d8523287cbec9cbecf92df9c265f88a0171a29"
+    },
+    {
+      "old": "codex/fd6288-native-sine-20261108",
+      "new": "codex/m1-fd6288-native-sine-20261108",
+      "sha": "e40de3a13339080139645ddb642e9db64104a6d8"
+    },
+    {
+      "old": "codex/fd6288-startup-capture-20260920",
+      "new": "codex/m1-fd6288-startup-capture-20260920",
+      "sha": "f745ff91fad0860fcf0a9c072ce2f44e4c6d5ba2"
+    },
+    {
+      "old": "main",
+      "new": "m1/main",
+      "sha": "abf97ffd6714346936cee3c2586a4d5feed0abdc"
+    }
+  ],
+  "releases": [
+    {
+      "id": 441130410,
+      "old_tag": "fd6288-g431-final-2026-11-11",
+      "new_tag": "m1-fd6288-g431-final-2026-11-11",
+      "object": {
+        "sha": "4bd446dbc86a638245677587be2ddb3f597b6114",
+        "type": "commit",
+        "url": "https://api.github.com/repos/hjgt/AM32/git/commits/4bd446dbc86a638245677587be2ddb3f597b6114"
+      },
+      "name": "FD6288 G431 \u76f4\u5347\u673a\u4e3b\u7535\u8c03 Final 2026-11-11",
+      "assets": [
+        {
+          "id": 733657852,
+          "name": "AM32_CUSTOM_FD6288_G431_2.20_FINAL.bin",
+          "digest": "sha256:a9808e0890301e39ed930bf47f160127c7a01cf115c40486c7b710f55831939b",
+          "size": 59392
+        },
+        {
+          "id": 733657855,
+          "name": "AM32_CUSTOM_FD6288_G431_2.20_FINAL.hex",
+          "digest": "sha256:7f30d67bda2a7c3d2bdb2dbe59920d83ebe751e252059571f0ead849989a8e2b",
+          "size": 116092
+        },
+        {
+          "id": 733657856,
+          "name": "AM32_FD6288_G431_SETTINGS_FINAL.bin",
+          "digest": "sha256:4f426d535486cb0d9b9c8b7bc0b74cd390efb56c73e9116e3a64f6c5a7baf7f3",
+          "size": 2048
+        },
+        {
+          "id": 733657851,
+          "name": "AM32_FD6288_G431_SETTINGS_FINAL.hex",
+          "digest": "sha256:2559d6b4daf6e46cffc2ed3ec01a76d5899114bee42385ae06d6658beee20f5c",
+          "size": 5660
+        },
+        {
+          "id": 733657858,
+          "name": "AM32_G431_BOOTLOADER_PB5_V17_FINAL.bin",
+          "digest": "sha256:4c7ac760fdf9275f0b9a9f56b844a5f509eac17d17c0cd2ab9636519f804ba6d",
+          "size": 4096
+        },
+        {
+          "id": 733657889,
+          "name": "AM32_G431_BOOTLOADER_PB5_V17_FINAL.hex",
+          "digest": "sha256:8dbc9242365760694047102e0fb868885c66586a5b4624ff96051a215ea62e0a",
+          "size": 11571
+        }
+      ]
+    },
+    {
+      "id": 389281246,
+      "old_tag": "fd6288-g431-final-2026-09-15",
+      "new_tag": "m1-fd6288-g431-final-2026-09-15",
+      "object": {
+        "sha": "2c77414fc6f6e8c73a508de8226c5f5bc4365fa7",
+        "type": "tag",
+        "url": "https://api.github.com/repos/hjgt/AM32/git/tags/2c77414fc6f6e8c73a508de8226c5f5bc4365fa7"
+      },
+      "name": "FD6288 G431 \u76f4\u5347\u673a\u4e3b\u7535\u8c03 2026-09-15",
+      "assets": [
+        {
+          "id": 566013327,
+          "name": "AM32_CUSTOM_FD6288_G431_2.20_FINAL.bin",
+          "digest": "sha256:e5e46df22c7c8c59f5f6986ca39cb8712da61676133f7ffb72485149389d6ce8",
+          "size": 59392
+        },
+        {
+          "id": 568099001,
+          "name": "AM32_CUSTOM_FD6288_G431_2.20_FINAL.hex",
+          "digest": "sha256:8c2766f90de00854584457f994cba52560c2debfc621c30710ab1875c4dabc0f",
+          "size": 167091
+        },
+        {
+          "id": 566013337,
+          "name": "AM32_FD6288_G431_SETTINGS_FINAL.bin",
+          "digest": "sha256:3d2b86e38d037c7979719831ea29ba65b7dc6519bce717c03a695c38da37e4cb",
+          "size": 2048
+        },
+        {
+          "id": 568099012,
+          "name": "AM32_FD6288_G431_SETTINGS_FINAL.hex",
+          "digest": "sha256:7beb53f5d2ccb71b6ba4c8424a18113bd827d02f78d11d833d5f15a2730454a9",
+          "size": 5811
+        },
+        {
+          "id": 566013323,
+          "name": "AM32_G431_BOOTLOADER_PB5_V17_FINAL.bin",
+          "digest": "sha256:4c7ac760fdf9275f0b9a9f56b844a5f509eac17d17c0cd2ab9636519f804ba6d",
+          "size": 4096
+        },
+        {
+          "id": 568099007,
+          "name": "AM32_G431_BOOTLOADER_PB5_V17_FINAL.hex",
+          "digest": "sha256:8dbc9242365760694047102e0fb868885c66586a5b4624ff96051a215ea62e0a",
+          "size": 11571
+        }
+      ]
+    }
+  ]
+}

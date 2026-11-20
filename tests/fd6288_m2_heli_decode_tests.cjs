@@ -1,0 +1,14 @@
+const assert=require('node:assert/strict');
+const {decodeM2Heli}=require('../tools/scripts/fd6288_native_sine_capture.cjs');
+const b=Buffer.alloc(96);[0x46485331,1,4,3000].forEach((x,i)=>b.writeUInt32LE(x,i*4));
+b.writeUInt32LE(261256,6*4);b.writeUInt32LE(1,12*4);b.writeUInt32LE(400,13*4);
+b.writeUInt32LE(1600,14*4);b.writeUInt32LE(4,16*4);
+assert.equal(decodeM2Heli(b).first_hold,null);
+b.writeUInt32LE(1,17*4);b.writeUInt32LE(0x20,18*4);b.writeUInt32LE(420,19*4);
+b.writeUInt32LE(410000,20*4);b.writeUInt32LE(261256,21*4);b.writeUInt32LE(3,22*4);
+const d=decodeM2Heli(b,0xffffffe0);
+assert.equal(d.first_hold.at_ms,64/160000);assert.equal(d.first_hold.reason,'overdue_feedback');
+assert.equal(d.first_hold.duty_percent,21);assert.equal(d.reason_name,'stopped');
+assert.equal(d.trusted_sector_us,1632.85);assert.equal(d.requested_percent,80);
+assert.equal(d.first_hold.feedback_age_us,2562.5);
+console.log('PASS heli diagnostic ABI, stopped first-hold cause, output units and DWT wrap');

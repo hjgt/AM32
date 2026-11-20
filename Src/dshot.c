@@ -239,6 +239,9 @@ void computeDshotDMA()
     }
 }
 
+#ifdef TARGET_FD_M2_RUN_FIX
+#include "fd6288_m2_run.h"
+#endif
 void make_dshot_package(uint16_t com_time)
 {
     uint16_t extended_frame_to_send = 0;
@@ -299,6 +302,9 @@ void make_dshot_package(uint16_t com_time)
         // shift the commutation time to allow for expanded range and put shift
         // amount in first three bits
         dshot_full_number = ((shift_amount << 9) | (com_time >> shift_amount));
+#if defined(TARGET_FD_M2_RUN_FIX) && !defined(TARGET_FD_M2_PURE)
+        fdM2WireRecord(com_time,dshot_full_number);
+#endif
     }
     // calculate checksum
     uint16_t csum = 0;

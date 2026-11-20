@@ -23,6 +23,11 @@ _Static_assert(sizeof(fd_sine_pins) == 3096u, "sine pin buffer ABI");
 #define FD_NATIVE_SINE_LIMIT_CYCLES (3000000u * 160u)
 #endif
 
+#ifdef TARGET_FD_M2_PURE
+volatile FdPowerDiagnostics fd_power_bench;
+static struct {uint32_t started, phase, edges;} fd_native_sine;
+#define FD_M2_TRIAL_ID 1u
+#else
 volatile FdPowerDiagnostics fd_power_bench = {
     .magic = FD_POWER_BENCH_MAGIC, .abi = 1u
 };
@@ -33,7 +38,9 @@ volatile struct {
     uint32_t edges, input_at_start, input_at_handoff, last_step;
 } fd_native_sine = { .magic = 0x46534e31u, .abi = 1u };
 _Static_assert(sizeof(fd_native_sine) == 60u, "native sine event ABI");
-#if defined(TARGET_FD_SINE_FIXED_12KHZ) || defined(TARGET_FD_SIXSTEP_ALIGN_CONTROL)
+#define FD_M2_TRIAL_ID fd_native_sine.trial
+#endif
+#if !defined(TARGET_FD_M2_PURE) && (defined(TARGET_FD_SINE_FIXED_12KHZ) || defined(TARGET_FD_SIXSTEP_ALIGN_CONTROL) || defined(TARGET_FD_M2_SINE_COAST))
 /* Existing foreground sensor cadence only; not switching-current peaks. */
 volatile struct {
     uint32_t magic, abi, trial, updates;
@@ -74,6 +81,36 @@ volatile struct {
 _Static_assert(sizeof(fd_sine_pwm_snapshot) == 80u, "sine PWM snapshot ABI");
 #endif
 static void fdBenchService(void);
+#ifdef TARGET_FD_M2_HELI_START
+#include "fd6288_m2_heli_start.h"
+static FdM2HeliStart fd_m2_heli;
+#endif
+#if defined(TARGET_FD_M2_RUN_FIX) && !defined(TARGET_FD_M2_PURE)
+#include "fd6288_m2_run.h"
+volatile struct {
+    uint32_t magic, abi, trial, count, origin, last_at, max_correction, corrected_edges;
+    struct {uint32_t at;uint16_t period,payload;} samples[128];
+} fd_m2_wire;
+_Static_assert(sizeof(fd_m2_wire)==1056u,"M2 wire period ABI");
+void fdM2WireRecord(uint16_t period, uint16_t payload)
+{
+    if (fd_native_sine.phase < 2u || fd_native_sine.phase >= 4u) return;
+    uint32_t now=DWT->CYCCNT;
+    if (fd_m2_wire.count && now-fd_m2_wire.last_at < 50000u*160u) return;
+    unsigned i=fd_m2_wire.count&127u;
+    fd_m2_wire.samples[i].at=now-fd_m2_wire.origin;
+    fd_m2_wire.samples[i].period=period;
+    fd_m2_wire.samples[i].payload=payload;
+    fd_m2_wire.last_at=now;
+    fd_m2_wire.count++;
+}
+#endif
+#ifdef TARGET_FD_M2_SINE_ADC_CAPTURE
+#include "fd6288_m2_sine_adc_capture.inc"
+#endif
+#ifdef TARGET_FD_M2_SINE_COAST
+#include "fd6288_m2_sine_coast.inc"
+#endif
 /* DWT is a CONTROL clock here, even with every waveform logger disabled. */
 static uint8_t fd_native_clock_ok;
 #define FD_NATIVE_SINE_CLOCK_FAULT 15u
@@ -111,6 +148,9 @@ static void fdNativeSineSensorTick(void)
 uint8_t fdNativeSineBridgeAllowed(void)
 {
     return fdNativeSineClockReady() && fd_power_bench.active_id && !fd_power_bench.inhibit && armed &&
+#ifdef TARGET_FD_M2_SINE_COAST
+        !fd_m2_sine_run.coast &&
+#endif
         adjusted_input && !stuck_rotor_inhibit && !drive_safety_limit_inhibit;
 }
 
@@ -150,7 +190,8 @@ static uint8_t fdBenchConfigOk(void)
         !eepromBuffer.variable_pwm && eepromBuffer.pwm_frequency == FD_NATIVE_SINE_PWM_KHZ &&
         !eepromBuffer.bi_direction && !eepromBuffer.rc_car_reverse &&
         !use_speed_control_loop && minimum_duty_cycle == 210u &&
-        min_startup_duty == 360u && startup_max_duty_cycle == 610u;
+        min_startup_duty == minimum_duty_cycle + FD_NATIVE_SINE_STARTUP_POWER &&
+        startup_max_duty_cycle == 610u;
 }
 
 #ifdef TARGET_FD_SIXSTEP_ALIGN_CONTROL
@@ -238,8 +279,27 @@ static void fdBenchStop(uint8_t reason)
 {
     uint32_t mask = __get_PRIMASK();
     __disable_irq();
+#ifdef TARGET_FD_M2_HELI_START
+    fd_m2_heli.active=0u;fd_m2_heli.reason=FD_HELI_STOPPED;fd_m2_heli.credit=0u;
+#endif
+#ifdef TARGET_FD_M2_SINE_ADC_CAPTURE
+    fdM2SineAdcStop();
+#endif
+#ifdef TARGET_FD_M2_SINE_ADAPTIVE
+    fdM2SineClosedEvent(2u);
+#endif
     fd_power_bench.inhibit = 1u;
     fd_native_ready = 0u;
+#ifdef TARGET_FD_M2_SINE_COAST
+    fd_m2_sine_run.coast = 0u;
+    GPIOB->BRR = 1u << 7;
+#endif
+#ifdef TARGET_FD_M2_SINE_SIXSTEP
+    fd_m2_sine_timed = fd_m2_sine_pickup_ready = fd_m2_sine_pickup_requested = 0u;
+#endif
+#ifdef TARGET_FD_M2_SINE_ADAPTIVE
+    fd_m2_sine_closed_late = 0u;
+#endif
     if (fd_power_bench.active_id) {
 #ifdef TARGET_FD_SINE_FIXED_PROBE
         fd_sine_pins.frozen = 1u;
@@ -264,14 +324,15 @@ static void fdBenchStop(uint8_t reason)
         fd_sine_pwm_snapshot.phase_b = (uint16_t)phase_B_position;
         fd_sine_pwm_snapshot.phase_c = (uint16_t)phase_C_position;
 #endif
-        fd_native_sine.reason = reason;
-        fd_native_sine.stopped_at = DWT->CYCCNT - fd_native_sine.started;
+        FD_M2_DIAG(fd_native_sine.reason = reason;
+        fd_native_sine.stopped_at = DWT->CYCCNT - fd_native_sine.started);
         fd_native_sine.phase = 4u;
-        fd_power_bench.completed++;
+        FD_M2_DIAG(fd_power_bench.completed++);
     }
     fd_power_bench.active_id = 0u;
     fd_power_bench.floor = 0u;
-    fd_power_bench.last_reason = reason;
+    FD_M2_DIAG(fd_power_bench.last_reason = reason);
+    (void)reason;
     fd_power_starting = 0u;
     fdAsyncCancel();
     heliCoastTrackingLost(1u);
@@ -297,8 +358,34 @@ static void fdBenchService(void)
             fdBenchStop(FD_NATIVE_SINE_CLOCK_FAULT);
         else if (!armed || stuck_rotor_inhibit || drive_safety_limit_inhibit)
             fdBenchStop(FD_BENCH_SAFETY_CAP);
-        else if (age >= FD_NATIVE_SINE_LIMIT_CYCLES || (fd_native_sine.edges >= 6u &&
-            age - fd_native_sine.sixth_edge_at >= 1000000u * 160u))
+#ifdef TARGET_FD_M2_SINE_COAST
+#ifdef TARGET_FD_M2_SINE_RUNUP
+        else if (fd_m2_sine_run.runup && input < FD_M2_SINE_EXIT_INPUT)
+            fdBenchStop(FD_BENCH_OPERATOR_ZERO);
+#endif
+        else if (fd_m2_sine_run.coast &&
+                 DWT->CYCCNT - fd_m2_sine_run.coast_at >= FD_M2_SINE_COAST_US * FD_M2_SINE_CYCLES_PER_US)
+#ifdef TARGET_FD_M2_SINE_SIXSTEP
+            fdBenchStop(fd_m2_sine_pickup_requested ? FD_BENCH_NO_LOCK : FD_BENCH_HIZ_DONE);
+        else if ((fd_m2_sine_timed || fd_native_sine.phase >= 2u) &&
+                 (fdM2SineCurrentOrTemperatureLimited() || driveEffectiveDutyLimit() < FD_M2_SINE_SIXSTEP_DUTY))
+            fdBenchStop(FD_BENCH_SAFETY_CAP);
+        else if ((fd_m2_sine_timed || fd_native_sine.phase >= 2u) && input < FD_M2_SINE_EXIT_INPUT)
+            fdBenchStop(FD_BENCH_OPERATOR_ZERO);
+#else
+            fdBenchStop(FD_BENCH_HIZ_DONE);
+#endif
+#endif
+        else if (
+#ifdef TARGET_FD_M2_SINE_CONTINUOUS
+            fd_native_sine.phase < 2u &&
+#endif
+#ifdef TARGET_FD_M2_PURE
+            age >= FD_NATIVE_SINE_LIMIT_CYCLES)
+#else
+            (age >= FD_NATIVE_SINE_LIMIT_CYCLES || (fd_native_sine.edges >= 6u &&
+            age - fd_native_sine.sixth_edge_at >= 1000000u * 160u)))
+#endif
             fdBenchStop(FD_BENCH_WINDOW);
         else if (fd_native_sine.phase >= 2u && !running)
             fdBenchStop(FD_BENCH_NOT_RUNNING);
@@ -316,22 +403,34 @@ static uint8_t fdBenchGuardInput(void)
     if (armed && adjusted_input > 35u && !fd_power_bench.active_id &&
         !fd_power_bench.inhibit && fd_native_ready) {
         fd_native_ready = 0u;
+#ifdef TARGET_FD_M2_PURE
+        fd_power_bench.active_id=1u;
+#else
         fd_power_bench.active_id = ++fd_power_bench.trials;
+#endif
         fd_power_bench.floor = min_startup_duty;
-        fd_native_sine.trial = fd_power_bench.active_id;
+        FD_M2_DIAG(fd_native_sine.trial = fd_power_bench.active_id);
         fd_native_sine.started = DWT->CYCCNT;
         fd_native_sine.phase = 1u;
-        fd_native_sine.reason = fd_native_sine.sine_steps = fd_native_sine.edges = 0u;
+        fd_native_sine.edges=0u;
+        FD_M2_DIAG(
+        fd_native_sine.reason = fd_native_sine.sine_steps = 0u;
         fd_native_sine.sixstep_at = fd_native_sine.first_edge_at = UINT32_MAX;
         fd_native_sine.sixth_edge_at = fd_native_sine.stopped_at = UINT32_MAX;
         fd_native_sine.input_at_start = adjusted_input;
         fd_native_sine.input_at_handoff = fd_native_sine.last_step = 0u;
-#if defined(TARGET_FD_SINE_FIXED_12KHZ) || defined(TARGET_FD_SIXSTEP_ALIGN_CONTROL)
+        );
+#if defined(TARGET_FD_SINE_FIXED_12KHZ) || defined(TARGET_FD_SIXSTEP_ALIGN_CONTROL) || defined(TARGET_FD_M2_SINE_COAST)
+        FD_M2_DIAG(
         fd_sine_sensors.trial = fd_native_sine.trial;
         fd_sine_sensors.updates = 0u;
         fd_sine_sensors.baseline_current = fd_sine_sensors.peak_current = actual_current;
         fd_sine_sensors.baseline_voltage = fd_sine_sensors.minimum_voltage = battery_voltage;
         fd_sine_sensors.baseline_raw_current = fd_sine_sensors.peak_raw_current = ADC_raw_current;
+        );
+#endif
+#ifdef TARGET_FD_M2_SINE_COAST
+        fdM2SineReset(FD_M2_TRIAL_ID);
 #endif
         fdAsyncCancel();
         allOff();
@@ -437,6 +536,13 @@ static uint8_t fdNativeSineHandoff(void)
 static void fdNativeSineEdge(void)
 {
     if (!fd_power_bench.active_id || fd_native_sine.phase < 2u) return;
+#ifdef TARGET_FD_M2_SINE_ADAPTIVE
+    fdM2SineClosedEvent(1u);
+#endif
+#ifdef TARGET_FD_M2_PURE
+    if (fd_native_sine.edges>=6u) return;
+    if (++fd_native_sine.edges==6u) fd_native_sine.phase=3u;
+#else
     uint32_t age = DWT->CYCCNT - fd_native_sine.started;
     fd_native_sine.edges++;
     if (fd_native_sine.edges == 1u) fd_native_sine.first_edge_at = age;
@@ -444,10 +550,14 @@ static void fdNativeSineEdge(void)
         fd_native_sine.sixth_edge_at = age;
         fd_native_sine.phase = 3u;
     }
+#endif
 }
 
 static uint8_t fdBenchDeadlineExpired(void)
 {
     return fd_power_bench.inhibit || (fd_power_bench.active_id &&
+#ifdef TARGET_FD_M2_SINE_CONTINUOUS
+        fd_native_sine.phase < 2u &&
+#endif
         (uint32_t)(DWT->CYCCNT - fd_native_sine.started) >= FD_NATIVE_SINE_LIMIT_CYCLES);
 }

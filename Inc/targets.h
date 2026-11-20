@@ -3082,8 +3082,13 @@
 #endif
 
  #ifdef CUSTOM_FD6288_G431
+#if defined(FD6288_M2_PURE) && FD6288_M2_PURE
+#define FIRMWARE_NAME "M2 PURE G431"
+#define FILE_NAME "M2_PURE_FD6288_G431"
+#else
  #define FIRMWARE_NAME "FD6288-G431"
 #define FILE_NAME "CUSTOM_FD6288_G431"
+#endif
 #define MCU_G431
 // Input: PB5 = TIM3_CH2 (AF2), telemetry: PB6 = USART1 (AF7)
 #define USE_TIMER_3_CHANNEL_2
@@ -3218,6 +3223,108 @@
 #error "Sine-only observation requires the native sine trial"
 #endif
 #define TARGET_FD_NATIVE_SINE_ONLY
+#endif
+#if defined(FD6288_M2_SINE_COAST) && FD6288_M2_SINE_COAST
+#if FD6288_M2_SINE_COAST != 1 || !FD6288_NATIVE_SINE_ONLY || !FD6288_ADC_JEOS || !FD6288_ZCD_ACTUAL_DEADTIME || !FD6288_NO_DIAGNOSTICS || FD6288_SINE_CENTERED_PWM || FD6288_SINE_FIXED_PROBE
+#error "M2 sine/coast requires the isolated native sine-only adapter, coherent JEOS and actual dead time"
+#endif
+#define TARGET_FD_M2_SINE_COAST
+#endif
+#if defined(FD6288_M2_SINE_SIXSTEP) && FD6288_M2_SINE_SIXSTEP
+#if FD6288_M2_SINE_SIXSTEP != 1 || !defined(TARGET_FD_M2_SINE_COAST) || !FD6288_STARTUP_TIMING_FIX
+#error "M2 sine-to-six-step requires the M2 sine diagnostic and ADC timeout handling"
+#endif
+#define TARGET_FD_M2_SINE_SIXSTEP
+#endif
+#if defined(FD6288_M2_SINE_RUNUP) && FD6288_M2_SINE_RUNUP
+#if FD6288_M2_SINE_RUNUP != 1 || !defined(TARGET_FD_M2_SINE_SIXSTEP) || FD6288_M2_SINE_STEP4_COAST
+#error "M2 sine run-up requires timed six-step without the step-4 cutoff"
+#endif
+#define TARGET_FD_M2_SINE_RUNUP
+#endif
+#if defined(FD6288_M2_SINE_STEP4_COAST) && FD6288_M2_SINE_STEP4_COAST
+#if FD6288_M2_SINE_STEP4_COAST != 1 || !defined(TARGET_FD_M2_SINE_SIXSTEP)
+#error "M2 sine step-4 coast requires the sine-to-six-step diagnostic"
+#endif
+#define TARGET_FD_M2_SINE_STEP4_COAST
+#endif
+#if defined(FD6288_M2_SINE_STEP4_ADC_TICKS) && FD6288_M2_SINE_STEP4_ADC_TICKS
+#if (!defined(TARGET_FD_M2_SINE_STEP4_COAST) && !defined(TARGET_FD_M2_SINE_RUNUP)) || FD6288_M2_SINE_STEP4_ADC_TICKS != 960
+#error "M2 step-4 late sample requires a coast or run-up trial and the 960-tick aperture"
+#endif
+#define TARGET_FD_M2_SINE_STEP4_LATE_ADC
+#endif
+#if defined(FD6288_M2_SINE_STEP5_ADVANCE_US) && FD6288_M2_SINE_STEP5_ADVANCE_US
+#if FD6288_M2_SINE_STEP5_ADVANCE_US != 350 || !defined(TARGET_FD_M2_SINE_RUNUP) || !defined(TARGET_FD_M2_SINE_STEP4_LATE_ADC)
+#error "M2 step-5 advance requires the run-up late-ADC trial and 350 us"
+#endif
+#define TARGET_FD_M2_SINE_STEP5_ADVANCE
+#endif
+#if defined(FD6288_M2_SINE_ADAPTIVE) && FD6288_M2_SINE_ADAPTIVE
+#if FD6288_M2_SINE_ADAPTIVE != 1 || !defined(TARGET_FD_M2_SINE_RUNUP) || !defined(TARGET_FD_M2_SINE_STEP4_LATE_ADC) || FD6288_M2_SINE_STEP5_ADVANCE_US
+#error "Adaptive M2 handoff requires run-up and late ADC without the fixed step-5 advance"
+#endif
+#define TARGET_FD_M2_SINE_ADAPTIVE
+#endif
+#if defined(FD6288_M2_SINE_RUNUP_COAST_ONLY) && FD6288_M2_SINE_RUNUP_COAST_ONLY
+#if FD6288_M2_SINE_RUNUP_COAST_ONLY != 1 || !defined(TARGET_FD_M2_SINE_ADAPTIVE)
+#error "M2 run-up coast-only trial requires the adaptive build"
+#endif
+#define TARGET_FD_M2_SINE_RUNUP_COAST_ONLY
+#endif
+#if defined(FD6288_M2_SINE_CONTINUOUS) && FD6288_M2_SINE_CONTINUOUS
+#if FD6288_M2_SINE_CONTINUOUS != 1 || !defined(TARGET_FD_M2_SINE_ADAPTIVE) || defined(TARGET_FD_M2_SINE_RUNUP_COAST_ONLY)
+#error "Continuous M2 operation requires the adaptive handoff build"
+#endif
+#define TARGET_FD_M2_SINE_CONTINUOUS
+#endif
+#if defined(FD6288_M2_PURE) && FD6288_M2_PURE
+#if FD6288_M2_PURE != 1 || !defined(TARGET_FD_M2_SINE_CONTINUOUS) || FD6288_M2_SINE_ADC_CAPTURE || !FD6288_NO_DIAGNOSTICS || !FD6288_M2_HELI_START || !FD6288_M2_STABLE_PRE
+#error "M2 pure requires continuous three-second heli control with stable PRE and no capture"
+#endif
+#define TARGET_FD_M2_PURE
+#endif
+#if defined(FD6288_M2_SINE_ADC_CAPTURE) && FD6288_M2_SINE_ADC_CAPTURE
+#if FD6288_M2_SINE_ADC_CAPTURE != 1 || !defined(TARGET_FD_M2_SINE_CONTINUOUS)
+#error "M2 raw ADC capture requires continuous handoff"
+#endif
+#define TARGET_FD_M2_SINE_ADC_CAPTURE
+#endif
+#if defined(FD6288_M2_RUN_FIX) && FD6288_M2_RUN_FIX
+#if FD6288_M2_RUN_FIX != 1 || !defined(TARGET_FD_M2_SINE_CONTINUOUS)
+#error "M2 run fixes require continuous operation"
+#endif
+#define TARGET_FD_M2_RUN_FIX
+#endif
+#if defined(FD6288_M2_STABLE_PRE) && FD6288_M2_STABLE_PRE
+#if FD6288_M2_STABLE_PRE != 1 || !defined(TARGET_FD_M2_RUN_FIX)
+#error "M2 stable PRE requires the continuous run-fix build"
+#endif
+#define TARGET_FD_M2_STABLE_PRE
+#endif
+#if defined(FD6288_M2_HELI_START) && FD6288_M2_HELI_START
+#if FD6288_M2_HELI_START != 1 || !defined(TARGET_FD_M2_RUN_FIX) || !FD6288_ASYNC_COMM || FD6288_M2_HELI_RISE_MS < 1000 || FD6288_M2_HELI_RISE_MS > 10000
+#error "M2 heli start requires run diagnostics and 1000..10000 ms rise time"
+#endif
+#define TARGET_FD_M2_HELI_START
+#endif
+#if defined(FD6288_M2_SINE_RUNUP_RPM) && FD6288_M2_SINE_RUNUP_RPM != 500
+#if !defined(TARGET_FD_M2_SINE_RUNUP_COAST_ONLY) || FD6288_M2_SINE_RUNUP_RPM < 500 || FD6288_M2_SINE_RUNUP_RPM > 700
+#error "Variable run-up speed requires the 500–700 RPM open-loop-only trial"
+#endif
+#endif
+#if defined(FD6288_M2_SINE_ALIGN_HOLD_US) && FD6288_M2_SINE_ALIGN_HOLD_US
+#if FD6288_M2_SINE_ALIGN_HOLD_US != 200000 || !defined(TARGET_FD_M2_SINE_ADAPTIVE)
+#error "The 200 ms sine alignment hold requires the adaptive M2 startup"
+#endif
+#endif
+#ifndef FD6288_M2_SINE_STEP4_HOLD_US
+#define FD6288_M2_SINE_STEP4_HOLD_US 500
+#endif
+#if FD6288_M2_SINE_STEP4_HOLD_US != 500
+#if !defined(TARGET_FD_M2_SINE_STEP4_LATE_ADC) || FD6288_M2_SINE_STEP4_HOLD_US != 1600
+#error "Extended step 4 pulse requires the 960-tick coast diagnostic"
+#endif
 #endif
 #ifndef FD6288_SINE_CENTERED_PWM
 #define FD6288_SINE_CENTERED_PWM 0
@@ -6167,6 +6274,9 @@
 #endif
 #define TARGET_FD_SCOPE_PB7
 #endif
+#ifdef TARGET_FD_M2_SINE_COAST
+#define TARGET_FD_SCOPE_PB7
+#endif
 #if defined(FD6288_ALIGN_ONLY) && FD6288_ALIGN_ONLY
 #if FD6288_ALIGN_ONLY != 1 || !defined(TARGET_FD_SCOPE_PB7) || !defined(TARGET_FD_ALIGN_HOLD) || !defined(TARGET_FD_ALIGN_SETTLE)
 #error "ALIGN_ONLY requires ALIGN-PAIR/PB7 with second-vector hold and settle"
@@ -6269,8 +6379,212 @@
 #if FD6288_START_RETRY != 1 || !defined(TARGET_STARTUP_FIRST_WAIT) || !defined(TARGET_FD_DOUBLE_ALIGN) || !defined(TARGET_FD_ALIGN_HOLD) || !defined(TARGET_FD_ALIGN_SETTLE) || !defined(TARGET_FD_ALIGN_SAMPLE_PAIR) || !defined(TARGET_FD_REPOSITION) || !defined(TARGET_FD_ADC_COHERENT) || !defined(TARGET_FD_ASYNC_COMM) || !defined(TARGET_FD_FIRST_EDGE_500US) || (FD6288_SECOND_ALIGN_MS != 100 && FD6288_SECOND_ALIGN_MS != 300)
 #error "START_RETRY requires100/300ms ALIGN-PAIR, coherent ADC, async and release gates"
 #endif
-#if defined(TARGET_FD_BLUE_START) || defined(TARGET_FD_EARLY_REKICK) || defined(TARGET_FD_HIZ_OBSERVE) || defined(TARGET_FD_LAUNCH_HOLD) || defined(TARGET_FD_ALIGN_ONLY) || defined(TARGET_FD_STARTUP_LEVEL) || defined(TARGET_FD_NATIVE_SINE)
+#if defined(TARGET_FD_BLUE_START) || defined(TARGET_FD_EARLY_REKICK) || (defined(TARGET_FD_HIZ_OBSERVE) && !defined(TARGET_FD_M2_HIZ_AFTER_TWO)) || defined(TARGET_FD_LAUNCH_HOLD) || defined(TARGET_FD_ALIGN_ONLY) || defined(TARGET_FD_STARTUP_LEVEL) || defined(TARGET_FD_NATIVE_SINE)
 #error "START_RETRY excludes other startup/recovery experiments"
 #endif
 #define TARGET_FD_START_RETRY
+#endif
+
+#if defined(FD6288_M2_START_CAPTURE) && FD6288_M2_START_CAPTURE
+#if FD6288_M2_START_CAPTURE != 1 || !defined(TARGET_FD_START_RETRY) || !defined(TARGET_FD_ALIGN_TAIL)
+#error "M2 startup capture requires full retries and alignment tail capture"
+#endif
+#define TARGET_FD_M2_START_CAPTURE
+#endif
+
+#if defined(FD6288_M2_START_RAMP) && FD6288_M2_START_RAMP
+#if FD6288_M2_START_RAMP != 1 || !defined(TARGET_FD_M2_START_CAPTURE) || FD6288_SECOND_ALIGN_MS != 300 || defined(TARGET_FD_PLANNED_ACQ)
+#error "M2 startup ramp requires 300ms positioning, M2 capture and full startup retries"
+#endif
+#define TARGET_FD_M2_START_RAMP
+#endif
+
+/* Reuse the Hi-Z bridge lock and recorder at the M2 ramp's second boundary.
+ * Unlike the original alignment-only profile, this uses the M2 start policy. */
+#if defined(FD6288_M2_HIZ_AFTER_TWO) && FD6288_M2_HIZ_AFTER_TWO
+#if FD6288_M2_HIZ_AFTER_TWO != 1 || !defined(TARGET_FD_M2_START_RAMP) || FD6288_START_RETRIES != 0 || (defined(FD6288_HIZ_OBSERVE) && FD6288_HIZ_OBSERVE)
+#error "M2 two-step observation requires the M2 startup ramp profile with no retries"
+#endif
+#define TARGET_FD_M2_HIZ_AFTER_TWO
+#define TARGET_FD_HIZ_OBSERVE
+#endif
+
+#if defined(FD6288_M2_HIZ_STEP4_MS) && FD6288_M2_HIZ_STEP4_MS
+#if (FD6288_M2_HIZ_STEP4_MS != 5 && FD6288_M2_HIZ_STEP4_MS != 11) || !defined(TARGET_FD_M2_HIZ_AFTER_TWO)
+#error "M2 step 4 comparison requires the high-Z profile and a 5 or 11 ms pulse"
+#endif
+#endif
+
+#if defined(FD6288_M2_STEP4_ADC_PAIR) && FD6288_M2_STEP4_ADC_PAIR
+#if FD6288_M2_STEP4_ADC_PAIR != 1 || !defined(TARGET_FD_M2_HIZ_AFTER_TWO) || !FD6288_M2_HIZ_STEP4_MS
+#error "M2 step 4 ADC pairing requires a timed step 4 in the high-Z profile"
+#endif
+#define TARGET_FD_M2_STEP4_ADC_PAIR
+#endif
+
+#if defined(FD6288_M2_HIZ_STEP3_US) && FD6288_M2_HIZ_STEP3_US != 12000
+#if FD6288_M2_HIZ_STEP3_US != 10300 || !defined(TARGET_FD_M2_STEP4_ADC_PAIR) || FD6288_M2_HIZ_STEP4_MS != 11
+#error "M2 early step 4 comparison requires a 10300 us step 3 and 11 ms paired capture"
+#endif
+#endif
+
+#if defined(FD6288_M2_HIZ_40MS) && FD6288_M2_HIZ_40MS
+#if FD6288_M2_HIZ_40MS != 1 || !defined(TARGET_FD_M2_HIZ_AFTER_TWO) || FD6288_M2_HIZ_STEP4_MS
+#error "M2 long coast capture requires exactly two timed vectors"
+#endif
+#define TARGET_FD_M2_HIZ_40MS
+#endif
+
+#if defined(FD6288_M2_RAMP_6500) && FD6288_M2_RAMP_6500
+#if FD6288_M2_RAMP_6500 != 1 || !defined(TARGET_FD_M2_START_RAMP) || defined(TARGET_FD_HIZ_OBSERVE)
+#error "M2 6.5 ms ramp requires the six-step startup and feedback profile"
+#endif
+#define TARGET_FD_M2_RAMP_6500
+#endif
+
+#if defined(FD6288_M2_FEEDBACK_DUTY_450) && FD6288_M2_FEEDBACK_DUTY_450
+#if FD6288_M2_FEEDBACK_DUTY_450 != 1 || !defined(TARGET_FD_M2_START_CAPTURE) || defined(TARGET_FD_M2_START_RAMP) || FD6288_FIRST_EDGE_DELAY_US != 2000
+#error "M2 450-duty probe requires the 2 ms feedback startup profile"
+#endif
+#define TARGET_FD_M2_FEEDBACK_DUTY_450
+#endif
+
+#if defined(FD6288_M2_LOW_SPEED_PICKUP) && FD6288_M2_LOW_SPEED_PICKUP
+#if FD6288_M2_LOW_SPEED_PICKUP != 1 || !defined(TARGET_FD_M2_HIZ_40MS)
+#error "M2 low-speed pickup requires the two-vector 40 ms coast profile"
+#endif
+#define TARGET_FD_M2_LOW_SPEED_PICKUP
+#endif
+
+#if defined(FD6288_M2_POWERED_CAPTURE) && FD6288_M2_POWERED_CAPTURE
+#if FD6288_M2_POWERED_CAPTURE != 1 || !defined(TARGET_FD_M2_LOW_SPEED_PICKUP)
+#error "M2 powered capture requires the low-speed pickup profile"
+#endif
+#define TARGET_FD_M2_POWERED_CAPTURE
+#endif
+
+#if defined(FD6288_M2_STEP4_DELAY_2200) && FD6288_M2_STEP4_DELAY_2200
+#if FD6288_M2_STEP4_DELAY_2200 != 1 || !defined(TARGET_FD_M2_POWERED_CAPTURE)
+#error "M2 step 4 delay requires the powered pickup capture profile"
+#endif
+#define TARGET_FD_M2_STEP4_DELAY_2200
+#endif
+
+#if defined(FD6288_M2_PICKUP_FIRST_DWELL_4000) && FD6288_M2_PICKUP_FIRST_DWELL_4000
+#if FD6288_M2_PICKUP_FIRST_DWELL_4000 != 1 || !defined(TARGET_FD_M2_STEP4_DELAY_2200)
+#error "M2 first pickup dwell comparison requires the step 4 delay profile"
+#endif
+#define TARGET_FD_M2_PICKUP_FIRST_DWELL_4000
+#endif
+
+#if defined(FD6288_M2_PICKUP_SECOND_DELAY_2000) && FD6288_M2_PICKUP_SECOND_DELAY_2000
+#if FD6288_M2_PICKUP_SECOND_DELAY_2000 != 1 || !defined(TARGET_FD_M2_PICKUP_FIRST_DWELL_4000)
+#error "M2 second pickup delay requires the first dwell profile"
+#endif
+#define TARGET_FD_M2_PICKUP_SECOND_DELAY_2000
+#endif
+
+#if defined(FD6288_M2_STEP5_COAST_COMPARE) && FD6288_M2_STEP5_COAST_COMPARE
+#if (FD6288_M2_STEP5_COAST_COMPARE != 1 && FD6288_M2_STEP5_COAST_COMPARE != 2 && \
+    FD6288_M2_STEP5_COAST_COMPARE != 3) || \
+    !defined(TARGET_FD_M2_PICKUP_SECOND_DELAY_2000)
+#error "M2 step 5 coast comparison requires the second-delay profile and mode 1, 2, or 3"
+#endif
+#define TARGET_FD_M2_STEP5_COAST_COMPARE
+#endif
+
+#if defined(FD6288_M2_STEP5_DELAY_4900) && FD6288_M2_STEP5_DELAY_4900
+#if FD6288_M2_STEP5_DELAY_4900 != 1 || !defined(TARGET_FD_M2_PICKUP_SECOND_DELAY_2000) || \
+    defined(TARGET_FD_M2_STEP5_COAST_COMPARE)
+#error "M2 step 5 delay requires the second-delay profile with normal feedback"
+#endif
+#define TARGET_FD_M2_STEP5_DELAY_4900
+#endif
+
+#if defined(FD6288_M2_STEP35_ADC_PAIR) && FD6288_M2_STEP35_ADC_PAIR
+#if FD6288_M2_STEP35_ADC_PAIR != 1 || FD6288_M2_STEP5_COAST_COMPARE != 3 || \
+    !defined(TARGET_FD_ADC_COHERENT)
+#error "M2 step 3/5 pair requires the 9 ms coast profile and coherent ADC"
+#endif
+#define TARGET_FD_M2_STEP35_ADC_PAIR
+#endif
+
+#if defined(FD6288_M2_STEP5_LATE_ADC) && FD6288_M2_STEP5_LATE_ADC
+#if FD6288_M2_STEP5_LATE_ADC != 1 || !defined(TARGET_FD_M2_PICKUP_SECOND_DELAY_2000) || \
+    !defined(TARGET_FD_ADC_COHERENT) || defined(TARGET_FD_M2_STEP5_COAST_COMPARE) || \
+    defined(TARGET_FD_M2_STEP5_DELAY_4900)
+#error "M2 step 5 late feedback requires the second-delay baseline and coherent ADC"
+#endif
+#define TARGET_FD_M2_STEP5_LATE_ADC
+#endif
+
+#if defined(FD6288_M2_HANDOFF_CAPTURE) && FD6288_M2_HANDOFF_CAPTURE
+#if FD6288_M2_HANDOFF_CAPTURE != 1 || !defined(TARGET_FD_M2_STEP5_LATE_ADC)
+#error "M2 handoff capture requires the step 5 late feedback profile"
+#endif
+#define TARGET_FD_M2_HANDOFF_CAPTURE
+#endif
+
+#if defined(FD6288_M2_STEP6_ADC_PAIR) && FD6288_M2_STEP6_ADC_PAIR
+#if FD6288_M2_STEP6_ADC_PAIR != 1 || !defined(TARGET_FD_M2_STEP5_LATE_ADC)
+#error "M2 step 6 pair requires the step 5 late feedback profile"
+#endif
+#define TARGET_FD_M2_STEP6_ADC_PAIR
+#endif
+
+#if defined(TARGET_FD_M2_STEP35_ADC_PAIR) || defined(TARGET_FD_M2_STEP6_ADC_PAIR)
+#define TARGET_FD_M2_ON_ADC_PAIR
+#endif
+
+#if defined(FD6288_M2_STEP6_LATE_ADC) && FD6288_M2_STEP6_LATE_ADC
+#if FD6288_M2_STEP6_LATE_ADC != 1 || !defined(TARGET_FD_M2_STEP5_LATE_ADC) || \
+    defined(TARGET_FD_M2_STEP6_ADC_PAIR)
+#error "M2 step 6 late feedback requires step 5 late feedback and no step 6 observation override"
+#endif
+#define TARGET_FD_M2_STEP6_LATE_ADC
+#endif
+
+#if defined(FD6288_M2_CLOSED_STEP4_DENSE) && FD6288_M2_CLOSED_STEP4_DENSE
+#if FD6288_M2_CLOSED_STEP4_DENSE != 1 || !defined(TARGET_FD_M2_HANDOFF_CAPTURE) || \
+    !defined(TARGET_FD_M2_STEP6_LATE_ADC)
+#error "M2 dense closed-loop step 4 capture requires the step 5/6 late feedback recorder"
+#endif
+#define TARGET_FD_M2_CLOSED_STEP4_DENSE
+#endif
+
+#if defined(FD6288_M2_TIMED_RUNUP) && FD6288_M2_TIMED_RUNUP
+#if FD6288_M2_TIMED_RUNUP != 1 || !defined(TARGET_FD_M2_CLOSED_STEP4_DENSE)
+#error "M2 timed run-up requires the late-sampling profile with closed-loop capture"
+#endif
+#define TARGET_FD_M2_TIMED_RUNUP
+#endif
+
+#if defined(FD6288_M2_RUNUP_ADC_CAPTURE) && FD6288_M2_RUNUP_ADC_CAPTURE
+#if FD6288_M2_RUNUP_ADC_CAPTURE != 1 || !defined(TARGET_FD_M2_TIMED_RUNUP)
+#error "M2 run-up ADC recording requires the bounded timed run-up"
+#endif
+#define TARGET_FD_M2_RUNUP_ADC_CAPTURE
+#endif
+
+#if defined(FD6288_M2_RUNUP_STEP4_PAIR) && FD6288_M2_RUNUP_STEP4_PAIR
+#if FD6288_M2_RUNUP_STEP4_PAIR != 1 || !defined(TARGET_FD_M2_RUNUP_ADC_CAPTURE)
+#error "M2 timed step 4 pair requires the run-up ADC recorder"
+#endif
+#define TARGET_FD_M2_RUNUP_STEP4_PAIR
+#define TARGET_FD_M2_ON_ADC_PAIR
+#endif
+
+#if defined(FD6288_M2_RUNUP_STEP4_ANCHOR) && FD6288_M2_RUNUP_STEP4_ANCHOR
+#if FD6288_M2_RUNUP_STEP4_ANCHOR != 1 || !defined(TARGET_FD_M2_RUNUP_ADC_CAPTURE) || \
+    defined(TARGET_FD_M2_RUNUP_STEP4_PAIR)
+#error "M2 run-up step 4 anchor requires the normal run-up ADC observer"
+#endif
+#define TARGET_FD_M2_RUNUP_STEP4_ANCHOR
+#endif
+
+#if defined(FD6288_M2_EARLY_STEP5_DWELL) && FD6288_M2_EARLY_STEP5_DWELL
+#if FD6288_M2_EARLY_STEP5_DWELL != 1 || !defined(TARGET_FD_M2_RUNUP_STEP4_ANCHOR)
+#error "M2 early step 5 dwell requires the run-up step 4 anchor baseline"
+#endif
+#define TARGET_FD_M2_EARLY_STEP5_DWELL
 #endif

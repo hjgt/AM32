@@ -7,6 +7,16 @@ typedef struct {
 } FdEdgeObserve;
 _Static_assert(sizeof(FdEdgeObserve)==12404,"raw observer ABI");
 extern volatile FdEdgeObserve fd_edge_observe;
+#ifdef TARGET_FD_M2_POWERED_CAPTURE
+#include "fd6288_m2_powered_capture.h"
+#endif
+#ifdef TARGET_FD_HIZ_OBSERVE
+#ifdef TARGET_FD_M2_HIZ_40MS
+enum { FD_HIZ_OBSERVE_US = 40000u, FD_HIZ_OBSERVE_ABI = 11u };
+#else
+enum { FD_HIZ_OBSERVE_US = 5000u, FD_HIZ_OBSERVE_ABI = 7u };
+#endif
+#endif
 static inline void fdEdgeBegin(uint32_t trial,uint32_t now) {
  /* Clear header only: old slots are invalidated by present ranges/counters.
   * Avoid a 12KB memset in the masked startup path. */
@@ -25,7 +35,9 @@ static inline uint8_t fdEdgeActive(void) {
 #ifdef TARGET_FD_LAUNCH_RAW
 #ifdef TARGET_FD_ALIGN_TAIL
 #ifdef TARGET_FD_HIZ_OBSERVE
- return fd_edge_observe.abi==7u && !fd_edge_observe.frozen && fd_edge_observe.active!=UINT32_MAX;
+ return fd_edge_observe.abi==FD_HIZ_OBSERVE_ABI && !fd_edge_observe.frozen && fd_edge_observe.active!=UINT32_MAX;
+#elif defined(TARGET_FD_M2_START_CAPTURE)
+ return fd_edge_observe.abi==10u && !fd_edge_observe.frozen && fd_edge_observe.active!=UINT32_MAX;
 #elif defined(TARGET_FD_EARLY_REKICK)
  return fd_edge_observe.abi==9u && !fd_edge_observe.frozen && fd_edge_observe.active!=UINT32_MAX;
 #elif defined(TARGET_FD_BLUE_START)
@@ -63,7 +75,9 @@ static inline void fdEdgeStep(uint32_t now,uint8_t stage) {
   /* Pair sampling/control already ended in commutate(). Reuse its slots;
    * clear counters only, never memset12KB in the masked launch path. */
 #ifdef TARGET_FD_ALIGN_TAIL
-#ifdef TARGET_FD_EARLY_REKICK
+#ifdef TARGET_FD_M2_START_CAPTURE
+  fd_edge_observe.abi=10u;
+#elif defined(TARGET_FD_EARLY_REKICK)
   fd_edge_observe.abi=9u;
 #elif defined(TARGET_FD_BLUE_START)
   fd_edge_observe.abi=8u;
@@ -104,20 +118,36 @@ static inline void fdEdgeStore(uint32_t slot,FdEdgeSample v) {
  fd_edge_observe.samples[slot]=v;fd_edge_observe.count++;
 }
 static inline void fdEdgeCost(uint32_t cycles) {
+#ifdef TARGET_FD_M2_POWERED_CAPTURE
+ if(fd_edge_observe.frozen) {
+  if(fd_m2_powered_capture.active && cycles>fd_m2_powered_capture.max_cycles)
+   fd_m2_powered_capture.max_cycles=cycles;
+  return;
+ }
+#endif
  fd_edge_observe.calls++;
  if(cycles>fd_edge_observe.max_cycles)fd_edge_observe.max_cycles=cycles;
 }
 static inline uint8_t fdEdgeNeeded(int16_t margin,uint8_t reason,uint8_t flags) {
- (void)margin;(void)reason;(void)flags;return fdEdgeActive();
+ (void)margin;(void)reason;(void)flags;
+#ifdef TARGET_FD_M2_POWERED_CAPTURE
+ if(fd_m2_powered_capture.active)return 1u;
+#endif
+ return fdEdgeActive();
 }
 static inline void fdEdgeSample(FdEdgeSample v) {
+#ifdef TARGET_FD_M2_POWERED_CAPTURE
+ if(fd_m2_powered_capture.active) {fdM2PoweredSample(v);return;}
+#endif
  if(!fdEdgeActive())return;
  v.reserved=(uint16_t)fd_edge_observe.sectors;
 #ifdef TARGET_FD_LAUNCH_RAW
  /* Already-consumed ADC triplets only. First2ms at full consumed rate,
   * then alternate groups, always retain ACCEPT. At most one24B store. */
  uint32_t age=(uint32_t)(v.at-fd_edge_observe.started)-fd_edge_observe.start0;
-#ifdef TARGET_FD_EARLY_REKICK
+#ifdef TARGET_FD_M2_START_CAPTURE
+ if(age>=80000u*160u) {fdEdgeFinish(v.at);return;}
+#elif defined(TARGET_FD_EARLY_REKICK)
  if(age>=124000u*160u) {fdEdgeFinish(v.at);return;}
 #elif defined(TARGET_FD_LAUNCH_TWO) || defined(TARGET_FD_BLUE_START)
  if(age>=61000u*160u) {fdEdgeFinish(v.at);return;}
@@ -129,7 +159,9 @@ static inline void fdEdgeSample(FdEdgeSample v) {
  if(v.reason==7u && !fd_edge_observe.start1)
   fd_edge_observe.start1=v.at-fd_edge_observe.started;
 #endif
-#ifdef TARGET_FD_EARLY_REKICK
+#ifdef TARGET_FD_M2_START_CAPTURE
+ if(age>=2000u*160u && (n&7u) && v.reason!=7u) {
+#elif defined(TARGET_FD_EARLY_REKICK)
  uint8_t dense=(uint32_t)((v.at-fd_edge_observe.started)-fd_edge_observe.start1)<2000u*160u;
  if(!dense && (n&3u) && v.reason!=7u) {
 #elif defined(TARGET_FD_LAUNCH_TWO) || defined(TARGET_FD_BLUE_START)
@@ -170,9 +202,10 @@ static inline unsigned fdEdgeAlignSlot(uint8_t left,uint32_t age) {
 
 #ifdef TARGET_FD_HIZ_OBSERVE
 static inline void fdEdgeHiZBegin(uint32_t off_at, uint32_t trigger_at) {
- if(fd_edge_observe.samples[0].present)
+ if(!fd_edge_observe.frozen && fd_edge_observe.samples[0].present)
   fd_edge_observe.samples[0].reserved=fd_edge_observe.max_cycles>65535u?65535u:fd_edge_observe.max_cycles;
- fd_edge_observe.abi=7u; fd_edge_observe.sectors=0u; fd_edge_observe.active=0u;
+ fd_edge_observe.frozen=0u;
+ fd_edge_observe.abi=FD_HIZ_OBSERVE_ABI; fd_edge_observe.sectors=0u; fd_edge_observe.active=0u;
  fd_edge_observe.first_samples=fd_edge_observe.seen=fd_edge_observe.count=0u;
  fd_edge_observe.max_cycles=fd_edge_observe.calls=0u;
  fd_edge_observe.start0=off_at-fd_edge_observe.started;
@@ -182,12 +215,18 @@ static inline void fdEdgeHiZBegin(uint32_t off_at, uint32_t trigger_at) {
 static inline void fdEdgeHiZSample(FdEdgeSample v) {
  if(!fdEdgeActive())return;
  uint32_t age=(uint32_t)(v.at-fd_edge_observe.started)-fd_edge_observe.start0;
- if(age>=5000u*160u) {fdEdgeFinish(v.at);return;}
+ if(age>=FD_HIZ_OBSERVE_US*160u) {fdEdgeFinish(v.at);return;}
  /* Queue/CCR preload boundary is deliberately visible, never called BEMF.
   * First2 groups OR first150us are marked, not discarded. Remaining groups
   * may still include demagnetization/clamping; this is not a validity gate. */
  if(fd_edge_observe.seen<2u || age<150u*160u)v.flags|=16u;
- v.reserved=(uint16_t)fd_edge_observe.seen++;
+ uint32_t group=fd_edge_observe.seen++;
+#ifdef TARGET_FD_M2_HIZ_40MS
+ /* Keep the entire release transient, then every other conversion.
+  * At 24 kHz this fits the 40 ms window in the existing 512 slots. */
+ if(age>=500u*160u && (group&1u)) {fd_edge_observe.post_samples++;return;}
+#endif
+ v.reserved=(uint16_t)group;
  fdEdgeStore(2u+fd_edge_observe.first_samples++,v);
  if(fd_edge_observe.first_samples==512u)fdEdgeFinish(v.at);
 }

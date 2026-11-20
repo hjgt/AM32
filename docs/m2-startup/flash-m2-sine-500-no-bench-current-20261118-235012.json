@@ -1,0 +1,54 @@
+[
+  {
+    "at": "2026-11-18T15:49:19.385675+00:00",
+    "stage": "stopped",
+    "result": {
+      "input": 0,
+      "adjusted_input": 0,
+      "newinput": 0,
+      "running": 0,
+      "duty_cycle": 0,
+      "heli_coast_active": 0,
+      "ccr": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "at": "2026-11-18T15:49:19.403999+00:00",
+    "stage": "configured_limits",
+    "result": {
+      "temperature_raw": 255,
+      "current_raw": 101,
+      "current_enabled": 0
+    }
+  },
+  {
+    "at": "2026-11-18T15:49:19.982083+00:00",
+    "stage": "reset_init",
+    "result": ""
+  },
+  {
+    "at": "2026-11-18T15:50:12.705171+00:00",
+    "stage": "write_main",
+    "result": "auto erase enabled\nwrote 59392 bytes from file M2_SOURCE_ROOT/test-firmware/fd6288-M2-SINE-500-NO-BENCH-CURRENT-20261118/AM32_CUSTOM_FD6288_G431_2.20.hex in 52.699749s (1.101 KiB/s)"
+  },
+  {
+    "at": "2026-11-18T15:50:12.815753+00:00",
+    "stage": "reset_run",
+    "result": ""
+  },
+  {
+    "at": "2026-11-18T15:50:12.906517+00:00",
+    "stage": "state",
+    "result": "running"
+  },
+  {
+    "at": "2026-11-18T15:50:12.906561+00:00",
+    "stage": "post_write_verify",
+    "result": "skipped per user request"
+  }
+]

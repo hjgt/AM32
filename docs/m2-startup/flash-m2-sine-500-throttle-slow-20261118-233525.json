@@ -1,0 +1,30 @@
+[
+  {
+    "command": "reset init",
+    "reply": "OK:"
+  },
+  {
+    "command": "adapter speed 100",
+    "reply": "OK:adapter speed: 100 kHz\n"
+  },
+  {
+    "command": "stm32g4x.cpu configure -work-area-size 0",
+    "reply": "OK:0"
+  },
+  {
+    "command": "mmw 0xe0042008 0x1800 0",
+    "reply": "OK:"
+  },
+  {
+    "command": "flash write_image erase {M2_SOURCE_ROOT/test-firmware/fd6288-M2-SINE-500-THROTTLE-20261118/AM32_CUSTOM_FD6288_G431_2.20.hex}",
+    "reply": "OK:auto erase enabled\nwrote 59392 bytes from file M2_SOURCE_ROOT/test-firmware/fd6288-M2-SINE-500-THROTTLE-20261118/AM32_CUSTOM_FD6288_G431_2.20.hex in 52.868244s (1.097 KiB/s)\n"
+  },
+  {
+    "command": "reset run",
+    "reply": "OK:"
+  },
+  {
+    "command": "[target current] curstate",
+    "reply": "OK:running"
+  }
+]

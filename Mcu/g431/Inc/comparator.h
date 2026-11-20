@@ -21,6 +21,9 @@ uint8_t adcZcdEventIsCrossing(void);
 
 /* Returns 1 only when a fresh, post-blanking ADC ZCD sample was produced. */
 uint8_t getCompOutputSample(uint8_t *level);
+#ifdef TARGET_FD_M2_RUN_FIX
+uint32_t adcZcdDelayCorrection(uint32_t accepted_at, uint32_t wait_ticks);
+#endif
 
 #ifdef TARGET_ADC_ZCD_GUARD
 enum {
@@ -54,7 +57,7 @@ typedef struct {
 extern volatile AdcZcdDiagnostics adc_zcd_diag;
 extern volatile AdcZcdTrace adc_zcd_trace[ADC_ZCD_TRACE_LENGTH];
 void adcZcdResetAcquisition(uint8_t reason);
-#ifdef TARGET_STARTUP_SEQUENCE
+#if defined(TARGET_STARTUP_SEQUENCE) || defined(TARGET_FD_M2_SINE_SIXSTEP)
 void adcZcdSeedHandoff(uint32_t period);
 #endif
 #ifdef TARGET_STARTUP_POWER_BENCH

@@ -81,8 +81,25 @@
  *   incomplete clean ON window -> 0 (PWM1 CH4 stays low: no falling trigger)
  *   normal                     -> clamp(duty/2, floor, latest safe trigger)
  */
+#ifdef TARGET_FD_M2_STEP4_ADC_PAIR
+enum { FD_STEP4_PAIR_EARLY = 600u, FD_STEP4_PAIR_LATE = 780u };
+extern volatile uint16_t fd_step4_pair_compare;
+#endif
 #ifdef TARGET_FD_ALIGN_SAMPLE_PAIR
 extern volatile uint8_t fd_align_sample_late;
+#endif
+#if defined(TARGET_FD_M2_ON_ADC_PAIR) || defined(TARGET_FD_M2_STEP5_LATE_ADC)
+enum { FD_M2_LATE_ADC_TICKS = 960u };
+#endif
+#ifdef TARGET_FD_M2_ON_ADC_PAIR
+extern volatile uint16_t fd_m2_on_adc_late;
+#endif
+#ifdef TARGET_FD_M2_STEP5_LATE_ADC
+extern volatile uint8_t fd_m2_startup_late_adc;
+#endif
+#ifdef TARGET_FD_M2_SINE_ADAPTIVE
+extern volatile uint8_t fd_m2_sine_closed_late;
+extern char step;
 #endif
 static inline uint16_t zcd_ccr4_from_duty(uint16_t duty)
 {
@@ -90,10 +107,23 @@ static inline uint16_t zcd_ccr4_from_duty(uint16_t duty)
         return 0u;
     }
 
+#ifdef TARGET_FD_M2_ON_ADC_PAIR
+    if (fd_m2_on_adc_late && duty >= FD_M2_LATE_ADC_TICKS + ZCD_ADC_WINDOW_TICKS)
+        return FD_M2_LATE_ADC_TICKS;
+#endif
+#ifdef TARGET_FD_M2_STEP5_LATE_ADC
+    if (fd_m2_startup_late_adc)
+        return duty >= FD_M2_LATE_ADC_TICKS + ZCD_ADC_WINDOW_TICKS ? FD_M2_LATE_ADC_TICKS : 0u;
+#endif
 #ifdef TARGET_FD_ALIGN_SAMPLE_PAIR
     /* Diagnostic only at the fixed second alignment compare=1200.
      * 900+244 <1200; actual sampling aperture remains unmeasured. */
     if (fd_align_sample_late && duty == 1200u) return 900u;
+#endif
+#ifdef TARGET_FD_M2_STEP4_ADC_PAIR
+    uint16_t paired = fd_step4_pair_compare;
+    if (paired >= ZCD_SAMPLE_FLOOR && duty >= FD_STEP4_PAIR_LATE + ZCD_ADC_WINDOW_TICKS)
+        return paired;
 #endif
     uint16_t mid = (uint16_t)(duty >> 1);
     uint16_t ccr4 = (mid < ZCD_SAMPLE_FLOOR) ? ZCD_SAMPLE_FLOOR : mid;
@@ -101,6 +131,13 @@ static inline uint16_t zcd_ccr4_from_duty(uint16_t duty)
     if (ccr4 > latest) {
         ccr4 = latest;
     }
+#ifdef TARGET_FD_M2_SINE_ADAPTIVE
+    unsigned sector = (unsigned)(uint8_t)step - 1u;
+    if (sector < 6u && (fd_m2_sine_closed_late & (1u << sector)) &&
+        ccr4 < FD6288_M2_SINE_STEP4_ADC_TICKS &&
+        latest >= FD6288_M2_SINE_STEP4_ADC_TICKS)
+        ccr4 = FD6288_M2_SINE_STEP4_ADC_TICKS;
+#endif
     return ccr4;
 }
 

@@ -1,0 +1,7085 @@
+{
+  "read_at": "2026-11-17T15:01:01.327Z",
+  "elf": "M2_SOURCE_ROOT/test-firmware/fd6288-M2-SINE-STEP4-EXTENDED-20261117/AM32_CUSTOM_FD6288_G431_2.20.elf",
+  "summary": {
+    "magic": 1179864625,
+    "abi": 1,
+    "trial": 2,
+    "started": 3250591410,
+    "phase": 4,
+    "reason": 14,
+    "sine_steps": 28961,
+    "sixstep_at": 200149512,
+    "first_edge_at": 4294967295,
+    "sixth_edge_at": 4294967295,
+    "stopped_at": 207187777,
+    "edges": 0,
+    "input_at_start": 48,
+    "input_at_handoff": 678,
+    "last_step": 4,
+    "phase_name": "stopped",
+    "sixstep_at_ms": 1250.93445,
+    "first_edge_at_ms": null,
+    "sixth_edge_at_ms": null,
+    "stopped_at_ms": 1294.92360625,
+    "timing_valid": true
+  },
+  "clock": {
+    "ctrl": 1073741825,
+    "demcr": 16777216,
+    "cyccnt_first": 1274711233,
+    "cyccnt_second": 1277414695,
+    "delta": 2703462,
+    "selftest_ok": 1,
+    "valid": true
+  },
+  "pwm_snapshot": null,
+  "pin_trace": null,
+  "sensors": {
+    "magic": 1179865905,
+    "abi": 1,
+    "trial": 2,
+    "updates": 1209,
+    "baseline_current": 11,
+    "peak_current": 116,
+    "baseline_voltage": 1227,
+    "minimum_voltage": 1219,
+    "baseline_raw_current": 20,
+    "peak_raw_current": 230,
+    "units": {
+      "current": "0.01A filtered",
+      "voltage": "0.01V filtered",
+      "raw_current": "ADC counts"
+    },
+    "peak_current_increase": 105,
+    "voltage_drop": 8,
+    "sampled_only": true
+  },
+  "ram_settings": {
+    "sine": 1,
+    "pwm_frequency_khz": 24,
+    "startup_power": 50,
+    "motor_kv": 500,
+    "motor_poles": 24,
+    "advance_raw": 18,
+    "auto_advance": 0,
+    "sine_range": 5,
+    "sine_power": 10
+  },
+  "raw_hex": "314e53460100000002000000b216c0c1040000000e00000021710000080aee0bffffffffffffffff416f590c0000000030000000a602000004000000",
+  "coast": {
+    "magic": 1179472689,
+    "abi": 1,
+    "trial": 2,
+    "off_at": 198210382,
+    "rate": 23809,
+    "angle": 215,
+    "frames": 28961,
+    "clamp_frames": 14686,
+    "max_gap_cycles": 9858,
+    "max_span_ticks": 1044,
+    "seen": 291,
+    "count": 158,
+    "off_ms": 1238.8148875,
+    "commanded_mechanical_rpm": 330.68055555555554,
+    "max_update_gap_us": 61.6125,
+    "samples": [
+      {
+        "us": 23.56875,
+        "a": 810,
+        "b": 905,
+        "c": 880,
+        "ab": -95,
+        "bc": 25,
+        "ca": 70,
+        "at_floor": false
+      },
+      {
+        "us": 65.24375,
+        "a": 375,
+        "b": 473,
+        "c": 461,
+        "ab": -98,
+        "bc": 12,
+        "ca": 86,
+        "at_floor": false
+      },
+      {
+        "us": 107.61875,
+        "a": 155,
+        "b": 260,
+        "c": 251,
+        "ab": -105,
+        "bc": 9,
+        "ca": 96,
+        "at_floor": false
+      },
+      {
+        "us": 148.475,
+        "a": 54,
+        "b": 163,
+        "c": 153,
+        "ab": -109,
+        "bc": 10,
+        "ca": 99,
+        "at_floor": false
+      },
+      {
+        "us": 190.21875,
+        "a": 35,
+        "b": 143,
+        "c": 135,
+        "ab": -108,
+        "bc": 8,
+        "ca": 100,
+        "at_floor": false
+      },
+      {
+        "us": 232.425,
+        "a": 20,
+        "b": 131,
+        "c": 122,
+        "ab": -111,
+        "bc": 9,
+        "ca": 102,
+        "at_floor": false
+      },
+      {
+        "us": 273.54375,
+        "a": 10,
+        "b": 121,
+        "c": 111,
+        "ab": -111,
+        "bc": 10,
+        "ca": 101,
+        "at_floor": false
+      },
+      {
+        "us": 315.775,
+        "a": 1,
+        "b": 111,
+        "c": 100,
+        "ab": -110,
+        "bc": 11,
+        "ca": 99,
+        "at_floor": false
+      },
+      {
+        "us": 357.625,
+        "a": 0,
+        "b": 104,
+        "c": 91,
+        "ab": -104,
+        "bc": 13,
+        "ca": 91,
+        "at_floor": true
+      },
+      {
+        "us": 398.4625,
+        "a": 0,
+        "b": 98,
+        "c": 84,
+        "ab": -98,
+        "bc": 14,
+        "ca": 84,
+        "at_floor": true
+      },
+      {
+        "us": 440.525,
+        "a": 0,
+        "b": 92,
+        "c": 76,
+        "ab": -92,
+        "bc": 16,
+        "ca": 76,
+        "at_floor": true
+      },
+      {
+        "us": 481.88125,
+        "a": 0,
+        "b": 93,
+        "c": 72,
+        "ab": -93,
+        "bc": 21,
+        "ca": 72,
+        "at_floor": true
+      },
+      {
+        "us": 523.53125,
+        "a": 0,
+        "b": 89,
+        "c": 68,
+        "ab": -89,
+        "bc": 21,
+        "ca": 68,
+        "at_floor": true
+      },
+      {
+        "us": 565.18125,
+        "a": 0,
+        "b": 85,
+        "c": 64,
+        "ab": -85,
+        "bc": 21,
+        "ca": 64,
+        "at_floor": true
+      },
+      {
+        "us": 606.7625,
+        "a": 0,
+        "b": 85,
+        "c": 63,
+        "ab": -85,
+        "bc": 22,
+        "ca": 63,
+        "at_floor": true
+      },
+      {
+        "us": 649.19375,
+        "a": 0,
+        "b": 83,
+        "c": 59,
+        "ab": -83,
+        "bc": 24,
+        "ca": 59,
+        "at_floor": true
+      },
+      {
+        "us": 690.4,
+        "a": 0,
+        "b": 82,
+        "c": 57,
+        "ab": -82,
+        "bc": 25,
+        "ca": 57,
+        "at_floor": true
+      },
+      {
+        "us": 731.83125,
+        "a": 0,
+        "b": 82,
+        "c": 54,
+        "ab": -82,
+        "bc": 28,
+        "ca": 54,
+        "at_floor": true
+      },
+      {
+        "us": 773.6125,
+        "a": 0,
+        "b": 80,
+        "c": 51,
+        "ab": -80,
+        "bc": 29,
+        "ca": 51,
+        "at_floor": true
+      },
+      {
+        "us": 816.70625,
+        "a": 0,
+        "b": 82,
+        "c": 48,
+        "ab": -82,
+        "bc": 34,
+        "ca": 48,
+        "at_floor": true
+      },
+      {
+        "us": 857.6,
+        "a": 0,
+        "b": 80,
+        "c": 45,
+        "ab": -80,
+        "bc": 35,
+        "ca": 45,
+        "at_floor": true
+      },
+      {
+        "us": 898.5875,
+        "a": 0,
+        "b": 81,
+        "c": 42,
+        "ab": -81,
+        "bc": 39,
+        "ca": 42,
+        "at_floor": true
+      },
+      {
+        "us": 940.14375,
+        "a": 0,
+        "b": 81,
+        "c": 39,
+        "ab": -81,
+        "bc": 42,
+        "ca": 39,
+        "at_floor": true
+      },
+      {
+        "us": 981.79375,
+        "a": 0,
+        "b": 78,
+        "c": 37,
+        "ab": -78,
+        "bc": 41,
+        "ca": 37,
+        "at_floor": true
+      },
+      {
+        "us": 1023.7375,
+        "a": 0,
+        "b": 80,
+        "c": 34,
+        "ab": -80,
+        "bc": 46,
+        "ca": 34,
+        "at_floor": true
+      },
+      {
+        "us": 1107.275,
+        "a": 0,
+        "b": 78,
+        "c": 28,
+        "ab": -78,
+        "bc": 50,
+        "ca": 28,
+        "at_floor": true
+      },
+      {
+        "us": 1190.425,
+        "a": 0,
+        "b": 79,
+        "c": 24,
+        "ab": -79,
+        "bc": 55,
+        "ca": 24,
+        "at_floor": true
+      },
+      {
+        "us": 1275.625,
+        "a": 0,
+        "b": 80,
+        "c": 20,
+        "ab": -80,
+        "bc": 60,
+        "ca": 20,
+        "at_floor": true
+      },
+      {
+        "us": 1356.76875,
+        "a": 0,
+        "b": 80,
+        "c": 15,
+        "ab": -80,
+        "bc": 65,
+        "ca": 15,
+        "at_floor": true
+      },
+      {
+        "us": 1440.1125,
+        "a": 0,
+        "b": 82,
+        "c": 10,
+        "ab": -82,
+        "bc": 72,
+        "ca": 10,
+        "at_floor": true
+      },
+      {
+        "us": 1523.6125,
+        "a": 0,
+        "b": 83,
+        "c": 6,
+        "ab": -83,
+        "bc": 77,
+        "ca": 6,
+        "at_floor": true
+      },
+      {
+        "us": 1606.775,
+        "a": 0,
+        "b": 83,
+        "c": 4,
+        "ab": -83,
+        "bc": 79,
+        "ca": 4,
+        "at_floor": true
+      },
+      {
+        "us": 1690.60625,
+        "a": 0,
+        "b": 86,
+        "c": 2,
+        "ab": -86,
+        "bc": 84,
+        "ca": 2,
+        "at_floor": true
+      },
+      {
+        "us": 1773.4125,
+        "a": 0,
+        "b": 90,
+        "c": 1,
+        "ab": -90,
+        "bc": 89,
+        "ca": 1,
+        "at_floor": true
+      },
+      {
+        "us": 1856.725,
+        "a": 0,
+        "b": 91,
+        "c": 0,
+        "ab": -91,
+        "bc": 91,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 1940.1,
+        "a": 0,
+        "b": 93,
+        "c": 0,
+        "ab": -93,
+        "bc": 93,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 2023.38125,
+        "a": 0,
+        "b": 94,
+        "c": 0,
+        "ab": -94,
+        "bc": 94,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 2106.825,
+        "a": 0,
+        "b": 94,
+        "c": 0,
+        "ab": -94,
+        "bc": 94,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 2189.9375,
+        "a": 0,
+        "b": 98,
+        "c": 0,
+        "ab": -98,
+        "bc": 98,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 2273.5375,
+        "a": 0,
+        "b": 99,
+        "c": 0,
+        "ab": -99,
+        "bc": 99,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 2356.69375,
+        "a": 0,
+        "b": 101,
+        "c": 0,
+        "ab": -101,
+        "bc": 101,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 2440.1375,
+        "a": 0,
+        "b": 99,
+        "c": 0,
+        "ab": -99,
+        "bc": 99,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 2523.33125,
+        "a": 0,
+        "b": 101,
+        "c": 0,
+        "ab": -101,
+        "bc": 101,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 2607.03125,
+        "a": 0,
+        "b": 103,
+        "c": 0,
+        "ab": -103,
+        "bc": 103,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 2689.975,
+        "a": 0,
+        "b": 105,
+        "c": 0,
+        "ab": -105,
+        "bc": 105,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 2773.41875,
+        "a": 0,
+        "b": 105,
+        "c": 0,
+        "ab": -105,
+        "bc": 105,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 2856.625,
+        "a": 2,
+        "b": 104,
+        "c": 0,
+        "ab": -102,
+        "bc": 104,
+        "ca": -2,
+        "at_floor": true
+      },
+      {
+        "us": 2940.25625,
+        "a": 3,
+        "b": 106,
+        "c": 0,
+        "ab": -103,
+        "bc": 106,
+        "ca": -3,
+        "at_floor": true
+      },
+      {
+        "us": 3023.26875,
+        "a": 4,
+        "b": 107,
+        "c": 0,
+        "ab": -103,
+        "bc": 107,
+        "ca": -4,
+        "at_floor": true
+      },
+      {
+        "us": 3106.51875,
+        "a": 7,
+        "b": 108,
+        "c": 0,
+        "ab": -101,
+        "bc": 108,
+        "ca": -7,
+        "at_floor": true
+      },
+      {
+        "us": 3190.51875,
+        "a": 10,
+        "b": 106,
+        "c": 0,
+        "ab": -96,
+        "bc": 106,
+        "ca": -10,
+        "at_floor": true
+      },
+      {
+        "us": 3273.2625,
+        "a": 14,
+        "b": 104,
+        "c": 0,
+        "ab": -90,
+        "bc": 104,
+        "ca": -14,
+        "at_floor": true
+      },
+      {
+        "us": 3356.54375,
+        "a": 18,
+        "b": 103,
+        "c": 0,
+        "ab": -85,
+        "bc": 103,
+        "ca": -18,
+        "at_floor": true
+      },
+      {
+        "us": 3440.00625,
+        "a": 21,
+        "b": 103,
+        "c": 0,
+        "ab": -82,
+        "bc": 103,
+        "ca": -21,
+        "at_floor": true
+      },
+      {
+        "us": 3523.2375,
+        "a": 25,
+        "b": 99,
+        "c": 0,
+        "ab": -74,
+        "bc": 99,
+        "ca": -25,
+        "at_floor": true
+      },
+      {
+        "us": 3606.55625,
+        "a": 32,
+        "b": 97,
+        "c": 0,
+        "ab": -65,
+        "bc": 97,
+        "ca": -32,
+        "at_floor": true
+      },
+      {
+        "us": 3689.8875,
+        "a": 36,
+        "b": 98,
+        "c": 0,
+        "ab": -62,
+        "bc": 98,
+        "ca": -36,
+        "at_floor": true
+      },
+      {
+        "us": 3774.375,
+        "a": 41,
+        "b": 95,
+        "c": 0,
+        "ab": -54,
+        "bc": 95,
+        "ca": -41,
+        "at_floor": true
+      },
+      {
+        "us": 3857.00625,
+        "a": 44,
+        "b": 92,
+        "c": 0,
+        "ab": -48,
+        "bc": 92,
+        "ca": -44,
+        "at_floor": true
+      },
+      {
+        "us": 3939.84375,
+        "a": 48,
+        "b": 90,
+        "c": 0,
+        "ab": -42,
+        "bc": 90,
+        "ca": -48,
+        "at_floor": true
+      },
+      {
+        "us": 4023.15,
+        "a": 53,
+        "b": 87,
+        "c": 0,
+        "ab": -34,
+        "bc": 87,
+        "ca": -53,
+        "at_floor": true
+      },
+      {
+        "us": 4106.5125,
+        "a": 57,
+        "b": 85,
+        "c": 0,
+        "ab": -28,
+        "bc": 85,
+        "ca": -57,
+        "at_floor": true
+      },
+      {
+        "us": 4189.84375,
+        "a": 58,
+        "b": 83,
+        "c": 0,
+        "ab": -25,
+        "bc": 83,
+        "ca": -58,
+        "at_floor": true
+      },
+      {
+        "us": 4273.3125,
+        "a": 60,
+        "b": 80,
+        "c": 0,
+        "ab": -20,
+        "bc": 80,
+        "ca": -60,
+        "at_floor": true
+      },
+      {
+        "us": 4356.46875,
+        "a": 64,
+        "b": 77,
+        "c": 0,
+        "ab": -13,
+        "bc": 77,
+        "ca": -64,
+        "at_floor": true
+      },
+      {
+        "us": 4440.2,
+        "a": 65,
+        "b": 78,
+        "c": 0,
+        "ab": -13,
+        "bc": 78,
+        "ca": -65,
+        "at_floor": true
+      },
+      {
+        "us": 4523.65,
+        "a": 64,
+        "b": 77,
+        "c": 0,
+        "ab": -13,
+        "bc": 77,
+        "ca": -64,
+        "at_floor": true
+      },
+      {
+        "us": 4607.13125,
+        "a": 64,
+        "b": 74,
+        "c": 0,
+        "ab": -10,
+        "bc": 74,
+        "ca": -64,
+        "at_floor": true
+      },
+      {
+        "us": 4689.975,
+        "a": 65,
+        "b": 72,
+        "c": 0,
+        "ab": -7,
+        "bc": 72,
+        "ca": -65,
+        "at_floor": true
+      },
+      {
+        "us": 4773.09375,
+        "a": 67,
+        "b": 71,
+        "c": 0,
+        "ab": -4,
+        "bc": 71,
+        "ca": -67,
+        "at_floor": true
+      },
+      {
+        "us": 4857.0875,
+        "a": 69,
+        "b": 71,
+        "c": 0,
+        "ab": -2,
+        "bc": 71,
+        "ca": -69,
+        "at_floor": true
+      },
+      {
+        "us": 4939.6625,
+        "a": 68,
+        "b": 67,
+        "c": 0,
+        "ab": 1,
+        "bc": 67,
+        "ca": -68,
+        "at_floor": true
+      },
+      {
+        "us": 5023.09375,
+        "a": 69,
+        "b": 66,
+        "c": 0,
+        "ab": 3,
+        "bc": 66,
+        "ca": -69,
+        "at_floor": true
+      },
+      {
+        "us": 5106.4875,
+        "a": 70,
+        "b": 65,
+        "c": 0,
+        "ab": 5,
+        "bc": 65,
+        "ca": -70,
+        "at_floor": true
+      },
+      {
+        "us": 5189.74375,
+        "a": 72,
+        "b": 65,
+        "c": 0,
+        "ab": 7,
+        "bc": 65,
+        "ca": -72,
+        "at_floor": true
+      },
+      {
+        "us": 5273.225,
+        "a": 72,
+        "b": 65,
+        "c": 0,
+        "ab": 7,
+        "bc": 65,
+        "ca": -72,
+        "at_floor": true
+      },
+      {
+        "us": 5356.5,
+        "a": 72,
+        "b": 62,
+        "c": 0,
+        "ab": 10,
+        "bc": 62,
+        "ca": -72,
+        "at_floor": true
+      },
+      {
+        "us": 5439.70625,
+        "a": 72,
+        "b": 61,
+        "c": 0,
+        "ab": 11,
+        "bc": 61,
+        "ca": -72,
+        "at_floor": true
+      },
+      {
+        "us": 5523.8875,
+        "a": 74,
+        "b": 61,
+        "c": 0,
+        "ab": 13,
+        "bc": 61,
+        "ca": -74,
+        "at_floor": true
+      },
+      {
+        "us": 5606.45625,
+        "a": 77,
+        "b": 60,
+        "c": 0,
+        "ab": 17,
+        "bc": 60,
+        "ca": -77,
+        "at_floor": true
+      },
+      {
+        "us": 5689.675,
+        "a": 78,
+        "b": 55,
+        "c": 0,
+        "ab": 23,
+        "bc": 55,
+        "ca": -78,
+        "at_floor": true
+      },
+      {
+        "us": 5773.3625,
+        "a": 78,
+        "b": 53,
+        "c": 0,
+        "ab": 25,
+        "bc": 53,
+        "ca": -78,
+        "at_floor": true
+      },
+      {
+        "us": 5856.28125,
+        "a": 80,
+        "b": 52,
+        "c": 0,
+        "ab": 28,
+        "bc": 52,
+        "ca": -80,
+        "at_floor": true
+      },
+      {
+        "us": 5939.8375,
+        "a": 83,
+        "b": 50,
+        "c": 0,
+        "ab": 33,
+        "bc": 50,
+        "ca": -83,
+        "at_floor": true
+      },
+      {
+        "us": 6022.975,
+        "a": 83,
+        "b": 49,
+        "c": 0,
+        "ab": 34,
+        "bc": 49,
+        "ca": -83,
+        "at_floor": true
+      },
+      {
+        "us": 6106.3,
+        "a": 85,
+        "b": 44,
+        "c": 0,
+        "ab": 41,
+        "bc": 44,
+        "ca": -85,
+        "at_floor": true
+      },
+      {
+        "us": 6189.6375,
+        "a": 89,
+        "b": 40,
+        "c": 0,
+        "ab": 49,
+        "bc": 40,
+        "ca": -89,
+        "at_floor": true
+      },
+      {
+        "us": 6273.3625,
+        "a": 91,
+        "b": 37,
+        "c": 0,
+        "ab": 54,
+        "bc": 37,
+        "ca": -91,
+        "at_floor": true
+      },
+      {
+        "us": 6356.5,
+        "a": 94,
+        "b": 33,
+        "c": 0,
+        "ab": 61,
+        "bc": 33,
+        "ca": -94,
+        "at_floor": true
+      },
+      {
+        "us": 6440.24375,
+        "a": 97,
+        "b": 29,
+        "c": 0,
+        "ab": 68,
+        "bc": 29,
+        "ca": -97,
+        "at_floor": true
+      },
+      {
+        "us": 6523.23125,
+        "a": 101,
+        "b": 24,
+        "c": 0,
+        "ab": 77,
+        "bc": 24,
+        "ca": -101,
+        "at_floor": true
+      },
+      {
+        "us": 6606.2625,
+        "a": 103,
+        "b": 20,
+        "c": 0,
+        "ab": 83,
+        "bc": 20,
+        "ca": -103,
+        "at_floor": true
+      },
+      {
+        "us": 6690.35,
+        "a": 105,
+        "b": 17,
+        "c": 0,
+        "ab": 88,
+        "bc": 17,
+        "ca": -105,
+        "at_floor": true
+      },
+      {
+        "us": 6773.14375,
+        "a": 107,
+        "b": 15,
+        "c": 0,
+        "ab": 92,
+        "bc": 15,
+        "ca": -107,
+        "at_floor": true
+      },
+      {
+        "us": 6856.225,
+        "a": 107,
+        "b": 11,
+        "c": 0,
+        "ab": 96,
+        "bc": 11,
+        "ca": -107,
+        "at_floor": true
+      },
+      {
+        "us": 6939.55625,
+        "a": 111,
+        "b": 8,
+        "c": 0,
+        "ab": 103,
+        "bc": 8,
+        "ca": -111,
+        "at_floor": true
+      },
+      {
+        "us": 7022.85625,
+        "a": 110,
+        "b": 6,
+        "c": 0,
+        "ab": 104,
+        "bc": 6,
+        "ca": -110,
+        "at_floor": true
+      },
+      {
+        "us": 7106.2,
+        "a": 109,
+        "b": 5,
+        "c": 0,
+        "ab": 104,
+        "bc": 5,
+        "ca": -109,
+        "at_floor": true
+      },
+      {
+        "us": 7191.6125,
+        "a": 111,
+        "b": 5,
+        "c": 0,
+        "ab": 106,
+        "bc": 5,
+        "ca": -111,
+        "at_floor": true
+      },
+      {
+        "us": 7272.9,
+        "a": 112,
+        "b": 2,
+        "c": 0,
+        "ab": 110,
+        "bc": 2,
+        "ca": -112,
+        "at_floor": true
+      },
+      {
+        "us": 7356.16875,
+        "a": 113,
+        "b": 0,
+        "c": 0,
+        "ab": 113,
+        "bc": 0,
+        "ca": -113,
+        "at_floor": true
+      },
+      {
+        "us": 7439.53125,
+        "a": 112,
+        "b": 0,
+        "c": 0,
+        "ab": 112,
+        "bc": 0,
+        "ca": -112,
+        "at_floor": true
+      },
+      {
+        "us": 7522.8375,
+        "a": 111,
+        "b": 0,
+        "c": 0,
+        "ab": 111,
+        "bc": 0,
+        "ca": -111,
+        "at_floor": true
+      },
+      {
+        "us": 7606.2625,
+        "a": 111,
+        "b": 0,
+        "c": 2,
+        "ab": 111,
+        "bc": -2,
+        "ca": -109,
+        "at_floor": true
+      },
+      {
+        "us": 7689.71875,
+        "a": 111,
+        "b": 0,
+        "c": 3,
+        "ab": 111,
+        "bc": -3,
+        "ca": -108,
+        "at_floor": true
+      },
+      {
+        "us": 7773.19375,
+        "a": 109,
+        "b": 0,
+        "c": 4,
+        "ab": 109,
+        "bc": -4,
+        "ca": -105,
+        "at_floor": true
+      },
+      {
+        "us": 7856.1375,
+        "a": 109,
+        "b": 0,
+        "c": 7,
+        "ab": 109,
+        "bc": -7,
+        "ca": -102,
+        "at_floor": true
+      },
+      {
+        "us": 7939.44375,
+        "a": 108,
+        "b": 0,
+        "c": 9,
+        "ab": 108,
+        "bc": -9,
+        "ca": -99,
+        "at_floor": true
+      },
+      {
+        "us": 8022.78125,
+        "a": 107,
+        "b": 0,
+        "c": 10,
+        "ab": 107,
+        "bc": -10,
+        "ca": -97,
+        "at_floor": true
+      },
+      {
+        "us": 8106.04375,
+        "a": 107,
+        "b": 0,
+        "c": 12,
+        "ab": 107,
+        "bc": -12,
+        "ca": -95,
+        "at_floor": true
+      },
+      {
+        "us": 8189.5,
+        "a": 105,
+        "b": 0,
+        "c": 14,
+        "ab": 105,
+        "bc": -14,
+        "ca": -91,
+        "at_floor": true
+      },
+      {
+        "us": 8272.775,
+        "a": 102,
+        "b": 0,
+        "c": 18,
+        "ab": 102,
+        "bc": -18,
+        "ca": -84,
+        "at_floor": true
+      },
+      {
+        "us": 8356.71875,
+        "a": 100,
+        "b": 0,
+        "c": 23,
+        "ab": 100,
+        "bc": -23,
+        "ca": -77,
+        "at_floor": true
+      },
+      {
+        "us": 8439.40625,
+        "a": 98,
+        "b": 0,
+        "c": 25,
+        "ab": 98,
+        "bc": -25,
+        "ca": -73,
+        "at_floor": true
+      },
+      {
+        "us": 8522.725,
+        "a": 96,
+        "b": 0,
+        "c": 28,
+        "ab": 96,
+        "bc": -28,
+        "ca": -68,
+        "at_floor": true
+      },
+      {
+        "us": 8606.30625,
+        "a": 93,
+        "b": 0,
+        "c": 32,
+        "ab": 93,
+        "bc": -32,
+        "ca": -61,
+        "at_floor": true
+      },
+      {
+        "us": 8689.36875,
+        "a": 92,
+        "b": 0,
+        "c": 36,
+        "ab": 92,
+        "bc": -36,
+        "ca": -56,
+        "at_floor": true
+      },
+      {
+        "us": 8772.7125,
+        "a": 88,
+        "b": 0,
+        "c": 41,
+        "ab": 88,
+        "bc": -41,
+        "ca": -47,
+        "at_floor": true
+      },
+      {
+        "us": 8856.13125,
+        "a": 85,
+        "b": 0,
+        "c": 43,
+        "ab": 85,
+        "bc": -43,
+        "ca": -42,
+        "at_floor": true
+      },
+      {
+        "us": 8939.425,
+        "a": 84,
+        "b": 0,
+        "c": 46,
+        "ab": 84,
+        "bc": -46,
+        "ca": -38,
+        "at_floor": true
+      },
+      {
+        "us": 9022.66875,
+        "a": 82,
+        "b": 0,
+        "c": 50,
+        "ab": 82,
+        "bc": -50,
+        "ca": -32,
+        "at_floor": true
+      },
+      {
+        "us": 9106.06875,
+        "a": 81,
+        "b": 0,
+        "c": 53,
+        "ab": 81,
+        "bc": -53,
+        "ca": -28,
+        "at_floor": true
+      },
+      {
+        "us": 9189.34375,
+        "a": 81,
+        "b": 0,
+        "c": 53,
+        "ab": 81,
+        "bc": -53,
+        "ca": -28,
+        "at_floor": true
+      },
+      {
+        "us": 9272.61875,
+        "a": 79,
+        "b": 0,
+        "c": 55,
+        "ab": 79,
+        "bc": -55,
+        "ca": -24,
+        "at_floor": true
+      },
+      {
+        "us": 9355.99375,
+        "a": 77,
+        "b": 0,
+        "c": 59,
+        "ab": 77,
+        "bc": -59,
+        "ca": -18,
+        "at_floor": true
+      },
+      {
+        "us": 9439.75625,
+        "a": 77,
+        "b": 0,
+        "c": 60,
+        "ab": 77,
+        "bc": -60,
+        "ca": -17,
+        "at_floor": true
+      },
+      {
+        "us": 9522.73125,
+        "a": 75,
+        "b": 0,
+        "c": 60,
+        "ab": 75,
+        "bc": -60,
+        "ca": -15,
+        "at_floor": true
+      },
+      {
+        "us": 9605.975,
+        "a": 74,
+        "b": 0,
+        "c": 62,
+        "ab": 74,
+        "bc": -62,
+        "ca": -12,
+        "at_floor": true
+      },
+      {
+        "us": 9690.38125,
+        "a": 73,
+        "b": 0,
+        "c": 64,
+        "ab": 73,
+        "bc": -64,
+        "ca": -9,
+        "at_floor": true
+      },
+      {
+        "us": 9772.61875,
+        "a": 74,
+        "b": 0,
+        "c": 65,
+        "ab": 74,
+        "bc": -65,
+        "ca": -9,
+        "at_floor": true
+      },
+      {
+        "us": 9855.9375,
+        "a": 73,
+        "b": 0,
+        "c": 65,
+        "ab": 73,
+        "bc": -65,
+        "ca": -8,
+        "at_floor": true
+      },
+      {
+        "us": 9939.26875,
+        "a": 71,
+        "b": 0,
+        "c": 66,
+        "ab": 71,
+        "bc": -66,
+        "ca": -5,
+        "at_floor": true
+      },
+      {
+        "us": 10022.59375,
+        "a": 70,
+        "b": 0,
+        "c": 69,
+        "ab": 70,
+        "bc": -69,
+        "ca": -1,
+        "at_floor": true
+      },
+      {
+        "us": 10105.89375,
+        "a": 70,
+        "b": 0,
+        "c": 71,
+        "ab": 70,
+        "bc": -71,
+        "ca": 1,
+        "at_floor": true
+      },
+      {
+        "us": 10189.75,
+        "a": 68,
+        "b": 0,
+        "c": 72,
+        "ab": 68,
+        "bc": -72,
+        "ca": 4,
+        "at_floor": true
+      },
+      {
+        "us": 10272.5625,
+        "a": 67,
+        "b": 0,
+        "c": 73,
+        "ab": 67,
+        "bc": -73,
+        "ca": 6,
+        "at_floor": true
+      },
+      {
+        "us": 10356.71875,
+        "a": 68,
+        "b": 0,
+        "c": 75,
+        "ab": 68,
+        "bc": -75,
+        "ca": 7,
+        "at_floor": true
+      },
+      {
+        "us": 10439.2125,
+        "a": 68,
+        "b": 0,
+        "c": 76,
+        "ab": 68,
+        "bc": -76,
+        "ca": 8,
+        "at_floor": true
+      },
+      {
+        "us": 10522.51875,
+        "a": 66,
+        "b": 0,
+        "c": 78,
+        "ab": 66,
+        "bc": -78,
+        "ca": 12,
+        "at_floor": true
+      },
+      {
+        "us": 10605.78125,
+        "a": 65,
+        "b": 0,
+        "c": 79,
+        "ab": 65,
+        "bc": -79,
+        "ca": 14,
+        "at_floor": true
+      },
+      {
+        "us": 10689.175,
+        "a": 64,
+        "b": 0,
+        "c": 80,
+        "ab": 64,
+        "bc": -80,
+        "ca": 16,
+        "at_floor": true
+      },
+      {
+        "us": 10772.56875,
+        "a": 60,
+        "b": 0,
+        "c": 84,
+        "ab": 60,
+        "bc": -84,
+        "ca": 24,
+        "at_floor": true
+      },
+      {
+        "us": 10855.7375,
+        "a": 58,
+        "b": 0,
+        "c": 87,
+        "ab": 58,
+        "bc": -87,
+        "ca": 29,
+        "at_floor": true
+      },
+      {
+        "us": 10939.6625,
+        "a": 55,
+        "b": 0,
+        "c": 87,
+        "ab": 55,
+        "bc": -87,
+        "ca": 32,
+        "at_floor": true
+      },
+      {
+        "us": 11022.78125,
+        "a": 51,
+        "b": 0,
+        "c": 90,
+        "ab": 51,
+        "bc": -90,
+        "ca": 39,
+        "at_floor": true
+      },
+      {
+        "us": 11105.79375,
+        "a": 47,
+        "b": 0,
+        "c": 92,
+        "ab": 47,
+        "bc": -92,
+        "ca": 45,
+        "at_floor": true
+      },
+      {
+        "us": 11189.11875,
+        "a": 43,
+        "b": 0,
+        "c": 94,
+        "ab": 43,
+        "bc": -94,
+        "ca": 51,
+        "at_floor": true
+      },
+      {
+        "us": 11272.5,
+        "a": 38,
+        "b": 0,
+        "c": 96,
+        "ab": 38,
+        "bc": -96,
+        "ca": 58,
+        "at_floor": true
+      },
+      {
+        "us": 11356.6625,
+        "a": 34,
+        "b": 0,
+        "c": 98,
+        "ab": 34,
+        "bc": -98,
+        "ca": 64,
+        "at_floor": true
+      },
+      {
+        "us": 11439.1,
+        "a": 30,
+        "b": 0,
+        "c": 100,
+        "ab": 30,
+        "bc": -100,
+        "ca": 70,
+        "at_floor": true
+      },
+      {
+        "us": 11522.3625,
+        "a": 24,
+        "b": 0,
+        "c": 104,
+        "ab": 24,
+        "bc": -104,
+        "ca": 80,
+        "at_floor": true
+      },
+      {
+        "us": 11606.48125,
+        "a": 19,
+        "b": 0,
+        "c": 105,
+        "ab": 19,
+        "bc": -105,
+        "ca": 86,
+        "at_floor": true
+      },
+      {
+        "us": 11689.06875,
+        "a": 17,
+        "b": 0,
+        "c": 104,
+        "ab": 17,
+        "bc": -104,
+        "ca": 87,
+        "at_floor": true
+      },
+      {
+        "us": 11772.33125,
+        "a": 14,
+        "b": 0,
+        "c": 106,
+        "ab": 14,
+        "bc": -106,
+        "ca": 92,
+        "at_floor": true
+      },
+      {
+        "us": 11856.36875,
+        "a": 11,
+        "b": 0,
+        "c": 107,
+        "ab": 11,
+        "bc": -107,
+        "ca": 96,
+        "at_floor": true
+      },
+      {
+        "us": 11939.06875,
+        "a": 8,
+        "b": 0,
+        "c": 106,
+        "ab": 8,
+        "bc": -106,
+        "ca": 98,
+        "at_floor": true
+      },
+      {
+        "us": 12022.39375,
+        "a": 8,
+        "b": 0,
+        "c": 104,
+        "ab": 8,
+        "bc": -104,
+        "ca": 96,
+        "at_floor": true
+      },
+      {
+        "us": 12105.69375,
+        "a": 8,
+        "b": 0,
+        "c": 103,
+        "ab": 8,
+        "bc": -103,
+        "ca": 95,
+        "at_floor": true
+      }
+    ]
+  },
+  "handoff": {
+    "trial": 2,
+    "pickup_ms": 1250.93445,
+    "coast_period_us": 2388.65625,
+    "closed_ms": null,
+    "closed_period_us": 0,
+    "sectors": [
+      {
+        "step": 3,
+        "at_ms": 1250.93445,
+        "edge_ms": 1252.30921875,
+        "streak": 1,
+        "samples": [
+          {
+            "us": 1.1625,
+            "a": 0,
+            "b": 0,
+            "c": 96,
+            "edge": false,
+            "qualified": false,
+            "rising": true,
+            "trigger_ticks": null
+          },
+          {
+            "us": 41.325,
+            "a": 0,
+            "b": 624,
+            "c": 2438,
+            "edge": false,
+            "qualified": false,
+            "rising": true,
+            "trigger_ticks": null
+          },
+          {
+            "us": 83.10625,
+            "a": 13,
+            "b": 669,
+            "c": 2463,
+            "edge": false,
+            "qualified": false,
+            "rising": true,
+            "trigger_ticks": null
+          },
+          {
+            "us": 124.65,
+            "a": 16,
+            "b": 697,
+            "c": 2438,
+            "edge": false,
+            "qualified": false,
+            "rising": true,
+            "trigger_ticks": null
+          },
+          {
+            "us": 166.26875,
+            "a": 15,
+            "b": 723,
+            "c": 2418,
+            "edge": false,
+            "qualified": false,
+            "rising": true,
+            "trigger_ticks": null
+          },
+          {
+            "us": 207.975,
+            "a": 14,
+            "b": 759,
+            "c": 2445,
+            "edge": false,
+            "qualified": false,
+            "rising": true,
+            "trigger_ticks": null
+          },
+          {
+            "us": 249.66875,
+            "a": 16,
+            "b": 775,
+            "c": 2413,
+            "edge": false,
+            "qualified": false,
+            "rising": true,
+            "trigger_ticks": null
+          },
+          {
+            "us": 291.7125,
+            "a": 16,
+            "b": 799,
+            "c": 2412,
+            "edge": false,
+            "qualified": false,
+            "rising": true,
+            "trigger_ticks": null
+          },
+          {
+            "us": 333.75,
+            "a": 16,
+            "b": 824,
+            "c": 2423,
+            "edge": false,
+            "qualified": false,
+            "rising": true,
+            "trigger_ticks": null
+          },
+          {
+            "us": 499.6125,
+            "a": 17,
+            "b": 880,
+            "c": 2393,
+            "edge": false,
+            "qualified": false,
+            "rising": true,
+            "trigger_ticks": null
+          },
+          {
+            "us": 666.35625,
+            "a": 17,
+            "b": 946,
+            "c": 2418,
+            "edge": false,
+            "qualified": false,
+            "rising": true,
+            "trigger_ticks": null
+          },
+          {
+            "us": 834.95,
+            "a": 17,
+            "b": 996,
+            "c": 2383,
+            "edge": false,
+            "qualified": false,
+            "rising": true,
+            "trigger_ticks": null
+          },
+          {
+            "us": 1000.25625,
+            "a": 5,
+            "b": 1085,
+            "c": 2399,
+            "edge": false,
+            "qualified": false,
+            "rising": true,
+            "trigger_ticks": null
+          },
+          {
+            "us": 1166.96875,
+            "a": 17,
+            "b": 1163,
+            "c": 2388,
+            "edge": false,
+            "qualified": false,
+            "rising": true,
+            "trigger_ticks": null
+          },
+          {
+            "us": 1333.06875,
+            "a": 17,
+            "b": 1221,
+            "c": 2381,
+            "edge": false,
+            "qualified": false,
+            "rising": true,
+            "trigger_ticks": null
+          },
+          {
+            "us": 1374.76875,
+            "a": 16,
+            "b": 1244,
+            "c": 2406,
+            "edge": true,
+            "qualified": true,
+            "rising": true,
+            "trigger_ticks": null
+          },
+          {
+            "us": 1499.53125,
+            "a": 17,
+            "b": 1266,
+            "c": 2398,
+            "edge": false,
+            "qualified": false,
+            "rising": true,
+            "trigger_ticks": null
+          },
+          {
+            "us": 1666.19375,
+            "a": 18,
+            "b": 1275,
+            "c": 2377,
+            "edge": false,
+            "qualified": false,
+            "rising": true,
+            "trigger_ticks": null
+          },
+          {
+            "us": 1833.51875,
+            "a": 17,
+            "b": 1287,
+            "c": 2406,
+            "edge": false,
+            "qualified": false,
+            "rising": true,
+            "trigger_ticks": null
+          },
+          {
+            "us": 2000.1875,
+            "a": 18,
+            "b": 1274,
+            "c": 2378,
+            "edge": false,
+            "qualified": false,
+            "rising": true,
+            "trigger_ticks": null
+          },
+          {
+            "us": 2166.1375,
+            "a": 18,
+            "b": 1285,
+            "c": 2391,
+            "edge": false,
+            "qualified": false,
+            "rising": true,
+            "trigger_ticks": null
+          },
+          {
+            "us": 2332.94375,
+            "a": 18,
+            "b": 1278,
+            "c": 2373,
+            "edge": false,
+            "qualified": false,
+            "rising": true,
+            "trigger_ticks": null
+          }
+        ]
+      },
+      {
+        "step": 4,
+        "at_ms": 1253.31889375,
+        "edge_ms": 1253.89398125,
+        "streak": 0,
+        "samples": [
+          {
+            "us": 33.84375,
+            "a": 16,
+            "b": 2452,
+            "c": 0,
+            "edge": false,
+            "qualified": false,
+            "rising": false,
+            "trigger_ticks": null
+          },
+          {
+            "us": 75.09375,
+            "a": 2,
+            "b": 2418,
+            "c": 0,
+            "edge": false,
+            "qualified": false,
+            "rising": false,
+            "trigger_ticks": null
+          },
+          {
+            "us": 116.8,
+            "a": 1,
+            "b": 2407,
+            "c": 267,
+            "edge": false,
+            "qualified": false,
+            "rising": false,
+            "trigger_ticks": 960
+          },
+          {
+            "us": 158.48125,
+            "a": 2,
+            "b": 2427,
+            "c": 1269,
+            "edge": false,
+            "qualified": false,
+            "rising": false,
+            "trigger_ticks": 960
+          },
+          {
+            "us": 200.24375,
+            "a": 6,
+            "b": 2402,
+            "c": 1275,
+            "edge": false,
+            "qualified": false,
+            "rising": false,
+            "trigger_ticks": 960
+          },
+          {
+            "us": 241.8,
+            "a": 6,
+            "b": 2415,
+            "c": 1278,
+            "edge": false,
+            "qualified": false,
+            "rising": false,
+            "trigger_ticks": 960
+          },
+          {
+            "us": 283.84375,
+            "a": 5,
+            "b": 2416,
+            "c": 1273,
+            "edge": false,
+            "qualified": false,
+            "rising": false,
+            "trigger_ticks": 960
+          },
+          {
+            "us": 325.60625,
+            "a": 6,
+            "b": 2400,
+            "c": 1254,
+            "edge": false,
+            "qualified": false,
+            "rising": false,
+            "trigger_ticks": 960
+          },
+          {
+            "us": 369.3625,
+            "a": 5,
+            "b": 2416,
+            "c": 1256,
+            "edge": false,
+            "qualified": false,
+            "rising": false,
+            "trigger_ticks": 960
+          },
+          {
+            "us": 450.0875,
+            "a": 7,
+            "b": 2393,
+            "c": 1214,
+            "edge": false,
+            "qualified": false,
+            "rising": false,
+            "trigger_ticks": 960
+          },
+          {
+            "us": 533.7625,
+            "a": 6,
+            "b": 2400,
+            "c": 1184,
+            "edge": false,
+            "qualified": false,
+            "rising": false,
+            "trigger_ticks": 960
+          },
+          {
+            "us": 575.0875,
+            "a": 6,
+            "b": 2397,
+            "c": 1162,
+            "edge": true,
+            "qualified": false,
+            "rising": false,
+            "trigger_ticks": 960
+          },
+          {
+            "us": 616.75,
+            "a": 6,
+            "b": 2416,
+            "c": 1154,
+            "edge": false,
+            "qualified": false,
+            "rising": false,
+            "trigger_ticks": 960
+          },
+          {
+            "us": 700.075,
+            "a": 6,
+            "b": 2402,
+            "c": 1106,
+            "edge": false,
+            "qualified": false,
+            "rising": false,
+            "trigger_ticks": 960
+          },
+          {
+            "us": 783.4,
+            "a": 3,
+            "b": 2387,
+            "c": 1058,
+            "edge": false,
+            "qualified": false,
+            "rising": false,
+            "trigger_ticks": 960
+          },
+          {
+            "us": 866.9375,
+            "a": 7,
+            "b": 2400,
+            "c": 1018,
+            "edge": false,
+            "qualified": false,
+            "rising": false,
+            "trigger_ticks": 960
+          },
+          {
+            "us": 950.31875,
+            "a": 5,
+            "b": 2420,
+            "c": 982,
+            "edge": false,
+            "qualified": false,
+            "rising": false,
+            "trigger_ticks": 960
+          },
+          {
+            "us": 1033.38125,
+            "a": 6,
+            "b": 2388,
+            "c": 929,
+            "edge": false,
+            "qualified": false,
+            "rising": false,
+            "trigger_ticks": 960
+          },
+          {
+            "us": 1116.7,
+            "a": 7,
+            "b": 2391,
+            "c": 892,
+            "edge": false,
+            "qualified": false,
+            "rising": false,
+            "trigger_ticks": 960
+          },
+          {
+            "us": 1199.9875,
+            "a": 5,
+            "b": 2405,
+            "c": 862,
+            "edge": false,
+            "qualified": false,
+            "rising": false,
+            "trigger_ticks": 960
+          },
+          {
+            "us": 1283.375,
+            "a": 6,
+            "b": 2397,
+            "c": 830,
+            "edge": false,
+            "qualified": false,
+            "rising": false,
+            "trigger_ticks": 960
+          },
+          {
+            "us": 1366.675,
+            "a": 6,
+            "b": 2384,
+            "c": 796,
+            "edge": false,
+            "qualified": false,
+            "rising": false,
+            "trigger_ticks": 960
+          },
+          {
+            "us": 1450.1875,
+            "a": 6,
+            "b": 2394,
+            "c": 774,
+            "edge": false,
+            "qualified": false,
+            "rising": false,
+            "trigger_ticks": 960
+          },
+          {
+            "us": 1533.325,
+            "a": 5,
+            "b": 2413,
+            "c": 756,
+            "edge": false,
+            "qualified": false,
+            "rising": false,
+            "trigger_ticks": 960
+          }
+        ]
+      }
+    ]
+  },
+  "step4_coast": {
+    "trial": 2,
+    "off_ms": 1254.92223125,
+    "step4_ms": 1253.31889375,
+    "step3_edge_ms": 1252.30921875,
+    "drive_us": 1603.3375,
+    "seen": 960,
+    "count": 492,
+    "samples": [
+      {
+        "us": 24.33125,
+        "a": 2628,
+        "b": 0,
+        "c": 1481,
+        "ab": 2628,
+        "bc": -1481,
+        "ca": -1147,
+        "at_floor": true
+      },
+      {
+        "us": 65.24375,
+        "a": 714,
+        "b": 789,
+        "c": 729,
+        "ab": -75,
+        "bc": 60,
+        "ca": 15,
+        "at_floor": false
+      },
+      {
+        "us": 106.8,
+        "a": 332,
+        "b": 424,
+        "c": 360,
+        "ab": -92,
+        "bc": 64,
+        "ca": 28,
+        "at_floor": false
+      },
+      {
+        "us": 148.78125,
+        "a": 147,
+        "b": 245,
+        "c": 178,
+        "ab": -98,
+        "bc": 67,
+        "ca": 31,
+        "at_floor": false
+      },
+      {
+        "us": 190.20625,
+        "a": 54,
+        "b": 157,
+        "c": 89,
+        "ab": -103,
+        "bc": 68,
+        "ca": 35,
+        "at_floor": false
+      },
+      {
+        "us": 231.9625,
+        "a": 8,
+        "b": 109,
+        "c": 39,
+        "ab": -101,
+        "bc": 70,
+        "ca": 31,
+        "at_floor": false
+      },
+      {
+        "us": 274.3875,
+        "a": 0,
+        "b": 87,
+        "c": 14,
+        "ab": -87,
+        "bc": 73,
+        "ca": 14,
+        "at_floor": true
+      },
+      {
+        "us": 315.21875,
+        "a": 0,
+        "b": 73,
+        "c": 0,
+        "ab": -73,
+        "bc": 73,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 356.79375,
+        "a": 0,
+        "b": 64,
+        "c": 0,
+        "ab": -64,
+        "bc": 64,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 399.025,
+        "a": 0,
+        "b": 63,
+        "c": 0,
+        "ab": -63,
+        "bc": 63,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 440.2125,
+        "a": 0,
+        "b": 60,
+        "c": 0,
+        "ab": -60,
+        "bc": 60,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 481.875,
+        "a": 0,
+        "b": 61,
+        "c": 0,
+        "ab": -61,
+        "bc": 61,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 523.5125,
+        "a": 0,
+        "b": 61,
+        "c": 0,
+        "ab": -61,
+        "bc": 61,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 565.60625,
+        "a": 0,
+        "b": 60,
+        "c": 0,
+        "ab": -60,
+        "bc": 60,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 606.85,
+        "a": 0,
+        "b": 60,
+        "c": 0,
+        "ab": -60,
+        "bc": 60,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 649.18125,
+        "a": 0,
+        "b": 61,
+        "c": 0,
+        "ab": -61,
+        "bc": 61,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 690.16875,
+        "a": 0,
+        "b": 62,
+        "c": 0,
+        "ab": -62,
+        "bc": 62,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 732.49375,
+        "a": 0,
+        "b": 63,
+        "c": 0,
+        "ab": -63,
+        "bc": 63,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 774.1375,
+        "a": 0,
+        "b": 62,
+        "c": 0,
+        "ab": -62,
+        "bc": 62,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 815.5375,
+        "a": 0,
+        "b": 61,
+        "c": 0,
+        "ab": -61,
+        "bc": 61,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 856.81875,
+        "a": 0,
+        "b": 62,
+        "c": 0,
+        "ab": -62,
+        "bc": 62,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 898.4875,
+        "a": 0,
+        "b": 61,
+        "c": 0,
+        "ab": -61,
+        "bc": 61,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 940.375,
+        "a": 0,
+        "b": 63,
+        "c": 0,
+        "ab": -63,
+        "bc": 63,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 981.825,
+        "a": 0,
+        "b": 62,
+        "c": 0,
+        "ab": -62,
+        "bc": 62,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 1024.075,
+        "a": 0,
+        "b": 64,
+        "c": 0,
+        "ab": -64,
+        "bc": 64,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 1107.29375,
+        "a": 0,
+        "b": 66,
+        "c": 0,
+        "ab": -66,
+        "bc": 66,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 1190.425,
+        "a": 0,
+        "b": 66,
+        "c": 0,
+        "ab": -66,
+        "bc": 66,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 1273.64375,
+        "a": 0,
+        "b": 66,
+        "c": 0,
+        "ab": -66,
+        "bc": 66,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 1356.95,
+        "a": 0,
+        "b": 66,
+        "c": 0,
+        "ab": -66,
+        "bc": 66,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 1440.14375,
+        "a": 0,
+        "b": 70,
+        "c": 0,
+        "ab": -70,
+        "bc": 70,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 1523.41875,
+        "a": 0,
+        "b": 70,
+        "c": 0,
+        "ab": -70,
+        "bc": 70,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 1606.7375,
+        "a": 0,
+        "b": 70,
+        "c": 0,
+        "ab": -70,
+        "bc": 70,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 1692.1,
+        "a": 0,
+        "b": 73,
+        "c": 0,
+        "ab": -73,
+        "bc": 73,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 1773.475,
+        "a": 0,
+        "b": 74,
+        "c": 0,
+        "ab": -74,
+        "bc": 74,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 1856.725,
+        "a": 0,
+        "b": 76,
+        "c": 0,
+        "ab": -76,
+        "bc": 76,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 1939.95,
+        "a": 0,
+        "b": 79,
+        "c": 0,
+        "ab": -79,
+        "bc": 79,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 2023.38125,
+        "a": 0,
+        "b": 81,
+        "c": 0,
+        "ab": -81,
+        "bc": 81,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 2106.70625,
+        "a": 0,
+        "b": 81,
+        "c": 0,
+        "ab": -81,
+        "bc": 81,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 2190.01875,
+        "a": 0,
+        "b": 83,
+        "c": 0,
+        "ab": -83,
+        "bc": 83,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 2273.3375,
+        "a": 0,
+        "b": 83,
+        "c": 0,
+        "ab": -83,
+        "bc": 83,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 2356.66875,
+        "a": 0,
+        "b": 83,
+        "c": 0,
+        "ab": -83,
+        "bc": 83,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 2440.7125,
+        "a": 3,
+        "b": 85,
+        "c": 0,
+        "ab": -82,
+        "bc": 85,
+        "ca": -3,
+        "at_floor": true
+      },
+      {
+        "us": 2523.725,
+        "a": 10,
+        "b": 85,
+        "c": 0,
+        "ab": -75,
+        "bc": 85,
+        "ca": -10,
+        "at_floor": true
+      },
+      {
+        "us": 2607.00625,
+        "a": 17,
+        "b": 84,
+        "c": 0,
+        "ab": -67,
+        "bc": 84,
+        "ca": -17,
+        "at_floor": true
+      },
+      {
+        "us": 2689.98125,
+        "a": 22,
+        "b": 84,
+        "c": 0,
+        "ab": -62,
+        "bc": 84,
+        "ca": -22,
+        "at_floor": true
+      },
+      {
+        "us": 2773.2875,
+        "a": 28,
+        "b": 84,
+        "c": 0,
+        "ab": -56,
+        "bc": 84,
+        "ca": -28,
+        "at_floor": true
+      },
+      {
+        "us": 2857.34375,
+        "a": 34,
+        "b": 82,
+        "c": 0,
+        "ab": -48,
+        "bc": 82,
+        "ca": -34,
+        "at_floor": true
+      },
+      {
+        "us": 2940.35625,
+        "a": 40,
+        "b": 80,
+        "c": 0,
+        "ab": -40,
+        "bc": 80,
+        "ca": -40,
+        "at_floor": true
+      },
+      {
+        "us": 3023.40625,
+        "a": 44,
+        "b": 79,
+        "c": 0,
+        "ab": -35,
+        "bc": 79,
+        "ca": -44,
+        "at_floor": true
+      },
+      {
+        "us": 3106.70625,
+        "a": 50,
+        "b": 74,
+        "c": 0,
+        "ab": -24,
+        "bc": 74,
+        "ca": -50,
+        "at_floor": true
+      },
+      {
+        "us": 3189.925,
+        "a": 51,
+        "b": 73,
+        "c": 0,
+        "ab": -22,
+        "bc": 73,
+        "ca": -51,
+        "at_floor": true
+      },
+      {
+        "us": 3273.71875,
+        "a": 53,
+        "b": 71,
+        "c": 0,
+        "ab": -18,
+        "bc": 71,
+        "ca": -53,
+        "at_floor": true
+      },
+      {
+        "us": 3356.55625,
+        "a": 55,
+        "b": 68,
+        "c": 0,
+        "ab": -13,
+        "bc": 68,
+        "ca": -55,
+        "at_floor": true
+      },
+      {
+        "us": 3440.1875,
+        "a": 56,
+        "b": 66,
+        "c": 0,
+        "ab": -10,
+        "bc": 66,
+        "ca": -56,
+        "at_floor": true
+      },
+      {
+        "us": 3523.65625,
+        "a": 56,
+        "b": 64,
+        "c": 0,
+        "ab": -8,
+        "bc": 64,
+        "ca": -56,
+        "at_floor": true
+      },
+      {
+        "us": 3606.7,
+        "a": 58,
+        "b": 62,
+        "c": 0,
+        "ab": -4,
+        "bc": 62,
+        "ca": -58,
+        "at_floor": true
+      },
+      {
+        "us": 3689.875,
+        "a": 59,
+        "b": 60,
+        "c": 0,
+        "ab": -1,
+        "bc": 60,
+        "ca": -59,
+        "at_floor": true
+      },
+      {
+        "us": 3773.93125,
+        "a": 59,
+        "b": 58,
+        "c": 0,
+        "ab": 1,
+        "bc": 58,
+        "ca": -59,
+        "at_floor": true
+      },
+      {
+        "us": 3856.6,
+        "a": 59,
+        "b": 54,
+        "c": 0,
+        "ab": 5,
+        "bc": 54,
+        "ca": -59,
+        "at_floor": true
+      },
+      {
+        "us": 3939.83125,
+        "a": 62,
+        "b": 53,
+        "c": 0,
+        "ab": 9,
+        "bc": 53,
+        "ca": -62,
+        "at_floor": true
+      },
+      {
+        "us": 4023.225,
+        "a": 63,
+        "b": 52,
+        "c": 0,
+        "ab": 11,
+        "bc": 52,
+        "ca": -63,
+        "at_floor": true
+      },
+      {
+        "us": 4106.48125,
+        "a": 64,
+        "b": 51,
+        "c": 0,
+        "ab": 13,
+        "bc": 51,
+        "ca": -64,
+        "at_floor": true
+      },
+      {
+        "us": 4191.20625,
+        "a": 65,
+        "b": 47,
+        "c": 0,
+        "ab": 18,
+        "bc": 47,
+        "ca": -65,
+        "at_floor": true
+      },
+      {
+        "us": 4273.15,
+        "a": 64,
+        "b": 47,
+        "c": 0,
+        "ab": 17,
+        "bc": 47,
+        "ca": -64,
+        "at_floor": true
+      },
+      {
+        "us": 4356.46875,
+        "a": 67,
+        "b": 47,
+        "c": 0,
+        "ab": 20,
+        "bc": 47,
+        "ca": -67,
+        "at_floor": true
+      },
+      {
+        "us": 4439.7125,
+        "a": 68,
+        "b": 46,
+        "c": 0,
+        "ab": 22,
+        "bc": 46,
+        "ca": -68,
+        "at_floor": true
+      },
+      {
+        "us": 4523.10625,
+        "a": 69,
+        "b": 43,
+        "c": 0,
+        "ab": 26,
+        "bc": 43,
+        "ca": -69,
+        "at_floor": true
+      },
+      {
+        "us": 4607.26875,
+        "a": 71,
+        "b": 40,
+        "c": 0,
+        "ab": 31,
+        "bc": 40,
+        "ca": -71,
+        "at_floor": true
+      },
+      {
+        "us": 4690.4875,
+        "a": 74,
+        "b": 38,
+        "c": 0,
+        "ab": 36,
+        "bc": 38,
+        "ca": -74,
+        "at_floor": true
+      },
+      {
+        "us": 4773.0875,
+        "a": 76,
+        "b": 38,
+        "c": 0,
+        "ab": 38,
+        "bc": 38,
+        "ca": -76,
+        "at_floor": true
+      },
+      {
+        "us": 4856.8875,
+        "a": 79,
+        "b": 35,
+        "c": 0,
+        "ab": 44,
+        "bc": 35,
+        "ca": -79,
+        "at_floor": true
+      },
+      {
+        "us": 4940.2125,
+        "a": 80,
+        "b": 32,
+        "c": 0,
+        "ab": 48,
+        "bc": 32,
+        "ca": -80,
+        "at_floor": true
+      },
+      {
+        "us": 5023.2375,
+        "a": 82,
+        "b": 27,
+        "c": 0,
+        "ab": 55,
+        "bc": 27,
+        "ca": -82,
+        "at_floor": true
+      },
+      {
+        "us": 5106.6375,
+        "a": 84,
+        "b": 26,
+        "c": 0,
+        "ab": 58,
+        "bc": 26,
+        "ca": -84,
+        "at_floor": true
+      },
+      {
+        "us": 5189.7375,
+        "a": 86,
+        "b": 23,
+        "c": 0,
+        "ab": 63,
+        "bc": 23,
+        "ca": -86,
+        "at_floor": true
+      },
+      {
+        "us": 5273.03125,
+        "a": 88,
+        "b": 21,
+        "c": 0,
+        "ab": 67,
+        "bc": 21,
+        "ca": -88,
+        "at_floor": true
+      },
+      {
+        "us": 5356.63125,
+        "a": 90,
+        "b": 17,
+        "c": 0,
+        "ab": 73,
+        "bc": 17,
+        "ca": -90,
+        "at_floor": true
+      },
+      {
+        "us": 5439.6875,
+        "a": 96,
+        "b": 16,
+        "c": 0,
+        "ab": 80,
+        "bc": 16,
+        "ca": -96,
+        "at_floor": true
+      },
+      {
+        "us": 5523.03125,
+        "a": 98,
+        "b": 13,
+        "c": 0,
+        "ab": 85,
+        "bc": 13,
+        "ca": -98,
+        "at_floor": true
+      },
+      {
+        "us": 5606.34375,
+        "a": 100,
+        "b": 11,
+        "c": 0,
+        "ab": 89,
+        "bc": 11,
+        "ca": -100,
+        "at_floor": true
+      },
+      {
+        "us": 5689.65625,
+        "a": 101,
+        "b": 8,
+        "c": 0,
+        "ab": 93,
+        "bc": 8,
+        "ca": -101,
+        "at_floor": true
+      },
+      {
+        "us": 5772.99375,
+        "a": 104,
+        "b": 7,
+        "c": 0,
+        "ab": 97,
+        "bc": 7,
+        "ca": -104,
+        "at_floor": true
+      },
+      {
+        "us": 5856.8375,
+        "a": 105,
+        "b": 4,
+        "c": 0,
+        "ab": 101,
+        "bc": 4,
+        "ca": -105,
+        "at_floor": true
+      },
+      {
+        "us": 5939.95,
+        "a": 107,
+        "b": 3,
+        "c": 0,
+        "ab": 104,
+        "bc": 3,
+        "ca": -107,
+        "at_floor": true
+      },
+      {
+        "us": 6023.30625,
+        "a": 108,
+        "b": 1,
+        "c": 0,
+        "ab": 107,
+        "bc": 1,
+        "ca": -108,
+        "at_floor": true
+      },
+      {
+        "us": 6106.2875,
+        "a": 109,
+        "b": 0,
+        "c": 0,
+        "ab": 109,
+        "bc": 0,
+        "ca": -109,
+        "at_floor": true
+      },
+      {
+        "us": 6189.6125,
+        "a": 112,
+        "b": 0,
+        "c": 0,
+        "ab": 112,
+        "bc": 0,
+        "ca": -112,
+        "at_floor": true
+      },
+      {
+        "us": 6273.01875,
+        "a": 113,
+        "b": 0,
+        "c": 0,
+        "ab": 113,
+        "bc": 0,
+        "ca": -113,
+        "at_floor": true
+      },
+      {
+        "us": 6356.26875,
+        "a": 113,
+        "b": 0,
+        "c": 0,
+        "ab": 113,
+        "bc": 0,
+        "ca": -113,
+        "at_floor": true
+      },
+      {
+        "us": 6439.60625,
+        "a": 115,
+        "b": 0,
+        "c": 0,
+        "ab": 115,
+        "bc": 0,
+        "ca": -115,
+        "at_floor": true
+      },
+      {
+        "us": 6522.93125,
+        "a": 116,
+        "b": 0,
+        "c": 0,
+        "ab": 116,
+        "bc": 0,
+        "ca": -116,
+        "at_floor": true
+      },
+      {
+        "us": 6606.26875,
+        "a": 119,
+        "b": 0,
+        "c": 1,
+        "ab": 119,
+        "bc": -1,
+        "ca": -118,
+        "at_floor": true
+      },
+      {
+        "us": 6690.28125,
+        "a": 117,
+        "b": 0,
+        "c": 3,
+        "ab": 117,
+        "bc": -3,
+        "ca": -114,
+        "at_floor": true
+      },
+      {
+        "us": 6772.925,
+        "a": 116,
+        "b": 0,
+        "c": 5,
+        "ab": 116,
+        "bc": -5,
+        "ca": -111,
+        "at_floor": true
+      },
+      {
+        "us": 6856.30625,
+        "a": 116,
+        "b": 0,
+        "c": 9,
+        "ab": 116,
+        "bc": -9,
+        "ca": -107,
+        "at_floor": true
+      },
+      {
+        "us": 6939.7125,
+        "a": 116,
+        "b": 0,
+        "c": 12,
+        "ab": 116,
+        "bc": -12,
+        "ca": -104,
+        "at_floor": true
+      },
+      {
+        "us": 7022.85625,
+        "a": 114,
+        "b": 0,
+        "c": 17,
+        "ab": 114,
+        "bc": -17,
+        "ca": -97,
+        "at_floor": true
+      },
+      {
+        "us": 7106.35,
+        "a": 109,
+        "b": 0,
+        "c": 23,
+        "ab": 109,
+        "bc": -23,
+        "ca": -86,
+        "at_floor": true
+      },
+      {
+        "us": 7189.56875,
+        "a": 107,
+        "b": 0,
+        "c": 28,
+        "ab": 107,
+        "bc": -28,
+        "ca": -79,
+        "at_floor": true
+      },
+      {
+        "us": 7273.375,
+        "a": 105,
+        "b": 0,
+        "c": 35,
+        "ab": 105,
+        "bc": -35,
+        "ca": -70,
+        "at_floor": true
+      },
+      {
+        "us": 7356.55625,
+        "a": 103,
+        "b": 0,
+        "c": 39,
+        "ab": 103,
+        "bc": -39,
+        "ca": -64,
+        "at_floor": true
+      },
+      {
+        "us": 7439.95,
+        "a": 100,
+        "b": 0,
+        "c": 43,
+        "ab": 100,
+        "bc": -43,
+        "ca": -57,
+        "at_floor": true
+      },
+      {
+        "us": 7523.0875,
+        "a": 96,
+        "b": 0,
+        "c": 49,
+        "ab": 96,
+        "bc": -49,
+        "ca": -47,
+        "at_floor": true
+      },
+      {
+        "us": 7608.2125,
+        "a": 94,
+        "b": 0,
+        "c": 53,
+        "ab": 94,
+        "bc": -53,
+        "ca": -41,
+        "at_floor": true
+      },
+      {
+        "us": 7689.44375,
+        "a": 90,
+        "b": 0,
+        "c": 55,
+        "ab": 90,
+        "bc": -55,
+        "ca": -35,
+        "at_floor": true
+      },
+      {
+        "us": 7772.7875,
+        "a": 86,
+        "b": 0,
+        "c": 58,
+        "ab": 86,
+        "bc": -58,
+        "ca": -28,
+        "at_floor": true
+      },
+      {
+        "us": 7856.0375,
+        "a": 84,
+        "b": 0,
+        "c": 61,
+        "ab": 84,
+        "bc": -61,
+        "ca": -23,
+        "at_floor": true
+      },
+      {
+        "us": 7939.45,
+        "a": 82,
+        "b": 0,
+        "c": 61,
+        "ab": 82,
+        "bc": -61,
+        "ca": -21,
+        "at_floor": true
+      },
+      {
+        "us": 8022.78125,
+        "a": 79,
+        "b": 0,
+        "c": 62,
+        "ab": 79,
+        "bc": -62,
+        "ca": -17,
+        "at_floor": true
+      },
+      {
+        "us": 8106.1,
+        "a": 76,
+        "b": 0,
+        "c": 62,
+        "ab": 76,
+        "bc": -62,
+        "ca": -14,
+        "at_floor": true
+      },
+      {
+        "us": 8189.40625,
+        "a": 73,
+        "b": 0,
+        "c": 64,
+        "ab": 73,
+        "bc": -64,
+        "ca": -9,
+        "at_floor": true
+      },
+      {
+        "us": 8272.76875,
+        "a": 73,
+        "b": 0,
+        "c": 65,
+        "ab": 73,
+        "bc": -65,
+        "ca": -8,
+        "at_floor": true
+      },
+      {
+        "us": 8356.05625,
+        "a": 71,
+        "b": 0,
+        "c": 65,
+        "ab": 71,
+        "bc": -65,
+        "ca": -6,
+        "at_floor": true
+      },
+      {
+        "us": 8439.38125,
+        "a": 69,
+        "b": 0,
+        "c": 66,
+        "ab": 69,
+        "bc": -66,
+        "ca": -3,
+        "at_floor": true
+      },
+      {
+        "us": 8522.625,
+        "a": 67,
+        "b": 0,
+        "c": 68,
+        "ab": 67,
+        "bc": -68,
+        "ca": 1,
+        "at_floor": true
+      },
+      {
+        "us": 8606.05,
+        "a": 68,
+        "b": 0,
+        "c": 66,
+        "ab": 68,
+        "bc": -66,
+        "ca": -2,
+        "at_floor": true
+      },
+      {
+        "us": 8689.38125,
+        "a": 66,
+        "b": 0,
+        "c": 68,
+        "ab": 66,
+        "bc": -68,
+        "ca": 2,
+        "at_floor": true
+      },
+      {
+        "us": 8772.7,
+        "a": 65,
+        "b": 0,
+        "c": 68,
+        "ab": 65,
+        "bc": -68,
+        "ca": 3,
+        "at_floor": true
+      },
+      {
+        "us": 8856.05,
+        "a": 64,
+        "b": 0,
+        "c": 68,
+        "ab": 64,
+        "bc": -68,
+        "ca": 4,
+        "at_floor": true
+      },
+      {
+        "us": 8939.3375,
+        "a": 65,
+        "b": 0,
+        "c": 69,
+        "ab": 65,
+        "bc": -69,
+        "ca": 4,
+        "at_floor": true
+      },
+      {
+        "us": 9022.66875,
+        "a": 62,
+        "b": 0,
+        "c": 72,
+        "ab": 62,
+        "bc": -72,
+        "ca": 10,
+        "at_floor": true
+      },
+      {
+        "us": 9106.0125,
+        "a": 61,
+        "b": 0,
+        "c": 73,
+        "ab": 61,
+        "bc": -73,
+        "ca": 12,
+        "at_floor": true
+      },
+      {
+        "us": 9189.30625,
+        "a": 60,
+        "b": 0,
+        "c": 73,
+        "ab": 60,
+        "bc": -73,
+        "ca": 13,
+        "at_floor": true
+      },
+      {
+        "us": 9272.64375,
+        "a": 60,
+        "b": 0,
+        "c": 75,
+        "ab": 60,
+        "bc": -75,
+        "ca": 15,
+        "at_floor": true
+      },
+      {
+        "us": 9355.96875,
+        "a": 60,
+        "b": 0,
+        "c": 76,
+        "ab": 60,
+        "bc": -76,
+        "ca": 16,
+        "at_floor": true
+      },
+      {
+        "us": 9439.2125,
+        "a": 56,
+        "b": 0,
+        "c": 80,
+        "ab": 56,
+        "bc": -80,
+        "ca": 24,
+        "at_floor": true
+      },
+      {
+        "us": 9522.65,
+        "a": 53,
+        "b": 0,
+        "c": 82,
+        "ab": 53,
+        "bc": -82,
+        "ca": 29,
+        "at_floor": true
+      },
+      {
+        "us": 9605.93125,
+        "a": 51,
+        "b": 0,
+        "c": 83,
+        "ab": 51,
+        "bc": -83,
+        "ca": 32,
+        "at_floor": true
+      },
+      {
+        "us": 9689.56875,
+        "a": 48,
+        "b": 0,
+        "c": 88,
+        "ab": 48,
+        "bc": -88,
+        "ca": 40,
+        "at_floor": true
+      },
+      {
+        "us": 9772.5875,
+        "a": 45,
+        "b": 0,
+        "c": 87,
+        "ab": 45,
+        "bc": -87,
+        "ca": 42,
+        "at_floor": true
+      },
+      {
+        "us": 9855.95625,
+        "a": 41,
+        "b": 0,
+        "c": 91,
+        "ab": 41,
+        "bc": -91,
+        "ca": 50,
+        "at_floor": true
+      },
+      {
+        "us": 9939.25,
+        "a": 38,
+        "b": 0,
+        "c": 95,
+        "ab": 38,
+        "bc": -95,
+        "ca": 57,
+        "at_floor": true
+      },
+      {
+        "us": 10022.5625,
+        "a": 33,
+        "b": 0,
+        "c": 99,
+        "ab": 33,
+        "bc": -99,
+        "ca": 66,
+        "at_floor": true
+      },
+      {
+        "us": 10107.05,
+        "a": 28,
+        "b": 0,
+        "c": 102,
+        "ab": 28,
+        "bc": -102,
+        "ca": 74,
+        "at_floor": true
+      },
+      {
+        "us": 10189.20625,
+        "a": 22,
+        "b": 0,
+        "c": 107,
+        "ab": 22,
+        "bc": -107,
+        "ca": 85,
+        "at_floor": true
+      },
+      {
+        "us": 10272.54375,
+        "a": 19,
+        "b": 0,
+        "c": 109,
+        "ab": 19,
+        "bc": -109,
+        "ca": 90,
+        "at_floor": true
+      },
+      {
+        "us": 10355.79375,
+        "a": 16,
+        "b": 0,
+        "c": 111,
+        "ab": 16,
+        "bc": -111,
+        "ca": 95,
+        "at_floor": true
+      },
+      {
+        "us": 10439.18125,
+        "a": 10,
+        "b": 0,
+        "c": 115,
+        "ab": 10,
+        "bc": -115,
+        "ca": 105,
+        "at_floor": true
+      },
+      {
+        "us": 10522.525,
+        "a": 5,
+        "b": 0,
+        "c": 115,
+        "ab": 5,
+        "bc": -115,
+        "ca": 110,
+        "at_floor": true
+      },
+      {
+        "us": 10605.83125,
+        "a": 4,
+        "b": 0,
+        "c": 115,
+        "ab": 4,
+        "bc": -115,
+        "ca": 111,
+        "at_floor": true
+      },
+      {
+        "us": 10689.65,
+        "a": 2,
+        "b": 0,
+        "c": 116,
+        "ab": 2,
+        "bc": -116,
+        "ca": 114,
+        "at_floor": true
+      },
+      {
+        "us": 10772.5,
+        "a": 0,
+        "b": 0,
+        "c": 118,
+        "ab": 0,
+        "bc": -118,
+        "ca": 118,
+        "at_floor": true
+      },
+      {
+        "us": 10855.825,
+        "a": 0,
+        "b": 0,
+        "c": 118,
+        "ab": 0,
+        "bc": -118,
+        "ca": 118,
+        "at_floor": true
+      },
+      {
+        "us": 10939.15,
+        "a": 0,
+        "b": 0,
+        "c": 115,
+        "ab": 0,
+        "bc": -115,
+        "ca": 115,
+        "at_floor": true
+      },
+      {
+        "us": 11022.39375,
+        "a": 0,
+        "b": 0,
+        "c": 114,
+        "ab": 0,
+        "bc": -114,
+        "ca": 114,
+        "at_floor": true
+      },
+      {
+        "us": 11106.5125,
+        "a": 0,
+        "b": 0,
+        "c": 115,
+        "ab": 0,
+        "bc": -115,
+        "ca": 115,
+        "at_floor": true
+      },
+      {
+        "us": 11189.575,
+        "a": 0,
+        "b": 1,
+        "c": 115,
+        "ab": -1,
+        "bc": -114,
+        "ca": 115,
+        "at_floor": true
+      },
+      {
+        "us": 11272.9875,
+        "a": 0,
+        "b": 2,
+        "c": 111,
+        "ab": -2,
+        "bc": -109,
+        "ca": 111,
+        "at_floor": true
+      },
+      {
+        "us": 11356.11875,
+        "a": 0,
+        "b": 3,
+        "c": 112,
+        "ab": -3,
+        "bc": -109,
+        "ca": 112,
+        "at_floor": true
+      },
+      {
+        "us": 11439.30625,
+        "a": 0,
+        "b": 5,
+        "c": 111,
+        "ab": -5,
+        "bc": -106,
+        "ca": 111,
+        "at_floor": true
+      },
+      {
+        "us": 11522.91875,
+        "a": 0,
+        "b": 9,
+        "c": 110,
+        "ab": -9,
+        "bc": -101,
+        "ca": 110,
+        "at_floor": true
+      },
+      {
+        "us": 11606.2625,
+        "a": 0,
+        "b": 9,
+        "c": 108,
+        "ab": -9,
+        "bc": -99,
+        "ca": 108,
+        "at_floor": true
+      },
+      {
+        "us": 11689.08125,
+        "a": 0,
+        "b": 13,
+        "c": 104,
+        "ab": -13,
+        "bc": -91,
+        "ca": 104,
+        "at_floor": true
+      },
+      {
+        "us": 11772.8875,
+        "a": 0,
+        "b": 18,
+        "c": 103,
+        "ab": -18,
+        "bc": -85,
+        "ca": 103,
+        "at_floor": true
+      },
+      {
+        "us": 11855.98125,
+        "a": 0,
+        "b": 21,
+        "c": 102,
+        "ab": -21,
+        "bc": -81,
+        "ca": 102,
+        "at_floor": true
+      },
+      {
+        "us": 11939.3125,
+        "a": 0,
+        "b": 25,
+        "c": 98,
+        "ab": -25,
+        "bc": -73,
+        "ca": 98,
+        "at_floor": true
+      },
+      {
+        "us": 12022.675,
+        "a": 0,
+        "b": 29,
+        "c": 95,
+        "ab": -29,
+        "bc": -66,
+        "ca": 95,
+        "at_floor": true
+      },
+      {
+        "us": 12106.04375,
+        "a": 0,
+        "b": 33,
+        "c": 92,
+        "ab": -33,
+        "bc": -59,
+        "ca": 92,
+        "at_floor": true
+      },
+      {
+        "us": 12188.93125,
+        "a": 0,
+        "b": 36,
+        "c": 89,
+        "ab": -36,
+        "bc": -53,
+        "ca": 89,
+        "at_floor": true
+      },
+      {
+        "us": 12272.35,
+        "a": 0,
+        "b": 39,
+        "c": 87,
+        "ab": -39,
+        "bc": -48,
+        "ca": 87,
+        "at_floor": true
+      },
+      {
+        "us": 12355.66875,
+        "a": 0,
+        "b": 42,
+        "c": 84,
+        "ab": -42,
+        "bc": -42,
+        "ca": 84,
+        "at_floor": true
+      },
+      {
+        "us": 12438.98125,
+        "a": 0,
+        "b": 46,
+        "c": 82,
+        "ab": -46,
+        "bc": -36,
+        "ca": 82,
+        "at_floor": true
+      },
+      {
+        "us": 12522.325,
+        "a": 0,
+        "b": 50,
+        "c": 82,
+        "ab": -50,
+        "bc": -32,
+        "ca": 82,
+        "at_floor": true
+      },
+      {
+        "us": 12606.03125,
+        "a": 0,
+        "b": 52,
+        "c": 81,
+        "ab": -52,
+        "bc": -29,
+        "ca": 81,
+        "at_floor": true
+      },
+      {
+        "us": 12688.98125,
+        "a": 0,
+        "b": 53,
+        "c": 79,
+        "ab": -53,
+        "bc": -26,
+        "ca": 79,
+        "at_floor": true
+      },
+      {
+        "us": 12772.28125,
+        "a": 0,
+        "b": 56,
+        "c": 78,
+        "ab": -56,
+        "bc": -22,
+        "ca": 78,
+        "at_floor": true
+      },
+      {
+        "us": 12855.78125,
+        "a": 0,
+        "b": 59,
+        "c": 77,
+        "ab": -59,
+        "bc": -18,
+        "ca": 77,
+        "at_floor": true
+      },
+      {
+        "us": 12938.95625,
+        "a": 0,
+        "b": 59,
+        "c": 75,
+        "ab": -59,
+        "bc": -16,
+        "ca": 75,
+        "at_floor": true
+      },
+      {
+        "us": 13022.2625,
+        "a": 0,
+        "b": 60,
+        "c": 74,
+        "ab": -60,
+        "bc": -14,
+        "ca": 74,
+        "at_floor": true
+      },
+      {
+        "us": 13106.05625,
+        "a": 0,
+        "b": 62,
+        "c": 73,
+        "ab": -62,
+        "bc": -11,
+        "ca": 73,
+        "at_floor": true
+      },
+      {
+        "us": 13189.23125,
+        "a": 0,
+        "b": 64,
+        "c": 73,
+        "ab": -64,
+        "bc": -9,
+        "ca": 73,
+        "at_floor": true
+      },
+      {
+        "us": 13272.4875,
+        "a": 0,
+        "b": 67,
+        "c": 72,
+        "ab": -67,
+        "bc": -5,
+        "ca": 72,
+        "at_floor": true
+      },
+      {
+        "us": 13355.94375,
+        "a": 0,
+        "b": 66,
+        "c": 73,
+        "ab": -66,
+        "bc": -7,
+        "ca": 73,
+        "at_floor": true
+      },
+      {
+        "us": 13439.05625,
+        "a": 0,
+        "b": 67,
+        "c": 72,
+        "ab": -67,
+        "bc": -5,
+        "ca": 72,
+        "at_floor": true
+      },
+      {
+        "us": 13524.175,
+        "a": 0,
+        "b": 70,
+        "c": 71,
+        "ab": -70,
+        "bc": -1,
+        "ca": 71,
+        "at_floor": true
+      },
+      {
+        "us": 13605.53125,
+        "a": 0,
+        "b": 72,
+        "c": 71,
+        "ab": -72,
+        "bc": 1,
+        "ca": 71,
+        "at_floor": true
+      },
+      {
+        "us": 13689.225,
+        "a": 0,
+        "b": 73,
+        "c": 70,
+        "ab": -73,
+        "bc": 3,
+        "ca": 70,
+        "at_floor": true
+      },
+      {
+        "us": 13772.625,
+        "a": 0,
+        "b": 76,
+        "c": 68,
+        "ab": -76,
+        "bc": 8,
+        "ca": 68,
+        "at_floor": true
+      },
+      {
+        "us": 13855.7125,
+        "a": 0,
+        "b": 78,
+        "c": 67,
+        "ab": -78,
+        "bc": 11,
+        "ca": 67,
+        "at_floor": true
+      },
+      {
+        "us": 13939.03125,
+        "a": 0,
+        "b": 80,
+        "c": 67,
+        "ab": -80,
+        "bc": 13,
+        "ca": 67,
+        "at_floor": true
+      },
+      {
+        "us": 14022.38125,
+        "a": 0,
+        "b": 81,
+        "c": 67,
+        "ab": -81,
+        "bc": 14,
+        "ca": 67,
+        "at_floor": true
+      },
+      {
+        "us": 14105.525,
+        "a": 0,
+        "b": 81,
+        "c": 64,
+        "ab": -81,
+        "bc": 17,
+        "ca": 64,
+        "at_floor": true
+      },
+      {
+        "us": 14188.825,
+        "a": 0,
+        "b": 85,
+        "c": 61,
+        "ab": -85,
+        "bc": 24,
+        "ca": 61,
+        "at_floor": true
+      },
+      {
+        "us": 14272.13125,
+        "a": 0,
+        "b": 88,
+        "c": 59,
+        "ab": -88,
+        "bc": 29,
+        "ca": 59,
+        "at_floor": true
+      },
+      {
+        "us": 14355.475,
+        "a": 0,
+        "b": 90,
+        "c": 55,
+        "ab": -90,
+        "bc": 35,
+        "ca": 55,
+        "at_floor": true
+      },
+      {
+        "us": 14438.7125,
+        "a": 0,
+        "b": 91,
+        "c": 52,
+        "ab": -91,
+        "bc": 39,
+        "ca": 52,
+        "at_floor": true
+      },
+      {
+        "us": 14522.11875,
+        "a": 0,
+        "b": 95,
+        "c": 50,
+        "ab": -95,
+        "bc": 45,
+        "ca": 50,
+        "at_floor": true
+      },
+      {
+        "us": 14605.45,
+        "a": 0,
+        "b": 99,
+        "c": 45,
+        "ab": -99,
+        "bc": 54,
+        "ca": 45,
+        "at_floor": true
+      },
+      {
+        "us": 14689.28125,
+        "a": 0,
+        "b": 102,
+        "c": 40,
+        "ab": -102,
+        "bc": 62,
+        "ca": 40,
+        "at_floor": true
+      },
+      {
+        "us": 14772.08125,
+        "a": 0,
+        "b": 102,
+        "c": 34,
+        "ab": -102,
+        "bc": 68,
+        "ca": 34,
+        "at_floor": true
+      },
+      {
+        "us": 14855.4125,
+        "a": 0,
+        "b": 104,
+        "c": 28,
+        "ab": -104,
+        "bc": 76,
+        "ca": 28,
+        "at_floor": true
+      },
+      {
+        "us": 14938.75625,
+        "a": 0,
+        "b": 108,
+        "c": 23,
+        "ab": -108,
+        "bc": 85,
+        "ca": 23,
+        "at_floor": true
+      },
+      {
+        "us": 15022.05625,
+        "a": 0,
+        "b": 110,
+        "c": 21,
+        "ab": -110,
+        "bc": 89,
+        "ca": 21,
+        "at_floor": true
+      },
+      {
+        "us": 15105.38125,
+        "a": 0,
+        "b": 110,
+        "c": 16,
+        "ab": -110,
+        "bc": 94,
+        "ca": 16,
+        "at_floor": true
+      },
+      {
+        "us": 15188.73125,
+        "a": 0,
+        "b": 111,
+        "c": 13,
+        "ab": -111,
+        "bc": 98,
+        "ca": 13,
+        "at_floor": true
+      },
+      {
+        "us": 15272.91875,
+        "a": 0,
+        "b": 111,
+        "c": 10,
+        "ab": -111,
+        "bc": 101,
+        "ca": 10,
+        "at_floor": true
+      },
+      {
+        "us": 15355.28125,
+        "a": 0,
+        "b": 109,
+        "c": 9,
+        "ab": -109,
+        "bc": 100,
+        "ca": 9,
+        "at_floor": true
+      },
+      {
+        "us": 15439.20625,
+        "a": 0,
+        "b": 108,
+        "c": 8,
+        "ab": -108,
+        "bc": 100,
+        "ca": 8,
+        "at_floor": true
+      },
+      {
+        "us": 15522.23125,
+        "a": 0,
+        "b": 107,
+        "c": 6,
+        "ab": -107,
+        "bc": 101,
+        "ca": 6,
+        "at_floor": true
+      },
+      {
+        "us": 15605.6625,
+        "a": 0,
+        "b": 106,
+        "c": 5,
+        "ab": -106,
+        "bc": 101,
+        "ca": 5,
+        "at_floor": true
+      },
+      {
+        "us": 15688.68125,
+        "a": 0,
+        "b": 108,
+        "c": 5,
+        "ab": -108,
+        "bc": 103,
+        "ca": 5,
+        "at_floor": true
+      },
+      {
+        "us": 15772.38125,
+        "a": 0,
+        "b": 106,
+        "c": 4,
+        "ab": -106,
+        "bc": 102,
+        "ca": 4,
+        "at_floor": true
+      },
+      {
+        "us": 15855.6,
+        "a": 1,
+        "b": 104,
+        "c": 3,
+        "ab": -103,
+        "bc": 101,
+        "ca": 2,
+        "at_floor": false
+      },
+      {
+        "us": 15938.7,
+        "a": 1,
+        "b": 104,
+        "c": 3,
+        "ab": -103,
+        "bc": 101,
+        "ca": 2,
+        "at_floor": false
+      },
+      {
+        "us": 16023.2875,
+        "a": 4,
+        "b": 105,
+        "c": 1,
+        "ab": -101,
+        "bc": 104,
+        "ca": -3,
+        "at_floor": false
+      },
+      {
+        "us": 16105.325,
+        "a": 4,
+        "b": 102,
+        "c": 0,
+        "ab": -98,
+        "bc": 102,
+        "ca": -4,
+        "at_floor": true
+      },
+      {
+        "us": 16188.61875,
+        "a": 6,
+        "b": 102,
+        "c": 1,
+        "ab": -96,
+        "bc": 101,
+        "ca": -5,
+        "at_floor": false
+      },
+      {
+        "us": 16272.10625,
+        "a": 8,
+        "b": 101,
+        "c": 0,
+        "ab": -93,
+        "bc": 101,
+        "ca": -8,
+        "at_floor": true
+      },
+      {
+        "us": 16355.2625,
+        "a": 10,
+        "b": 101,
+        "c": 0,
+        "ab": -91,
+        "bc": 101,
+        "ca": -10,
+        "at_floor": true
+      },
+      {
+        "us": 16438.59375,
+        "a": 10,
+        "b": 103,
+        "c": 0,
+        "ab": -93,
+        "bc": 103,
+        "ca": -10,
+        "at_floor": true
+      },
+      {
+        "us": 16521.89375,
+        "a": 11,
+        "b": 100,
+        "c": 0,
+        "ab": -89,
+        "bc": 100,
+        "ca": -11,
+        "at_floor": true
+      },
+      {
+        "us": 16605.25,
+        "a": 13,
+        "b": 99,
+        "c": 0,
+        "ab": -86,
+        "bc": 99,
+        "ca": -13,
+        "at_floor": true
+      },
+      {
+        "us": 16688.5625,
+        "a": 16,
+        "b": 99,
+        "c": 0,
+        "ab": -83,
+        "bc": 99,
+        "ca": -16,
+        "at_floor": true
+      },
+      {
+        "us": 16771.89375,
+        "a": 17,
+        "b": 101,
+        "c": 0,
+        "ab": -84,
+        "bc": 101,
+        "ca": -17,
+        "at_floor": true
+      },
+      {
+        "us": 16855.95625,
+        "a": 21,
+        "b": 99,
+        "c": 0,
+        "ab": -78,
+        "bc": 99,
+        "ca": -21,
+        "at_floor": true
+      },
+      {
+        "us": 16938.46875,
+        "a": 25,
+        "b": 96,
+        "c": 0,
+        "ab": -71,
+        "bc": 96,
+        "ca": -25,
+        "at_floor": true
+      },
+      {
+        "us": 17022.425,
+        "a": 27,
+        "b": 96,
+        "c": 0,
+        "ab": -69,
+        "bc": 96,
+        "ca": -27,
+        "at_floor": true
+      },
+      {
+        "us": 17105.4625,
+        "a": 32,
+        "b": 95,
+        "c": 0,
+        "ab": -63,
+        "bc": 95,
+        "ca": -32,
+        "at_floor": true
+      },
+      {
+        "us": 17188.91875,
+        "a": 35,
+        "b": 94,
+        "c": 0,
+        "ab": -59,
+        "bc": 94,
+        "ca": -35,
+        "at_floor": true
+      },
+      {
+        "us": 17272.0125,
+        "a": 38,
+        "b": 93,
+        "c": 0,
+        "ab": -55,
+        "bc": 93,
+        "ca": -38,
+        "at_floor": true
+      },
+      {
+        "us": 17355.4875,
+        "a": 41,
+        "b": 91,
+        "c": 0,
+        "ab": -50,
+        "bc": 91,
+        "ca": -41,
+        "at_floor": true
+      },
+      {
+        "us": 17438.9375,
+        "a": 47,
+        "b": 90,
+        "c": 0,
+        "ab": -43,
+        "bc": 90,
+        "ca": -47,
+        "at_floor": true
+      },
+      {
+        "us": 17522.075,
+        "a": 50,
+        "b": 88,
+        "c": 0,
+        "ab": -38,
+        "bc": 88,
+        "ca": -50,
+        "at_floor": true
+      },
+      {
+        "us": 17605.14375,
+        "a": 54,
+        "b": 88,
+        "c": 0,
+        "ab": -34,
+        "bc": 88,
+        "ca": -54,
+        "at_floor": true
+      },
+      {
+        "us": 17688.46875,
+        "a": 58,
+        "b": 87,
+        "c": 0,
+        "ab": -29,
+        "bc": 87,
+        "ca": -58,
+        "at_floor": true
+      },
+      {
+        "us": 17771.78125,
+        "a": 62,
+        "b": 85,
+        "c": 0,
+        "ab": -23,
+        "bc": 85,
+        "ca": -62,
+        "at_floor": true
+      },
+      {
+        "us": 17855.24375,
+        "a": 64,
+        "b": 83,
+        "c": 0,
+        "ab": -19,
+        "bc": 83,
+        "ca": -64,
+        "at_floor": true
+      },
+      {
+        "us": 17938.45625,
+        "a": 66,
+        "b": 82,
+        "c": 0,
+        "ab": -16,
+        "bc": 82,
+        "ca": -66,
+        "at_floor": true
+      },
+      {
+        "us": 18021.7625,
+        "a": 67,
+        "b": 82,
+        "c": 0,
+        "ab": -15,
+        "bc": 82,
+        "ca": -67,
+        "at_floor": true
+      },
+      {
+        "us": 18105.325,
+        "a": 68,
+        "b": 80,
+        "c": 0,
+        "ab": -12,
+        "bc": 80,
+        "ca": -68,
+        "at_floor": true
+      },
+      {
+        "us": 18188.4125,
+        "a": 71,
+        "b": 77,
+        "c": 0,
+        "ab": -6,
+        "bc": 77,
+        "ca": -71,
+        "at_floor": true
+      },
+      {
+        "us": 18271.73125,
+        "a": 72,
+        "b": 75,
+        "c": 0,
+        "ab": -3,
+        "bc": 75,
+        "ca": -72,
+        "at_floor": true
+      },
+      {
+        "us": 18355.08125,
+        "a": 73,
+        "b": 75,
+        "c": 0,
+        "ab": -2,
+        "bc": 75,
+        "ca": -73,
+        "at_floor": true
+      },
+      {
+        "us": 18438.68125,
+        "a": 74,
+        "b": 75,
+        "c": 0,
+        "ab": -1,
+        "bc": 75,
+        "ca": -74,
+        "at_floor": true
+      },
+      {
+        "us": 18522.3,
+        "a": 76,
+        "b": 72,
+        "c": 0,
+        "ab": 4,
+        "bc": 72,
+        "ca": -76,
+        "at_floor": true
+      },
+      {
+        "us": 18605.03125,
+        "a": 77,
+        "b": 71,
+        "c": 0,
+        "ab": 6,
+        "bc": 71,
+        "ca": -77,
+        "at_floor": true
+      },
+      {
+        "us": 18688.3875,
+        "a": 79,
+        "b": 69,
+        "c": 0,
+        "ab": 10,
+        "bc": 69,
+        "ca": -79,
+        "at_floor": true
+      },
+      {
+        "us": 18771.88125,
+        "a": 79,
+        "b": 68,
+        "c": 0,
+        "ab": 11,
+        "bc": 68,
+        "ca": -79,
+        "at_floor": true
+      },
+      {
+        "us": 18855.00625,
+        "a": 80,
+        "b": 65,
+        "c": 0,
+        "ab": 15,
+        "bc": 65,
+        "ca": -80,
+        "at_floor": true
+      },
+      {
+        "us": 18938.34375,
+        "a": 82,
+        "b": 62,
+        "c": 0,
+        "ab": 20,
+        "bc": 62,
+        "ca": -82,
+        "at_floor": true
+      },
+      {
+        "us": 19021.60625,
+        "a": 83,
+        "b": 61,
+        "c": 0,
+        "ab": 22,
+        "bc": 61,
+        "ca": -83,
+        "at_floor": true
+      },
+      {
+        "us": 19105.38125,
+        "a": 84,
+        "b": 59,
+        "c": 0,
+        "ab": 25,
+        "bc": 59,
+        "ca": -84,
+        "at_floor": true
+      },
+      {
+        "us": 19188.5875,
+        "a": 84,
+        "b": 56,
+        "c": 0,
+        "ab": 28,
+        "bc": 56,
+        "ca": -84,
+        "at_floor": true
+      },
+      {
+        "us": 19272.0125,
+        "a": 84,
+        "b": 54,
+        "c": 0,
+        "ab": 30,
+        "bc": 54,
+        "ca": -84,
+        "at_floor": true
+      },
+      {
+        "us": 19355.1125,
+        "a": 87,
+        "b": 49,
+        "c": 0,
+        "ab": 38,
+        "bc": 49,
+        "ca": -87,
+        "at_floor": true
+      },
+      {
+        "us": 19440.21875,
+        "a": 89,
+        "b": 45,
+        "c": 0,
+        "ab": 44,
+        "bc": 45,
+        "ca": -89,
+        "at_floor": true
+      },
+      {
+        "us": 19521.60625,
+        "a": 91,
+        "b": 43,
+        "c": 0,
+        "ab": 48,
+        "bc": 43,
+        "ca": -91,
+        "at_floor": true
+      },
+      {
+        "us": 19604.93125,
+        "a": 90,
+        "b": 36,
+        "c": 0,
+        "ab": 54,
+        "bc": 36,
+        "ca": -90,
+        "at_floor": true
+      },
+      {
+        "us": 19688.4375,
+        "a": 94,
+        "b": 35,
+        "c": 0,
+        "ab": 59,
+        "bc": 35,
+        "ca": -94,
+        "at_floor": true
+      },
+      {
+        "us": 19771.5875,
+        "a": 95,
+        "b": 31,
+        "c": 0,
+        "ab": 64,
+        "bc": 31,
+        "ca": -95,
+        "at_floor": true
+      },
+      {
+        "us": 19855.00625,
+        "a": 97,
+        "b": 27,
+        "c": 0,
+        "ab": 70,
+        "bc": 27,
+        "ca": -97,
+        "at_floor": true
+      },
+      {
+        "us": 19938.36875,
+        "a": 98,
+        "b": 22,
+        "c": 0,
+        "ab": 76,
+        "bc": 22,
+        "ca": -98,
+        "at_floor": true
+      },
+      {
+        "us": 20021.5625,
+        "a": 98,
+        "b": 19,
+        "c": 0,
+        "ab": 79,
+        "bc": 19,
+        "ca": -98,
+        "at_floor": true
+      },
+      {
+        "us": 20104.88125,
+        "a": 99,
+        "b": 18,
+        "c": 0,
+        "ab": 81,
+        "bc": 18,
+        "ca": -99,
+        "at_floor": true
+      },
+      {
+        "us": 20188.21875,
+        "a": 101,
+        "b": 15,
+        "c": 0,
+        "ab": 86,
+        "bc": 15,
+        "ca": -101,
+        "at_floor": true
+      },
+      {
+        "us": 20271.53125,
+        "a": 102,
+        "b": 13,
+        "c": 0,
+        "ab": 89,
+        "bc": 13,
+        "ca": -102,
+        "at_floor": true
+      },
+      {
+        "us": 20354.8,
+        "a": 102,
+        "b": 10,
+        "c": 0,
+        "ab": 92,
+        "bc": 10,
+        "ca": -102,
+        "at_floor": true
+      },
+      {
+        "us": 20438.2,
+        "a": 104,
+        "b": 11,
+        "c": 0,
+        "ab": 93,
+        "bc": 11,
+        "ca": -104,
+        "at_floor": true
+      },
+      {
+        "us": 20521.50625,
+        "a": 103,
+        "b": 10,
+        "c": 0,
+        "ab": 93,
+        "bc": 10,
+        "ca": -103,
+        "at_floor": true
+      },
+      {
+        "us": 20604.91875,
+        "a": 104,
+        "b": 7,
+        "c": 0,
+        "ab": 97,
+        "bc": 7,
+        "ca": -104,
+        "at_floor": true
+      },
+      {
+        "us": 20688.16875,
+        "a": 104,
+        "b": 6,
+        "c": 0,
+        "ab": 98,
+        "bc": 6,
+        "ca": -104,
+        "at_floor": true
+      },
+      {
+        "us": 20771.50625,
+        "a": 105,
+        "b": 4,
+        "c": 0,
+        "ab": 101,
+        "bc": 4,
+        "ca": -105,
+        "at_floor": true
+      },
+      {
+        "us": 20854.81875,
+        "a": 104,
+        "b": 3,
+        "c": 2,
+        "ab": 101,
+        "bc": 1,
+        "ca": -102,
+        "at_floor": false
+      },
+      {
+        "us": 20938.1375,
+        "a": 105,
+        "b": 2,
+        "c": 3,
+        "ab": 103,
+        "bc": -1,
+        "ca": -102,
+        "at_floor": false
+      },
+      {
+        "us": 21021.48125,
+        "a": 104,
+        "b": 1,
+        "c": 4,
+        "ab": 103,
+        "bc": -3,
+        "ca": -100,
+        "at_floor": false
+      },
+      {
+        "us": 21104.8,
+        "a": 104,
+        "b": 0,
+        "c": 4,
+        "ab": 104,
+        "bc": -4,
+        "ca": -100,
+        "at_floor": true
+      },
+      {
+        "us": 21188.11875,
+        "a": 107,
+        "b": 0,
+        "c": 4,
+        "ab": 107,
+        "bc": -4,
+        "ca": -103,
+        "at_floor": true
+      },
+      {
+        "us": 21271.35625,
+        "a": 107,
+        "b": 0,
+        "c": 6,
+        "ab": 107,
+        "bc": -6,
+        "ca": -101,
+        "at_floor": true
+      },
+      {
+        "us": 21354.775,
+        "a": 106,
+        "b": 0,
+        "c": 8,
+        "ab": 106,
+        "bc": -8,
+        "ca": -98,
+        "at_floor": true
+      },
+      {
+        "us": 21438.10625,
+        "a": 107,
+        "b": 0,
+        "c": 8,
+        "ab": 107,
+        "bc": -8,
+        "ca": -99,
+        "at_floor": true
+      },
+      {
+        "us": 21521.34375,
+        "a": 107,
+        "b": 0,
+        "c": 10,
+        "ab": 107,
+        "bc": -10,
+        "ca": -97,
+        "at_floor": true
+      },
+      {
+        "us": 21604.73125,
+        "a": 107,
+        "b": 0,
+        "c": 13,
+        "ab": 107,
+        "bc": -13,
+        "ca": -94,
+        "at_floor": true
+      },
+      {
+        "us": 21688.08125,
+        "a": 104,
+        "b": 0,
+        "c": 16,
+        "ab": 104,
+        "bc": -16,
+        "ca": -88,
+        "at_floor": true
+      },
+      {
+        "us": 21771.38125,
+        "a": 103,
+        "b": 0,
+        "c": 19,
+        "ab": 103,
+        "bc": -19,
+        "ca": -84,
+        "at_floor": true
+      },
+      {
+        "us": 21854.7375,
+        "a": 103,
+        "b": 0,
+        "c": 23,
+        "ab": 103,
+        "bc": -23,
+        "ca": -80,
+        "at_floor": true
+      },
+      {
+        "us": 21939.03125,
+        "a": 102,
+        "b": 0,
+        "c": 25,
+        "ab": 102,
+        "bc": -25,
+        "ca": -77,
+        "at_floor": true
+      },
+      {
+        "us": 22021.3875,
+        "a": 102,
+        "b": 0,
+        "c": 30,
+        "ab": 102,
+        "bc": -30,
+        "ca": -72,
+        "at_floor": true
+      },
+      {
+        "us": 22104.69375,
+        "a": 98,
+        "b": 0,
+        "c": 35,
+        "ab": 98,
+        "bc": -35,
+        "ca": -63,
+        "at_floor": true
+      },
+      {
+        "us": 22187.9375,
+        "a": 96,
+        "b": 0,
+        "c": 40,
+        "ab": 96,
+        "bc": -40,
+        "ca": -56,
+        "at_floor": true
+      },
+      {
+        "us": 22271.35625,
+        "a": 94,
+        "b": 0,
+        "c": 44,
+        "ab": 94,
+        "bc": -44,
+        "ca": -50,
+        "at_floor": true
+      },
+      {
+        "us": 22354.65625,
+        "a": 93,
+        "b": 0,
+        "c": 47,
+        "ab": 93,
+        "bc": -47,
+        "ca": -46,
+        "at_floor": true
+      },
+      {
+        "us": 22437.9,
+        "a": 89,
+        "b": 0,
+        "c": 52,
+        "ab": 89,
+        "bc": -52,
+        "ca": -37,
+        "at_floor": true
+      },
+      {
+        "us": 22521.9875,
+        "a": 87,
+        "b": 0,
+        "c": 56,
+        "ab": 87,
+        "bc": -56,
+        "ca": -31,
+        "at_floor": true
+      },
+      {
+        "us": 22604.6375,
+        "a": 86,
+        "b": 0,
+        "c": 59,
+        "ab": 86,
+        "bc": -59,
+        "ca": -27,
+        "at_floor": true
+      },
+      {
+        "us": 22688.71875,
+        "a": 84,
+        "b": 0,
+        "c": 61,
+        "ab": 84,
+        "bc": -61,
+        "ca": -23,
+        "at_floor": true
+      },
+      {
+        "us": 22771.4625,
+        "a": 83,
+        "b": 0,
+        "c": 61,
+        "ab": 83,
+        "bc": -61,
+        "ca": -22,
+        "at_floor": true
+      },
+      {
+        "us": 22854.875,
+        "a": 79,
+        "b": 0,
+        "c": 64,
+        "ab": 79,
+        "bc": -64,
+        "ca": -15,
+        "at_floor": true
+      },
+      {
+        "us": 22937.9375,
+        "a": 77,
+        "b": 0,
+        "c": 65,
+        "ab": 77,
+        "bc": -65,
+        "ca": -12,
+        "at_floor": true
+      },
+      {
+        "us": 23021.2625,
+        "a": 77,
+        "b": 0,
+        "c": 67,
+        "ab": 77,
+        "bc": -67,
+        "ca": -10,
+        "at_floor": true
+      },
+      {
+        "us": 23104.825,
+        "a": 75,
+        "b": 0,
+        "c": 66,
+        "ab": 75,
+        "bc": -66,
+        "ca": -9,
+        "at_floor": true
+      },
+      {
+        "us": 23187.9375,
+        "a": 75,
+        "b": 0,
+        "c": 67,
+        "ab": 75,
+        "bc": -67,
+        "ca": -8,
+        "at_floor": true
+      },
+      {
+        "us": 23271.23125,
+        "a": 74,
+        "b": 0,
+        "c": 69,
+        "ab": 74,
+        "bc": -69,
+        "ca": -5,
+        "at_floor": true
+      },
+      {
+        "us": 23354.875,
+        "a": 72,
+        "b": 0,
+        "c": 72,
+        "ab": 72,
+        "bc": -72,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 23437.975,
+        "a": 70,
+        "b": 0,
+        "c": 71,
+        "ab": 70,
+        "bc": -71,
+        "ca": 1,
+        "at_floor": true
+      },
+      {
+        "us": 23521.7625,
+        "a": 71,
+        "b": 0,
+        "c": 71,
+        "ab": 71,
+        "bc": -71,
+        "ca": 0,
+        "at_floor": true
+      },
+      {
+        "us": 23604.54375,
+        "a": 68,
+        "b": 0,
+        "c": 73,
+        "ab": 68,
+        "bc": -73,
+        "ca": 5,
+        "at_floor": true
+      },
+      {
+        "us": 23688.375,
+        "a": 66,
+        "b": 0,
+        "c": 74,
+        "ab": 66,
+        "bc": -74,
+        "ca": 8,
+        "at_floor": true
+      },
+      {
+        "us": 23771.71875,
+        "a": 64,
+        "b": 0,
+        "c": 75,
+        "ab": 64,
+        "bc": -75,
+        "ca": 11,
+        "at_floor": true
+      },
+      {
+        "us": 23854.5375,
+        "a": 63,
+        "b": 0,
+        "c": 77,
+        "ab": 63,
+        "bc": -77,
+        "ca": 14,
+        "at_floor": true
+      },
+      {
+        "us": 23937.84375,
+        "a": 63,
+        "b": 0,
+        "c": 76,
+        "ab": 63,
+        "bc": -76,
+        "ca": 13,
+        "at_floor": true
+      },
+      {
+        "us": 24021.4375,
+        "a": 62,
+        "b": 0,
+        "c": 79,
+        "ab": 62,
+        "bc": -79,
+        "ca": 17,
+        "at_floor": true
+      },
+      {
+        "us": 24104.48125,
+        "a": 59,
+        "b": 0,
+        "c": 80,
+        "ab": 59,
+        "bc": -80,
+        "ca": 21,
+        "at_floor": true
+      },
+      {
+        "us": 24187.8125,
+        "a": 56,
+        "b": 0,
+        "c": 81,
+        "ab": 56,
+        "bc": -81,
+        "ca": 25,
+        "at_floor": true
+      },
+      {
+        "us": 24271.13125,
+        "a": 54,
+        "b": 0,
+        "c": 82,
+        "ab": 54,
+        "bc": -82,
+        "ca": 28,
+        "at_floor": true
+      },
+      {
+        "us": 24354.475,
+        "a": 51,
+        "b": 0,
+        "c": 85,
+        "ab": 51,
+        "bc": -85,
+        "ca": 34,
+        "at_floor": true
+      },
+      {
+        "us": 24438.08125,
+        "a": 47,
+        "b": 0,
+        "c": 88,
+        "ab": 47,
+        "bc": -88,
+        "ca": 41,
+        "at_floor": true
+      },
+      {
+        "us": 24521.2,
+        "a": 43,
+        "b": 0,
+        "c": 88,
+        "ab": 43,
+        "bc": -88,
+        "ca": 45,
+        "at_floor": true
+      },
+      {
+        "us": 24604.4375,
+        "a": 38,
+        "b": 0,
+        "c": 91,
+        "ab": 38,
+        "bc": -91,
+        "ca": 53,
+        "at_floor": true
+      },
+      {
+        "us": 24688.44375,
+        "a": 36,
+        "b": 0,
+        "c": 93,
+        "ab": 36,
+        "bc": -93,
+        "ca": 57,
+        "at_floor": true
+      },
+      {
+        "us": 24771.71875,
+        "a": 33,
+        "b": 0,
+        "c": 95,
+        "ab": 33,
+        "bc": -95,
+        "ca": 62,
+        "at_floor": true
+      },
+      {
+        "us": 24854.4625,
+        "a": 28,
+        "b": 0,
+        "c": 97,
+        "ab": 28,
+        "bc": -97,
+        "ca": 69,
+        "at_floor": true
+      },
+      {
+        "us": 24937.7375,
+        "a": 25,
+        "b": 0,
+        "c": 99,
+        "ab": 25,
+        "bc": -99,
+        "ca": 74,
+        "at_floor": true
+      },
+      {
+        "us": 25021.54375,
+        "a": 21,
+        "b": 0,
+        "c": 101,
+        "ab": 21,
+        "bc": -101,
+        "ca": 80,
+        "at_floor": true
+      },
+      {
+        "us": 25104.76875,
+        "a": 16,
+        "b": 0,
+        "c": 105,
+        "ab": 16,
+        "bc": -105,
+        "ca": 89,
+        "at_floor": true
+      },
+      {
+        "us": 25188.15,
+        "a": 13,
+        "b": 0,
+        "c": 105,
+        "ab": 13,
+        "bc": -105,
+        "ca": 92,
+        "at_floor": true
+      },
+      {
+        "us": 25271.24375,
+        "a": 12,
+        "b": 0,
+        "c": 105,
+        "ab": 12,
+        "bc": -105,
+        "ca": 93,
+        "at_floor": true
+      },
+      {
+        "us": 25356.31875,
+        "a": 10,
+        "b": 0,
+        "c": 106,
+        "ab": 10,
+        "bc": -106,
+        "ca": 96,
+        "at_floor": true
+      },
+      {
+        "us": 25437.6875,
+        "a": 8,
+        "b": 0,
+        "c": 107,
+        "ab": 8,
+        "bc": -107,
+        "ca": 99,
+        "at_floor": true
+      },
+      {
+        "us": 25521.025,
+        "a": 4,
+        "b": 0,
+        "c": 107,
+        "ab": 4,
+        "bc": -107,
+        "ca": 103,
+        "at_floor": true
+      },
+      {
+        "us": 25604.96875,
+        "a": 5,
+        "b": 0,
+        "c": 106,
+        "ab": 5,
+        "bc": -106,
+        "ca": 101,
+        "at_floor": true
+      },
+      {
+        "us": 25687.6625,
+        "a": 4,
+        "b": 0,
+        "c": 107,
+        "ab": 4,
+        "bc": -107,
+        "ca": 103,
+        "at_floor": true
+      },
+      {
+        "us": 25771,
+        "a": 1,
+        "b": 0,
+        "c": 107,
+        "ab": 1,
+        "bc": -107,
+        "ca": 106,
+        "at_floor": true
+      },
+      {
+        "us": 25854.31875,
+        "a": 0,
+        "b": 0,
+        "c": 108,
+        "ab": 0,
+        "bc": -108,
+        "ca": 108,
+        "at_floor": true
+      },
+      {
+        "us": 25937.6625,
+        "a": 0,
+        "b": 0,
+        "c": 107,
+        "ab": 0,
+        "bc": -107,
+        "ca": 107,
+        "at_floor": true
+      },
+      {
+        "us": 26020.975,
+        "a": 0,
+        "b": 2,
+        "c": 106,
+        "ab": -2,
+        "bc": -104,
+        "ca": 106,
+        "at_floor": true
+      },
+      {
+        "us": 26104.28125,
+        "a": 0,
+        "b": 4,
+        "c": 107,
+        "ab": -4,
+        "bc": -103,
+        "ca": 107,
+        "at_floor": true
+      },
+      {
+        "us": 26187.60625,
+        "a": 0,
+        "b": 5,
+        "c": 107,
+        "ab": -5,
+        "bc": -102,
+        "ca": 107,
+        "at_floor": true
+      },
+      {
+        "us": 26270.85,
+        "a": 0,
+        "b": 6,
+        "c": 106,
+        "ab": -6,
+        "bc": -100,
+        "ca": 106,
+        "at_floor": true
+      },
+      {
+        "us": 26354.26875,
+        "a": 0,
+        "b": 9,
+        "c": 106,
+        "ab": -9,
+        "bc": -97,
+        "ca": 106,
+        "at_floor": true
+      },
+      {
+        "us": 26437.59375,
+        "a": 0,
+        "b": 10,
+        "c": 106,
+        "ab": -10,
+        "bc": -96,
+        "ca": 106,
+        "at_floor": true
+      },
+      {
+        "us": 26520.83125,
+        "a": 0,
+        "b": 13,
+        "c": 106,
+        "ab": -13,
+        "bc": -93,
+        "ca": 106,
+        "at_floor": true
+      },
+      {
+        "us": 26604.375,
+        "a": 0,
+        "b": 16,
+        "c": 105,
+        "ab": -16,
+        "bc": -89,
+        "ca": 105,
+        "at_floor": true
+      },
+      {
+        "us": 26687.58125,
+        "a": 0,
+        "b": 16,
+        "c": 102,
+        "ab": -16,
+        "bc": -86,
+        "ca": 102,
+        "at_floor": true
+      },
+      {
+        "us": 26770.88125,
+        "a": 0,
+        "b": 22,
+        "c": 99,
+        "ab": -22,
+        "bc": -77,
+        "ca": 99,
+        "at_floor": true
+      },
+      {
+        "us": 26854.74375,
+        "a": 0,
+        "b": 26,
+        "c": 98,
+        "ab": -26,
+        "bc": -72,
+        "ca": 98,
+        "at_floor": true
+      },
+      {
+        "us": 26937.53125,
+        "a": 0,
+        "b": 28,
+        "c": 95,
+        "ab": -28,
+        "bc": -67,
+        "ca": 95,
+        "at_floor": true
+      },
+      {
+        "us": 27020.8625,
+        "a": 0,
+        "b": 33,
+        "c": 94,
+        "ab": -33,
+        "bc": -61,
+        "ca": 94,
+        "at_floor": true
+      },
+      {
+        "us": 27104.19375,
+        "a": 0,
+        "b": 36,
+        "c": 93,
+        "ab": -36,
+        "bc": -57,
+        "ca": 93,
+        "at_floor": true
+      },
+      {
+        "us": 27187.68125,
+        "a": 0,
+        "b": 42,
+        "c": 92,
+        "ab": -42,
+        "bc": -50,
+        "ca": 92,
+        "at_floor": true
+      },
+      {
+        "us": 27270.95,
+        "a": 0,
+        "b": 45,
+        "c": 89,
+        "ab": -45,
+        "bc": -44,
+        "ca": 89,
+        "at_floor": true
+      },
+      {
+        "us": 27354.2375,
+        "a": 0,
+        "b": 49,
+        "c": 87,
+        "ab": -49,
+        "bc": -38,
+        "ca": 87,
+        "at_floor": true
+      },
+      {
+        "us": 27437.6625,
+        "a": 0,
+        "b": 52,
+        "c": 85,
+        "ab": -52,
+        "bc": -33,
+        "ca": 85,
+        "at_floor": true
+      },
+      {
+        "us": 27520.825,
+        "a": 0,
+        "b": 55,
+        "c": 83,
+        "ab": -55,
+        "bc": -28,
+        "ca": 83,
+        "at_floor": true
+      },
+      {
+        "us": 27604.13125,
+        "a": 0,
+        "b": 60,
+        "c": 83,
+        "ab": -60,
+        "bc": -23,
+        "ca": 83,
+        "at_floor": true
+      },
+      {
+        "us": 27687.4625,
+        "a": 0,
+        "b": 61,
+        "c": 81,
+        "ab": -61,
+        "bc": -20,
+        "ca": 81,
+        "at_floor": true
+      },
+      {
+        "us": 27770.79375,
+        "a": 0,
+        "b": 62,
+        "c": 78,
+        "ab": -62,
+        "bc": -16,
+        "ca": 78,
+        "at_floor": true
+      },
+      {
+        "us": 27855.28125,
+        "a": 0,
+        "b": 63,
+        "c": 77,
+        "ab": -63,
+        "bc": -14,
+        "ca": 77,
+        "at_floor": true
+      },
+      {
+        "us": 27937.5375,
+        "a": 0,
+        "b": 64,
+        "c": 78,
+        "ab": -64,
+        "bc": -14,
+        "ca": 78,
+        "at_floor": true
+      },
+      {
+        "us": 28020.78125,
+        "a": 0,
+        "b": 65,
+        "c": 75,
+        "ab": -65,
+        "bc": -10,
+        "ca": 75,
+        "at_floor": true
+      },
+      {
+        "us": 28104.41875,
+        "a": 0,
+        "b": 66,
+        "c": 75,
+        "ab": -66,
+        "bc": -9,
+        "ca": 75,
+        "at_floor": true
+      },
+      {
+        "us": 28187.43125,
+        "a": 0,
+        "b": 67,
+        "c": 74,
+        "ab": -67,
+        "bc": -7,
+        "ca": 74,
+        "at_floor": true
+      },
+      {
+        "us": 28270.75,
+        "a": 0,
+        "b": 70,
+        "c": 72,
+        "ab": -70,
+        "bc": -2,
+        "ca": 72,
+        "at_floor": true
+      },
+      {
+        "us": 28354.04375,
+        "a": 0,
+        "b": 71,
+        "c": 70,
+        "ab": -71,
+        "bc": 1,
+        "ca": 70,
+        "at_floor": true
+      },
+      {
+        "us": 28437.4,
+        "a": 0,
+        "b": 72,
+        "c": 70,
+        "ab": -72,
+        "bc": 2,
+        "ca": 70,
+        "at_floor": true
+      },
+      {
+        "us": 28520.71875,
+        "a": 0,
+        "b": 73,
+        "c": 69,
+        "ab": -73,
+        "bc": 4,
+        "ca": 69,
+        "at_floor": true
+      },
+      {
+        "us": 28604.375,
+        "a": 0,
+        "b": 74,
+        "c": 67,
+        "ab": -74,
+        "bc": 7,
+        "ca": 67,
+        "at_floor": true
+      },
+      {
+        "us": 28687.55,
+        "a": 0,
+        "b": 73,
+        "c": 65,
+        "ab": -73,
+        "bc": 8,
+        "ca": 65,
+        "at_floor": true
+      },
+      {
+        "us": 28770.9875,
+        "a": 0,
+        "b": 75,
+        "c": 65,
+        "ab": -75,
+        "bc": 10,
+        "ca": 65,
+        "at_floor": true
+      },
+      {
+        "us": 28854.45625,
+        "a": 0,
+        "b": 76,
+        "c": 65,
+        "ab": -76,
+        "bc": 11,
+        "ca": 65,
+        "at_floor": true
+      },
+      {
+        "us": 28937.51875,
+        "a": 0,
+        "b": 78,
+        "c": 63,
+        "ab": -78,
+        "bc": 15,
+        "ca": 63,
+        "at_floor": true
+      },
+      {
+        "us": 29020.83125,
+        "a": 0,
+        "b": 79,
+        "c": 60,
+        "ab": -79,
+        "bc": 19,
+        "ca": 60,
+        "at_floor": true
+      },
+      {
+        "us": 29104.00625,
+        "a": 0,
+        "b": 81,
+        "c": 58,
+        "ab": -81,
+        "bc": 23,
+        "ca": 58,
+        "at_floor": true
+      },
+      {
+        "us": 29187.3125,
+        "a": 0,
+        "b": 83,
+        "c": 57,
+        "ab": -83,
+        "bc": 26,
+        "ca": 57,
+        "at_floor": true
+      },
+      {
+        "us": 29270.65,
+        "a": 0,
+        "b": 85,
+        "c": 54,
+        "ab": -85,
+        "bc": 31,
+        "ca": 54,
+        "at_floor": true
+      },
+      {
+        "us": 29353.95625,
+        "a": 0,
+        "b": 87,
+        "c": 51,
+        "ab": -87,
+        "bc": 36,
+        "ca": 51,
+        "at_floor": true
+      },
+      {
+        "us": 29437.29375,
+        "a": 0,
+        "b": 89,
+        "c": 46,
+        "ab": -89,
+        "bc": 43,
+        "ca": 46,
+        "at_floor": true
+      },
+      {
+        "us": 29520.7625,
+        "a": 0,
+        "b": 90,
+        "c": 43,
+        "ab": -90,
+        "bc": 47,
+        "ca": 43,
+        "at_floor": true
+      },
+      {
+        "us": 29603.9625,
+        "a": 0,
+        "b": 93,
+        "c": 39,
+        "ab": -93,
+        "bc": 54,
+        "ca": 39,
+        "at_floor": true
+      },
+      {
+        "us": 29687.18125,
+        "a": 0,
+        "b": 94,
+        "c": 36,
+        "ab": -94,
+        "bc": 58,
+        "ca": 36,
+        "at_floor": true
+      },
+      {
+        "us": 29770.5875,
+        "a": 0,
+        "b": 96,
+        "c": 30,
+        "ab": -96,
+        "bc": 66,
+        "ca": 30,
+        "at_floor": true
+      },
+      {
+        "us": 29853.925,
+        "a": 0,
+        "b": 101,
+        "c": 26,
+        "ab": -101,
+        "bc": 75,
+        "ca": 26,
+        "at_floor": true
+      },
+      {
+        "us": 29937.1625,
+        "a": 0,
+        "b": 102,
+        "c": 24,
+        "ab": -102,
+        "bc": 78,
+        "ca": 24,
+        "at_floor": true
+      },
+      {
+        "us": 30020.5625,
+        "a": 0,
+        "b": 104,
+        "c": 21,
+        "ab": -104,
+        "bc": 83,
+        "ca": 21,
+        "at_floor": true
+      },
+      {
+        "us": 30103.91875,
+        "a": 0,
+        "b": 104,
+        "c": 17,
+        "ab": -104,
+        "bc": 87,
+        "ca": 17,
+        "at_floor": true
+      },
+      {
+        "us": 30187.23125,
+        "a": 0,
+        "b": 107,
+        "c": 14,
+        "ab": -107,
+        "bc": 93,
+        "ca": 14,
+        "at_floor": true
+      },
+      {
+        "us": 30270.5625,
+        "a": 0,
+        "b": 107,
+        "c": 10,
+        "ab": -107,
+        "bc": 97,
+        "ca": 10,
+        "at_floor": true
+      },
+      {
+        "us": 30354.79375,
+        "a": 0,
+        "b": 107,
+        "c": 10,
+        "ab": -107,
+        "bc": 97,
+        "ca": 10,
+        "at_floor": true
+      },
+      {
+        "us": 30437.18125,
+        "a": 0,
+        "b": 106,
+        "c": 8,
+        "ab": -106,
+        "bc": 98,
+        "ca": 8,
+        "at_floor": true
+      },
+      {
+        "us": 30520.65625,
+        "a": 0,
+        "b": 105,
+        "c": 6,
+        "ab": -105,
+        "bc": 99,
+        "ca": 6,
+        "at_floor": true
+      },
+      {
+        "us": 30603.84375,
+        "a": 0,
+        "b": 107,
+        "c": 4,
+        "ab": -107,
+        "bc": 103,
+        "ca": 4,
+        "at_floor": true
+      },
+      {
+        "us": 30687.18125,
+        "a": 0,
+        "b": 108,
+        "c": 5,
+        "ab": -108,
+        "bc": 103,
+        "ca": 5,
+        "at_floor": true
+      },
+      {
+        "us": 30770.51875,
+        "a": 0,
+        "b": 107,
+        "c": 4,
+        "ab": -107,
+        "bc": 103,
+        "ca": 4,
+        "at_floor": true
+      },
+      {
+        "us": 30853.75,
+        "a": 0,
+        "b": 106,
+        "c": 3,
+        "ab": -106,
+        "bc": 103,
+        "ca": 3,
+        "at_floor": true
+      },
+      {
+        "us": 30937.14375,
+        "a": 1,
+        "b": 106,
+        "c": 2,
+        "ab": -105,
+        "bc": 104,
+        "ca": 1,
+        "at_floor": false
+      },
+      {
+        "us": 31020.4625,
+        "a": 3,
+        "b": 107,
+        "c": 0,
+        "ab": -104,
+        "bc": 107,
+        "ca": -3,
+        "at_floor": true
+      },
+      {
+        "us": 31103.79375,
+        "a": 4,
+        "b": 104,
+        "c": 0,
+        "ab": -100,
+        "bc": 104,
+        "ca": -4,
+        "at_floor": true
+      },
+      {
+        "us": 31187.1125,
+        "a": 5,
+        "b": 104,
+        "c": 0,
+        "ab": -99,
+        "bc": 104,
+        "ca": -5,
+        "at_floor": true
+      },
+      {
+        "us": 31272.08125,
+        "a": 7,
+        "b": 104,
+        "c": 0,
+        "ab": -97,
+        "bc": 104,
+        "ca": -7,
+        "at_floor": true
+      },
+      {
+        "us": 31354.5125,
+        "a": 9,
+        "b": 105,
+        "c": 0,
+        "ab": -96,
+        "bc": 105,
+        "ca": -9,
+        "at_floor": true
+      },
+      {
+        "us": 31437.51875,
+        "a": 9,
+        "b": 107,
+        "c": 0,
+        "ab": -98,
+        "bc": 107,
+        "ca": -9,
+        "at_floor": true
+      },
+      {
+        "us": 31520.65625,
+        "a": 10,
+        "b": 103,
+        "c": 0,
+        "ab": -93,
+        "bc": 103,
+        "ca": -10,
+        "at_floor": true
+      },
+      {
+        "us": 31603.75,
+        "a": 14,
+        "b": 102,
+        "c": 0,
+        "ab": -88,
+        "bc": 102,
+        "ca": -14,
+        "at_floor": true
+      },
+      {
+        "us": 31687.075,
+        "a": 16,
+        "b": 101,
+        "c": 0,
+        "ab": -85,
+        "bc": 101,
+        "ca": -16,
+        "at_floor": true
+      },
+      {
+        "us": 31770.40625,
+        "a": 20,
+        "b": 101,
+        "c": 0,
+        "ab": -81,
+        "bc": 101,
+        "ca": -20,
+        "at_floor": true
+      },
+      {
+        "us": 31853.71875,
+        "a": 23,
+        "b": 99,
+        "c": 0,
+        "ab": -76,
+        "bc": 99,
+        "ca": -23,
+        "at_floor": true
+      },
+      {
+        "us": 31937.0375,
+        "a": 27,
+        "b": 96,
+        "c": 0,
+        "ab": -69,
+        "bc": 96,
+        "ca": -27,
+        "at_floor": true
+      },
+      {
+        "us": 32020.35625,
+        "a": 31,
+        "b": 95,
+        "c": 0,
+        "ab": -64,
+        "bc": 95,
+        "ca": -31,
+        "at_floor": true
+      },
+      {
+        "us": 32103.69375,
+        "a": 36,
+        "b": 95,
+        "c": 0,
+        "ab": -59,
+        "bc": 95,
+        "ca": -36,
+        "at_floor": true
+      },
+      {
+        "us": 32186.93125,
+        "a": 39,
+        "b": 94,
+        "c": 0,
+        "ab": -55,
+        "bc": 94,
+        "ca": -39,
+        "at_floor": true
+      },
+      {
+        "us": 32270.35625,
+        "a": 41,
+        "b": 90,
+        "c": 0,
+        "ab": -49,
+        "bc": 90,
+        "ca": -41,
+        "at_floor": true
+      },
+      {
+        "us": 32354.45625,
+        "a": 45,
+        "b": 89,
+        "c": 0,
+        "ab": -44,
+        "bc": 89,
+        "ca": -45,
+        "at_floor": true
+      },
+      {
+        "us": 32436.9,
+        "a": 51,
+        "b": 88,
+        "c": 0,
+        "ab": -37,
+        "bc": 88,
+        "ca": -51,
+        "at_floor": true
+      },
+      {
+        "us": 32520.4875,
+        "a": 52,
+        "b": 86,
+        "c": 0,
+        "ab": -34,
+        "bc": 86,
+        "ca": -52,
+        "at_floor": true
+      },
+      {
+        "us": 32603.63125,
+        "a": 57,
+        "b": 84,
+        "c": 0,
+        "ab": -27,
+        "bc": 84,
+        "ca": -57,
+        "at_floor": true
+      },
+      {
+        "us": 32686.98125,
+        "a": 60,
+        "b": 82,
+        "c": 0,
+        "ab": -22,
+        "bc": 82,
+        "ca": -60,
+        "at_floor": true
+      },
+      {
+        "us": 32770.30625,
+        "a": 62,
+        "b": 81,
+        "c": 0,
+        "ab": -19,
+        "bc": 81,
+        "ca": -62,
+        "at_floor": true
+      },
+      {
+        "us": 32853.625,
+        "a": 63,
+        "b": 78,
+        "c": 0,
+        "ab": -15,
+        "bc": 78,
+        "ca": -63,
+        "at_floor": true
+      },
+      {
+        "us": 32936.9375,
+        "a": 64,
+        "b": 78,
+        "c": 0,
+        "ab": -14,
+        "bc": 78,
+        "ca": -64,
+        "at_floor": true
+      },
+      {
+        "us": 33020.26875,
+        "a": 65,
+        "b": 77,
+        "c": 0,
+        "ab": -12,
+        "bc": 77,
+        "ca": -65,
+        "at_floor": true
+      },
+      {
+        "us": 33103.50625,
+        "a": 67,
+        "b": 75,
+        "c": 0,
+        "ab": -8,
+        "bc": 75,
+        "ca": -67,
+        "at_floor": true
+      },
+      {
+        "us": 33186.93125,
+        "a": 70,
+        "b": 74,
+        "c": 0,
+        "ab": -4,
+        "bc": 74,
+        "ca": -70,
+        "at_floor": true
+      },
+      {
+        "us": 33270.2375,
+        "a": 69,
+        "b": 73,
+        "c": 0,
+        "ab": -4,
+        "bc": 73,
+        "ca": -69,
+        "at_floor": true
+      },
+      {
+        "us": 33353.5125,
+        "a": 69,
+        "b": 71,
+        "c": 0,
+        "ab": -2,
+        "bc": 71,
+        "ca": -69,
+        "at_floor": true
+      },
+      {
+        "us": 33436.88125,
+        "a": 72,
+        "b": 72,
+        "c": 0,
+        "ab": 0,
+        "bc": 72,
+        "ca": -72,
+        "at_floor": true
+      },
+      {
+        "us": 33520.20625,
+        "a": 74,
+        "b": 69,
+        "c": 0,
+        "ab": 5,
+        "bc": 69,
+        "ca": -74,
+        "at_floor": true
+      },
+      {
+        "us": 33604.31875,
+        "a": 75,
+        "b": 68,
+        "c": 0,
+        "ab": 7,
+        "bc": 68,
+        "ca": -75,
+        "at_floor": true
+      },
+      {
+        "us": 33687.325,
+        "a": 75,
+        "b": 66,
+        "c": 0,
+        "ab": 9,
+        "bc": 66,
+        "ca": -75,
+        "at_floor": true
+      },
+      {
+        "us": 33771.0375,
+        "a": 76,
+        "b": 67,
+        "c": 0,
+        "ab": 9,
+        "bc": 67,
+        "ca": -76,
+        "at_floor": true
+      },
+      {
+        "us": 33853.66875,
+        "a": 76,
+        "b": 65,
+        "c": 0,
+        "ab": 11,
+        "bc": 65,
+        "ca": -76,
+        "at_floor": true
+      },
+      {
+        "us": 33936.8375,
+        "a": 78,
+        "b": 62,
+        "c": 0,
+        "ab": 16,
+        "bc": 62,
+        "ca": -78,
+        "at_floor": true
+      },
+      {
+        "us": 34020.5625,
+        "a": 80,
+        "b": 60,
+        "c": 0,
+        "ab": 20,
+        "bc": 60,
+        "ca": -80,
+        "at_floor": true
+      },
+      {
+        "us": 34103.69375,
+        "a": 80,
+        "b": 59,
+        "c": 0,
+        "ab": 21,
+        "bc": 59,
+        "ca": -80,
+        "at_floor": true
+      },
+      {
+        "us": 34186.80625,
+        "a": 83,
+        "b": 57,
+        "c": 0,
+        "ab": 26,
+        "bc": 57,
+        "ca": -83,
+        "at_floor": true
+      },
+      {
+        "us": 34270.15,
+        "a": 84,
+        "b": 52,
+        "c": 0,
+        "ab": 32,
+        "bc": 52,
+        "ca": -84,
+        "at_floor": true
+      },
+      {
+        "us": 34353.9625,
+        "a": 85,
+        "b": 50,
+        "c": 0,
+        "ab": 35,
+        "bc": 50,
+        "ca": -85,
+        "at_floor": true
+      },
+      {
+        "us": 34437.18125,
+        "a": 88,
+        "b": 47,
+        "c": 0,
+        "ab": 41,
+        "bc": 47,
+        "ca": -88,
+        "at_floor": true
+      },
+      {
+        "us": 34520.1125,
+        "a": 89,
+        "b": 45,
+        "c": 0,
+        "ab": 44,
+        "bc": 45,
+        "ca": -89,
+        "at_floor": true
+      },
+      {
+        "us": 34603.575,
+        "a": 89,
+        "b": 40,
+        "c": 0,
+        "ab": 49,
+        "bc": 40,
+        "ca": -89,
+        "at_floor": true
+      },
+      {
+        "us": 34686.99375,
+        "a": 92,
+        "b": 35,
+        "c": 0,
+        "ab": 57,
+        "bc": 35,
+        "ca": -92,
+        "at_floor": true
+      },
+      {
+        "us": 34770.1625,
+        "a": 96,
+        "b": 31,
+        "c": 0,
+        "ab": 65,
+        "bc": 31,
+        "ca": -96,
+        "at_floor": true
+      },
+      {
+        "us": 34853.40625,
+        "a": 97,
+        "b": 27,
+        "c": 0,
+        "ab": 70,
+        "bc": 27,
+        "ca": -97,
+        "at_floor": true
+      },
+      {
+        "us": 34936.9875,
+        "a": 99,
+        "b": 26,
+        "c": 0,
+        "ab": 73,
+        "bc": 26,
+        "ca": -99,
+        "at_floor": true
+      },
+      {
+        "us": 35020.05625,
+        "a": 101,
+        "b": 21,
+        "c": 0,
+        "ab": 80,
+        "bc": 21,
+        "ca": -101,
+        "at_floor": true
+      },
+      {
+        "us": 35103.38125,
+        "a": 104,
+        "b": 17,
+        "c": 0,
+        "ab": 87,
+        "bc": 17,
+        "ca": -104,
+        "at_floor": true
+      },
+      {
+        "us": 35187.00625,
+        "a": 106,
+        "b": 15,
+        "c": 0,
+        "ab": 91,
+        "bc": 15,
+        "ca": -106,
+        "at_floor": true
+      },
+      {
+        "us": 35270.1375,
+        "a": 107,
+        "b": 14,
+        "c": 0,
+        "ab": 93,
+        "bc": 14,
+        "ca": -107,
+        "at_floor": true
+      },
+      {
+        "us": 35353.9125,
+        "a": 105,
+        "b": 11,
+        "c": 0,
+        "ab": 94,
+        "bc": 11,
+        "ca": -105,
+        "at_floor": true
+      },
+      {
+        "us": 35436.70625,
+        "a": 106,
+        "b": 8,
+        "c": 0,
+        "ab": 98,
+        "bc": 8,
+        "ca": -106,
+        "at_floor": true
+      },
+      {
+        "us": 35520.025,
+        "a": 107,
+        "b": 8,
+        "c": 0,
+        "ab": 99,
+        "bc": 8,
+        "ca": -107,
+        "at_floor": true
+      },
+      {
+        "us": 35603.68125,
+        "a": 108,
+        "b": 7,
+        "c": 0,
+        "ab": 101,
+        "bc": 7,
+        "ca": -108,
+        "at_floor": true
+      },
+      {
+        "us": 35686.65625,
+        "a": 107,
+        "b": 4,
+        "c": 0,
+        "ab": 103,
+        "bc": 4,
+        "ca": -107,
+        "at_floor": true
+      },
+      {
+        "us": 35770.00625,
+        "a": 106,
+        "b": 3,
+        "c": 0,
+        "ab": 103,
+        "bc": 3,
+        "ca": -106,
+        "at_floor": true
+      },
+      {
+        "us": 35853.48125,
+        "a": 106,
+        "b": 3,
+        "c": 0,
+        "ab": 103,
+        "bc": 3,
+        "ca": -106,
+        "at_floor": true
+      },
+      {
+        "us": 35936.63125,
+        "a": 108,
+        "b": 2,
+        "c": 1,
+        "ab": 106,
+        "bc": 1,
+        "ca": -107,
+        "at_floor": false
+      },
+      {
+        "us": 36020.5,
+        "a": 107,
+        "b": 1,
+        "c": 2,
+        "ab": 106,
+        "bc": -1,
+        "ca": -105,
+        "at_floor": false
+      },
+      {
+        "us": 36103.8125,
+        "a": 105,
+        "b": 0,
+        "c": 4,
+        "ab": 105,
+        "bc": -4,
+        "ca": -101,
+        "at_floor": true
+      },
+      {
+        "us": 36187.00625,
+        "a": 108,
+        "b": 0,
+        "c": 4,
+        "ab": 108,
+        "bc": -4,
+        "ca": -104,
+        "at_floor": true
+      },
+      {
+        "us": 36270.0375,
+        "a": 107,
+        "b": 0,
+        "c": 6,
+        "ab": 107,
+        "bc": -6,
+        "ca": -101,
+        "at_floor": true
+      },
+      {
+        "us": 36353.5875,
+        "a": 108,
+        "b": 0,
+        "c": 8,
+        "ab": 108,
+        "bc": -8,
+        "ca": -100,
+        "at_floor": true
+      },
+      {
+        "us": 36436.7375,
+        "a": 106,
+        "b": 0,
+        "c": 8,
+        "ab": 106,
+        "bc": -8,
+        "ca": -98,
+        "at_floor": true
+      },
+      {
+        "us": 36519.83125,
+        "a": 106,
+        "b": 0,
+        "c": 10,
+        "ab": 106,
+        "bc": -10,
+        "ca": -96,
+        "at_floor": true
+      },
+      {
+        "us": 36603.23125,
+        "a": 104,
+        "b": 0,
+        "c": 13,
+        "ab": 104,
+        "bc": -13,
+        "ca": -91,
+        "at_floor": true
+      },
+      {
+        "us": 36687.1,
+        "a": 105,
+        "b": 0,
+        "c": 16,
+        "ab": 105,
+        "bc": -16,
+        "ca": -89,
+        "at_floor": true
+      },
+      {
+        "us": 36770.34375,
+        "a": 102,
+        "b": 0,
+        "c": 19,
+        "ab": 102,
+        "bc": -19,
+        "ca": -83,
+        "at_floor": true
+      },
+      {
+        "us": 36853.4,
+        "a": 100,
+        "b": 0,
+        "c": 23,
+        "ab": 100,
+        "bc": -23,
+        "ca": -77,
+        "at_floor": true
+      },
+      {
+        "us": 36936.54375,
+        "a": 101,
+        "b": 0,
+        "c": 25,
+        "ab": 101,
+        "bc": -25,
+        "ca": -76,
+        "at_floor": true
+      },
+      {
+        "us": 37019.85625,
+        "a": 99,
+        "b": 0,
+        "c": 28,
+        "ab": 99,
+        "bc": -28,
+        "ca": -71,
+        "at_floor": true
+      },
+      {
+        "us": 37103.18125,
+        "a": 96,
+        "b": 0,
+        "c": 33,
+        "ab": 96,
+        "bc": -33,
+        "ca": -63,
+        "at_floor": true
+      },
+      {
+        "us": 37188.55625,
+        "a": 94,
+        "b": 0,
+        "c": 37,
+        "ab": 94,
+        "bc": -37,
+        "ca": -57,
+        "at_floor": true
+      },
+      {
+        "us": 37269.85,
+        "a": 93,
+        "b": 0,
+        "c": 41,
+        "ab": 93,
+        "bc": -41,
+        "ca": -52,
+        "at_floor": true
+      },
+      {
+        "us": 37353.15625,
+        "a": 91,
+        "b": 0,
+        "c": 45,
+        "ab": 91,
+        "bc": -45,
+        "ca": -46,
+        "at_floor": true
+      },
+      {
+        "us": 37436.40625,
+        "a": 88,
+        "b": 0,
+        "c": 50,
+        "ab": 88,
+        "bc": -50,
+        "ca": -38,
+        "at_floor": true
+      },
+      {
+        "us": 37519.95,
+        "a": 85,
+        "b": 0,
+        "c": 53,
+        "ab": 85,
+        "bc": -53,
+        "ca": -32,
+        "at_floor": true
+      },
+      {
+        "us": 37603.15625,
+        "a": 83,
+        "b": 0,
+        "c": 56,
+        "ab": 83,
+        "bc": -56,
+        "ca": -27,
+        "at_floor": true
+      },
+      {
+        "us": 37686.475,
+        "a": 84,
+        "b": 0,
+        "c": 58,
+        "ab": 84,
+        "bc": -58,
+        "ca": -26,
+        "at_floor": true
+      },
+      {
+        "us": 37769.8,
+        "a": 82,
+        "b": 0,
+        "c": 59,
+        "ab": 82,
+        "bc": -59,
+        "ca": -23,
+        "at_floor": true
+      },
+      {
+        "us": 37853.11875,
+        "a": 79,
+        "b": 0,
+        "c": 62,
+        "ab": 79,
+        "bc": -62,
+        "ca": -17,
+        "at_floor": true
+      },
+      {
+        "us": 37936.4375,
+        "a": 77,
+        "b": 0,
+        "c": 63,
+        "ab": 77,
+        "bc": -63,
+        "ca": -14,
+        "at_floor": true
+      },
+      {
+        "us": 38019.78125,
+        "a": 77,
+        "b": 0,
+        "c": 64,
+        "ab": 77,
+        "bc": -64,
+        "ca": -13,
+        "at_floor": true
+      },
+      {
+        "us": 38103.01875,
+        "a": 76,
+        "b": 0,
+        "c": 65,
+        "ab": 76,
+        "bc": -65,
+        "ca": -11,
+        "at_floor": true
+      },
+      {
+        "us": 38186.4125,
+        "a": 73,
+        "b": 0,
+        "c": 66,
+        "ab": 73,
+        "bc": -66,
+        "ca": -7,
+        "at_floor": true
+      },
+      {
+        "us": 38269.75,
+        "a": 72,
+        "b": 0,
+        "c": 68,
+        "ab": 72,
+        "bc": -68,
+        "ca": -4,
+        "at_floor": true
+      },
+      {
+        "us": 38352.98125,
+        "a": 71,
+        "b": 0,
+        "c": 69,
+        "ab": 71,
+        "bc": -69,
+        "ca": -2,
+        "at_floor": true
+      },
+      {
+        "us": 38438.28125,
+        "a": 72,
+        "b": 0,
+        "c": 70,
+        "ab": 72,
+        "bc": -70,
+        "ca": -2,
+        "at_floor": true
+      },
+      {
+        "us": 38519.69375,
+        "a": 71,
+        "b": 0,
+        "c": 68,
+        "ab": 71,
+        "bc": -68,
+        "ca": -3,
+        "at_floor": true
+      },
+      {
+        "us": 38603.0625,
+        "a": 68,
+        "b": 0,
+        "c": 71,
+        "ab": 68,
+        "bc": -71,
+        "ca": 3,
+        "at_floor": true
+      },
+      {
+        "us": 38686.375,
+        "a": 67,
+        "b": 0,
+        "c": 73,
+        "ab": 67,
+        "bc": -73,
+        "ca": 6,
+        "at_floor": true
+      },
+      {
+        "us": 38769.70625,
+        "a": 66,
+        "b": 0,
+        "c": 74,
+        "ab": 66,
+        "bc": -74,
+        "ca": 8,
+        "at_floor": true
+      },
+      {
+        "us": 38853.0125,
+        "a": 65,
+        "b": 0,
+        "c": 74,
+        "ab": 65,
+        "bc": -74,
+        "ca": 9,
+        "at_floor": true
+      },
+      {
+        "us": 38937.2,
+        "a": 65,
+        "b": 0,
+        "c": 75,
+        "ab": 65,
+        "bc": -75,
+        "ca": 10,
+        "at_floor": true
+      },
+      {
+        "us": 39019.575,
+        "a": 63,
+        "b": 0,
+        "c": 76,
+        "ab": 63,
+        "bc": -76,
+        "ca": 13,
+        "at_floor": true
+      },
+      {
+        "us": 39103.50625,
+        "a": 61,
+        "b": 0,
+        "c": 78,
+        "ab": 61,
+        "bc": -78,
+        "ca": 17,
+        "at_floor": true
+      },
+      {
+        "us": 39186.55,
+        "a": 59,
+        "b": 0,
+        "c": 80,
+        "ab": 59,
+        "bc": -80,
+        "ca": 21,
+        "at_floor": true
+      },
+      {
+        "us": 39270,
+        "a": 58,
+        "b": 0,
+        "c": 80,
+        "ab": 58,
+        "bc": -80,
+        "ca": 22,
+        "at_floor": true
+      },
+      {
+        "us": 39353.28125,
+        "a": 54,
+        "b": 0,
+        "c": 83,
+        "ab": 54,
+        "bc": -83,
+        "ca": 29,
+        "at_floor": true
+      },
+      {
+        "us": 39436.30625,
+        "a": 50,
+        "b": 0,
+        "c": 86,
+        "ab": 50,
+        "bc": -86,
+        "ca": 36,
+        "at_floor": true
+      },
+      {
+        "us": 39519.61875,
+        "a": 46,
+        "b": 0,
+        "c": 88,
+        "ab": 46,
+        "bc": -88,
+        "ca": 42,
+        "at_floor": true
+      },
+      {
+        "us": 39602.95,
+        "a": 42,
+        "b": 0,
+        "c": 90,
+        "ab": 42,
+        "bc": -90,
+        "ca": 48,
+        "at_floor": true
+      },
+      {
+        "us": 39687.225,
+        "a": 39,
+        "b": 0,
+        "c": 90,
+        "ab": 39,
+        "bc": -90,
+        "ca": 51,
+        "at_floor": true
+      },
+      {
+        "us": 39769.58125,
+        "a": 37,
+        "b": 0,
+        "c": 94,
+        "ab": 37,
+        "bc": -94,
+        "ca": 57,
+        "at_floor": true
+      },
+      {
+        "us": 39853.4625,
+        "a": 31,
+        "b": 0,
+        "c": 97,
+        "ab": 31,
+        "bc": -97,
+        "ca": 66,
+        "at_floor": true
+      },
+      {
+        "us": 39936.85625,
+        "a": 27,
+        "b": 0,
+        "c": 98,
+        "ab": 27,
+        "bc": -98,
+        "ca": 71,
+        "at_floor": true
+      }
+    ]
+  }
+}

@@ -6,6 +6,9 @@
 #include <stdint.h>
 #include "fd6288_diagnostic_switch.h"
 #include "fd6288_sector_diag.h"
+#ifdef TARGET_FD_M2_LOW_SPEED_PICKUP
+#include "fd6288_m2_pickup.h"
+#endif
 enum { FD_REV_OFF, FD_REV_ALIGN, FD_REV_OPEN, FD_REV_PENDING, FD_REV_CLOSED, FD_REV_RELAX };
 enum { FD_REV_NONE, FD_REV_STEP, FD_REV_HANDOFF, FD_REV_RETRY, FD_REV_LAUNCH, FD_REV_PLANNED, FD_REV_RELEASE, FD_REV_REALIGN };
 #ifdef TARGET_FD_ALIGN_ONLY
@@ -23,9 +26,21 @@ enum { FD_ALIGN_ONLY_EXTRA_TICKS = (FD6288_ALIGN_ONLY_SECOND_MS - 60u) * 1000u *
     FD_ALIGN_ONLY_TOTAL_TICKS = (30u + FD6288_ALIGN_ONLY_SECOND_MS) * 1000u * 160u };
 #endif
 #ifdef TARGET_FD_HIZ_OBSERVE
+#ifndef FD6288_M2_HIZ_STEP4_MS
+#define FD6288_M2_HIZ_STEP4_MS 0
+#endif
+#ifndef FD6288_M2_HIZ_STEP3_US
+#define FD6288_M2_HIZ_STEP3_US 12000
+#endif
 enum { FD_REV_HIZ = 6u, FD_REV_HIZ_RELEASE = 11u, FD_REV_HIZ_STOP = 12u,
-    FD_HIZ_TICKS = 5000u * 160u,
-    FD_HIZ_TOTAL_TICKS = (30u + 300u + 6u) * 1000u * 160u };
+    FD_HIZ_TICKS = FD_HIZ_OBSERVE_US * 160u,
+#ifdef TARGET_FD_M2_HIZ_AFTER_TWO
+    FD_M2_HIZ_STEP4_MS = FD6288_M2_HIZ_STEP4_MS,
+    FD_HIZ_TOTAL_TICKS = (330000u + 12000u + FD6288_M2_HIZ_STEP3_US +
+        FD_M2_HIZ_STEP4_MS * 1000u + FD_HIZ_OBSERVE_US + 1000u) * 160u };
+#else
+    FD_HIZ_TOTAL_TICKS = (330000u + FD_HIZ_OBSERVE_US + 1000u) * 160u };
+#endif
 #endif
 enum { FD_REV_EDGE_IGNORED, FD_REV_EDGE_EARLY, FD_REV_EDGE_LATE,
     FD_REV_EDGE_SEED, FD_REV_EDGE_PERIOD, FD_REV_EDGE_GOOD, FD_REV_EDGE_READY };
@@ -98,7 +113,34 @@ enum { FD_RK_EARLY_TICKS=1000u*FD_REV_US, FD_RK_RELAX_TICKS=20000u*FD_REV_US,
  FD_RK_FIRST_TICKS=30000u*FD_REV_US, FD_RK_MAX=3u,
  FD_REV_RK_LAUNCH=16u, FD_REV_RK_STOP=17u };
 #endif
+#ifdef TARGET_FD_M2_START_RAMP
+/* Timed drive cadence in microseconds. The high-Z profile stops after
+ * its last timed vector, while the six-step profile switches to feedback. */
+static const uint16_t fd_m2_ramp_us[] = {
+    12000u,
+#ifdef TARGET_FD_M2_HIZ_AFTER_TWO
+    FD6288_M2_HIZ_STEP3_US,
+#if FD6288_M2_HIZ_STEP4_MS
+    FD_M2_HIZ_STEP4_MS * 1000u,
+#endif
+#elif defined(TARGET_FD_M2_RAMP_6500)
+    12000u, 10000u, 8500u, 7500u, 6500u
+#else
+    12000u, 11000u, 10000u, 9000u, 8000u
+#endif
+};
+enum { FD_M2_RAMP_SECTORS = sizeof(fd_m2_ramp_us) / sizeof(fd_m2_ramp_us[0]),
+       FD_M2_RAMP_LIMIT = 65000u * FD_REV_US };
+#endif
 typedef struct {
+#ifdef TARGET_FD_M2_LOW_SPEED_PICKUP
+    uint32_t pickup_at;
+    uint8_t pickup_started;
+#endif
+#ifdef TARGET_FD_M2_START_RAMP
+    uint32_t ramp_at;
+    uint8_t ramp_sector; /* 1..6 during timed drive, zero for feedback */
+#endif
 #ifdef TARGET_FD_START_RETRY
     uint32_t sr_attempt_at;
     uint8_t sr_attempts, sr_failures, sr_failure_kind;
@@ -137,6 +179,13 @@ typedef struct {
 #endif
 #ifdef TARGET_FD_LAUNCH_TWO
     uint8_t launch_vectors;
+#endif
+#ifdef TARGET_FD_M2_TIMED_RUNUP
+    uint32_t runup_base, runup_edge;
+    uint8_t runup_requested, runup_left, runup_streak, runup_seen;
+#ifdef TARGET_FD_M2_RUNUP_STEP4_ANCHOR
+    uint32_t runup_step4_after;
+#endif
 #endif
 } FdRevPolicy;
 #ifdef TARGET_STARTUP_FEEDBACK
@@ -322,7 +371,7 @@ static inline uint8_t fdRevCanReposition(const FdRevPolicy *s, uint32_t now)
 }
 #endif
 #ifdef TARGET_FD_START_RETRY
-/* Missing feedback ends this attempt; it never generates a blind step.
+/* Missing feedback after acquisition starts ends this attempt.
  * A partial streak cannot reset the attempt/failure/whole-trial budget. */
 static inline uint8_t fdStartRetryFail(FdRevPolicy *s, uint32_t now, uint8_t kind)
 {
@@ -338,9 +387,80 @@ static inline uint8_t fdStartRetryFail(FdRevPolicy *s, uint32_t now, uint8_t kin
     s->stage = FD_REV_RELAX;
     return FD_REV_RELEASE;
 }
+#ifdef TARGET_FD_M2_TIMED_RUNUP
+enum { FD_M2_RUNUP_SECTORS = 6u };
+static const uint8_t fd_m2_runup_percent[FD_M2_RUNUP_SECTORS] = {100u,96u,92u,88u,84u,84u};
+
+static inline uint8_t fdM2RunupObserve(FdRevPolicy *s, uint32_t now)
+{
+    uint32_t age = now - s->sector_at;
+    if (s->runup_seen || age < s->period / 4u || age >= s->period - s->period / 8u)
+        return 0u;
+    uint32_t gap = now - s->runup_edge;
+    uint32_t tolerance = s->period / 4u;
+    if (s->runup_streak && gap >= s->period - tolerance && gap <= s->period + tolerance) {
+        s->runup_streak++;
+        s->last_real_period = gap;
+    } else {
+        s->runup_streak = 1u;
+    }
+    s->runup_edge = now;
+    s->runup_seen = 1u;
+    return 1u;
+}
+
+#ifdef TARGET_FD_M2_RUNUP_STEP4_ANCHOR
+static inline uint8_t fdM2RunupAnchorStep4(FdRevPolicy *s, uint8_t advance)
+{
+    if (s->runup_streak < 2u) return 0u;
+    if (advance > 24u) advance = 24u;
+    uint32_t period = s->last_real_period;
+    uint32_t delay = period / 2u - period * advance / 64u;
+    uint32_t due = (s->runup_edge - s->sector_at) + delay;
+    if (due >= s->period) return 0u;
+    s->runup_step4_after = due;
+    return 1u;
+}
+#endif
+
+static inline uint8_t fdM2RunupAdvance(FdRevPolicy *s, uint32_t now)
+{
+    uint32_t dwell = s->period;
+#ifdef TARGET_FD_M2_RUNUP_STEP4_ANCHOR
+    if (s->runup_step4_after) dwell = s->runup_step4_after;
+#endif
+    if ((uint32_t)(now - s->sector_at) < dwell) return FD_REV_NONE;
+#ifdef TARGET_FD_M2_RUNUP_STEP4_ANCHOR
+    s->runup_step4_after = 0u;
+#endif
+    if (!s->runup_seen) s->runup_streak = 0u;
+    s->runup_seen = 0u;
+    if (--s->runup_left) {
+        s->sector_at = now;
+        s->period = s->runup_base * fd_m2_runup_percent[FD_M2_RUNUP_SECTORS - s->runup_left] / 100u;
+        return FD_REV_PLANNED;
+    }
+    uint32_t since_edge = now - s->runup_edge;
+    if (s->runup_streak < 2u || since_edge < s->last_real_period / 5u ||
+        since_edge > s->last_real_period * 3u / 5u)
+        return fdStartRetryFail(s, now, FD_SR_FAIL_SECTOR);
+    s->edge_at = s->runup_edge;
+    s->measured = s->last_real_period;
+    s->stage = FD_REV_CLOSED;
+    s->closed_at = now;
+    return FD_REV_HANDOFF;
+}
+#endif
 static inline uint8_t fdStartRetryAdvance(FdRevPolicy *s, uint32_t now)
 {
     if (s->stage == FD_REV_OFF || s->stage == FD_REV_CLOSED) return FD_REV_NONE;
+#ifdef TARGET_FD_M2_HIZ_AFTER_TWO
+    if (s->stage == FD_REV_HIZ) {
+        if ((uint32_t)(now - s->sector_at) < FD_HIZ_TICKS) return FD_REV_NONE;
+        s->stage = FD_REV_OFF;
+        return FD_REV_HIZ_STOP;
+    }
+#endif
     if (s->stage == FD_REV_RELAX) {
         if ((uint32_t)(now - s->sector_at) < FD_SR_RELAX_TICKS) return FD_REV_NONE;
         uint8_t attempts = s->sr_attempts, failures = s->sr_failures;
@@ -359,11 +479,52 @@ static inline uint8_t fdStartRetryAdvance(FdRevPolicy *s, uint32_t now)
         s->sector_at = now;
         if (--s->align_left) return FD_REV_STEP;
         s->stage = FD_REV_OPEN;
+#ifdef TARGET_FD_M2_START_RAMP
+        s->ramp_sector = 1u;
+        s->ramp_at = now;
+        s->period = fd_m2_ramp_us[0] * FD_REV_US;
+#endif
         return FD_REV_LAUNCH;
     }
+#ifdef TARGET_FD_M2_START_RAMP
+    if (s->ramp_sector) {
+        if ((uint32_t)(now - s->ramp_at) >= FD_M2_RAMP_LIMIT)
+            return fdStartRetryFail(s, now, FD_SR_FAIL_SECTOR);
+        if ((uint32_t)(now - s->sector_at) < s->period) return FD_REV_NONE;
+        s->sector_at = now;
+        if (s->ramp_sector == FD_M2_RAMP_SECTORS) {
+            s->ramp_sector = 0u;
+#ifdef TARGET_FD_M2_HIZ_AFTER_TWO
+            s->stage = FD_REV_HIZ;
+            return FD_REV_HIZ_RELEASE;
+#else
+            s->period = FD_REV_RETRY_TICKS;
+#endif
+        } else {
+            s->period = fd_m2_ramp_us[s->ramp_sector++] * FD_REV_US;
+        }
+        return FD_REV_PLANNED;
+    }
+#endif
+#ifdef TARGET_FD_M2_TIMED_RUNUP
+    if (s->runup_left) return fdM2RunupAdvance(s, now);
+#endif
     if (s->stage == FD_REV_PENDING) {
         if ((uint32_t)(now - s->edge_at) < s->delay) return FD_REV_NONE;
         if (s->confidence >= FD_REV_REQUIRED_EDGES) {
+#ifdef TARGET_FD_M2_TIMED_RUNUP
+            if (s->runup_requested) {
+                uint32_t base = s->measured;
+                if (base < 4000u * FD_REV_US) base = 4000u * FD_REV_US;
+                if (base > 5500u * FD_REV_US) base = 5500u * FD_REV_US;
+                s->runup_requested = 0u;
+                s->runup_base = s->period = base;
+                s->runup_left = FD_M2_RUNUP_SECTORS;
+                s->stage = FD_REV_OPEN;
+                s->sector_at = now;
+                return FD_REV_PLANNED;
+            }
+#endif
             s->stage = FD_REV_CLOSED;
             s->closed_at = now;
             return FD_REV_HANDOFF;
@@ -646,7 +807,7 @@ static inline uint8_t fdRevEdgePolicy(FdRevPolicy *s, uint32_t now, uint8_t adva
     if(s->blue_first || s->stage!=FD_REV_OPEN ||
        (uint32_t)(now-s->blue_attempt_at)>=FD_BLUE_ATTEMPT_TICKS)return 0u;
 #endif
-#ifdef TARGET_FD_HIZ_OBSERVE
+#if defined(TARGET_FD_HIZ_OBSERVE) && !defined(TARGET_FD_M2_LOW_SPEED_PICKUP)
     (void)s; (void)now; (void)advance64;
     return 0u; /* no event may schedule a driven sector in this diagnostic */
 #endif
@@ -708,6 +869,9 @@ static inline uint8_t fdRevEdgePolicy(FdRevPolicy *s, uint32_t now, uint8_t adva
     s->stage = FD_REV_PENDING;
     return 1u;
 #else
+#ifdef TARGET_FD_M2_START_RAMP
+    if (s->ramp_sector) return 0u; /* recorder retains the event before policy */
+#endif
     FD_DIAG(s->decision = FD_REV_EDGE_IGNORED);
     FD_DIAG(s->phase_percent = 255u); /* no commanded-period phase window in S3 */
     if (s->stage != FD_REV_OPEN || s->seen) return 0u;
@@ -795,9 +959,15 @@ static inline uint8_t fdRevEdgePolicy(FdRevPolicy *s, uint32_t now, uint8_t adva
     }
 #endif
 #ifdef TARGET_FD_FIRST_EDGE_500US
+#ifndef FD6288_FIRST_EDGE_DELAY_US
+#define FD6288_FIRST_EDGE_DELAY_US 500
+#endif
+#if FD6288_FIRST_EDGE_DELAY_US != 500 && FD6288_FIRST_EDGE_DELAY_US != 2000
+#error "First-edge comparison supports 500 or 2000 microseconds"
+#endif
     /* Single-variable probe: only the seed of each new feedback streak.
      * Keep NATIVE_EARLY, so edges 2..5 retain zero policy delay. */
-    if (s->confidence == 1u) s->delay = 500u * FD_REV_US;
+    if (s->confidence == 1u) s->delay = FD6288_FIRST_EDGE_DELAY_US * FD_REV_US;
 #endif
     if (s->confidence == FD_REV_REQUIRED_EDGES) {
         if (advance64 > 24u) advance64 = 24u;
@@ -930,7 +1100,16 @@ static inline uint8_t fdRevEdgePolicy(FdRevPolicy *s, uint32_t now, uint8_t adva
 static inline uint8_t fdRevDeadlinePolicy(const FdRevPolicy *s, uint32_t now,
     uint32_t started)
 {
-#ifdef TARGET_FD_START_RETRY
+#if defined(TARGET_FD_M2_LOW_SPEED_PICKUP)
+    if (s->stage == FD_REV_CLOSED) return 0u;
+    if (s->pickup_started)
+        return (uint32_t)(now - s->pickup_at) >= FD_M2_PICKUP_DRIVE_TICKS ||
+            (uint32_t)(now - started) >= FD_HIZ_TOTAL_TICKS + FD_M2_PICKUP_DRIVE_TICKS;
+    return (uint32_t)(now - started) >= FD_HIZ_TOTAL_TICKS;
+#elif defined(TARGET_FD_M2_HIZ_AFTER_TWO)
+    (void)s;
+    return (uint32_t)(now - started) >= FD_HIZ_TOTAL_TICKS;
+#elif defined(TARGET_FD_START_RETRY)
     return s->stage != FD_REV_CLOSED && (uint32_t)(now - started) >= FD_SR_TOTAL_TICKS;
 #elif defined(TARGET_FD_EARLY_REKICK)
     return s->stage!=FD_REV_CLOSED && (uint32_t)(now-started)>=FD_REV_ACQUIRE_TICKS;

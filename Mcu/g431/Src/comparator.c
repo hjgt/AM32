@@ -11,6 +11,17 @@
 #include "fd6288_diagnostic_switch.h"
 #include "fd6288_startup_trace.h"
 #include "fd6288_startup_sequence.h"
+#ifdef TARGET_FD_M2_RUN_FIX
+#include "fd6288_m2_run.h"
+static FdM2CrossingTime fd_m2_crossing_time;
+#ifdef TARGET_FD_M2_STABLE_PRE
+static uint32_t fd_m2_switch_at, fd_m2_last_group_at;
+static uint8_t fd_m2_pre_allowed;
+#endif
+#endif
+#ifdef TARGET_FD_M2_SINE_ADC_CAPTURE
+#include "fd6288_m2_sine_adc_capture.h"
+#endif
 #ifdef TARGET_FD_ASYNC_COMM
 #include "fd6288_async.h"
 #endif
@@ -62,7 +73,7 @@ _Static_assert(ADC_ZCD_HYSTERESIS_COUNTS == FD_PAIR_HYSTERESIS,
 #endif
 static volatile uint8_t adc_zcd_blank = 0;
 static uint8_t          adc_zcd_last_out = 0;
-#if (defined(TARGET_STARTUP_TRACE) && !defined(TARGET_FD_NO_DIAGNOSTICS)) || defined(TARGET_FD_SECTOR_DIAG)
+#if (defined(TARGET_STARTUP_TRACE) && !defined(TARGET_FD_NO_DIAGNOSTICS)) || defined(TARGET_FD_SECTOR_DIAG) || defined(TARGET_FD_M2_SINE_ADC_CAPTURE)
 static uint8_t adc_zcd_decision;
 #define FD_DECISION(reason) (adc_zcd_decision = (reason))
 #else
@@ -88,7 +99,14 @@ static uint8_t adc_zcd_drive_crossings;
 static uint8_t adc_zcd_required_samples;
 static uint32_t adc_zcd_earliest;
 static uint32_t adc_zcd_last_real_interval;
-#ifdef TARGET_STARTUP_SEQUENCE
+#ifdef TARGET_FD_M2_RUN_FIX
+uint32_t adcZcdDelayCorrection(uint32_t accepted_at, uint32_t wait_ticks)
+{
+    return adc_zcd_required_samples == 1u && adc_zcd_drive_crossings >= 5u ?
+        fdM2CrossingDelay(&fd_m2_crossing_time, accepted_at, wait_ticks) : 0u;
+}
+#endif
+#if defined(TARGET_STARTUP_SEQUENCE) || defined(TARGET_FD_M2_SINE_SIXSTEP)
 void adcZcdSeedHandoff(uint32_t period)
 {
     /* Six real adjacent edges preceded this handoff. S2 additionally checks
@@ -122,8 +140,14 @@ void adcZcdResetAcquisition(uint8_t reason)
 {
     uint32_t primask = __get_PRIMASK();
     __disable_irq();
+#ifdef TARGET_FD_M2_RUN_FIX
+    fd_m2_crossing_time = (FdM2CrossingTime){0};
+#endif
 #ifdef TARGET_FD_ASYNC_COMM
     fdAsyncCancel();
+#endif
+#ifdef TARGET_FD_M2_STABLE_PRE
+    fd_m2_pre_allowed=0u;fd_m2_last_group_at=0u;
 #endif
     adc_zcd_drive_crossings = 0u;
     adc_zcd_before_seen = 0u;
@@ -286,6 +310,27 @@ _Static_assert(sizeof(FdPinSyncRecord)==24,"sync pin record ABI");
 _Static_assert(sizeof(FdPinSync)==12320,"sync pin header ABI");
 #endif
 
+#ifdef TARGET_FD_M2_SINE_ADC_CAPTURE
+static inline void fdAdcCaptureSnapshot(uint16_t a, uint16_t b, uint16_t c,
+    uint8_t blank, uint8_t sample_valid, uint8_t accepted, uint8_t collision)
+{
+    if (!fd_m2_sine_adc_enabled) return;
+    uint32_t at = DWT->CYCCNT;
+    fdM2SineAdcStage((FdM2SineAdcSample){
+        .cycles = at, .a = a, .b = b, .c = c,
+        .elapsed = INTERVAL_TIMER_COUNT, .period = commutation_interval,
+        .duty = TIM1->CCR1, .trigger = TIM1->CCR4, .cnt = TIM1->CNT,
+        .step = adc_zcd_phase, .decision = adc_zcd_decision,
+        .flags = (rising != 0u) | (sample_valid << 1) |
+            (adc_zcd_before_seen << 2) | (adc_zcd_reported << 3) |
+            (accepted << 4) | (collision << 5),
+        .qualification = (blank & 15u) | (adc_zcd_confirmations << 4)
+    });
+    __asm__ volatile ("" ::: "memory"); /* Measure the completed RAM stores. */
+    fdM2SineAdcCost(DWT->CYCCNT - at, 1u);
+}
+#endif
+
 uint8_t getCompOutputSample(uint8_t *level)
 {
     /*
@@ -317,6 +362,9 @@ uint8_t getCompOutputSample(uint8_t *level)
     }
     LL_ADC_ClearFlag_JEOS(ADC1);
     FD_DECISION(FD_SAMPLE_INVALID);
+#ifdef TARGET_FD_M2_SINE_ADC_CAPTURE
+    uint8_t capture_blank = adc_zcd_blank;
+#endif
 
 #ifdef TARGET_FD_EDGE_RAW
     uint32_t edge_read_at = DWT->CYCCNT;
@@ -352,12 +400,23 @@ uint8_t getCompOutputSample(uint8_t *level)
     /* A new completion during the snapshot may mix ranks. Discard rather
      * than feed an incoherent triplet; the still-set JEOS retriggers IRQ. */
     if (LL_ADC_IsActiveFlag_JEOS(ADC1)) {
+#ifdef TARGET_FD_M2_RUN_FIX
+        fd_m2_crossing_time = (FdM2CrossingTime){0};
+#endif
         FD_DIAG(fd_async_diag.sample_collisions++);
         *level = adc_zcd_last_out;
+#ifdef TARGET_FD_M2_SINE_ADC_CAPTURE
+        fdAdcCaptureSnapshot(va, vb, vc, capture_blank, 0u, 0u, 1u);
+#endif
         return 0u;
     }
 #endif
 
+#ifdef TARGET_FD_M2_STABLE_PRE
+    uint32_t group_at=DWT->CYCCNT;
+    uint32_t group_gap=group_at-fd_m2_last_group_at;
+    fd_m2_last_group_at=group_at;
+#endif
 #ifdef HELI_COAST_ON_ZERO
     /* Snapshot the mode once so a state transition cannot mix DRIVE and Coast
      * validity rules within one three-rank ADC sequence. */
@@ -417,6 +476,17 @@ uint8_t getCompOutputSample(uint8_t *level)
             (((int32_t)drive_high - (int32_t)drive_low) >=
                 ADC_ZCD_MIN_DRIVE_DELTA);
     }
+#ifdef TARGET_FD_M2_RUN_FIX
+    /* Drain fresh boundary groups, including an invalid drive triplet.
+     * Otherwise that already discarded group extends blanking into the
+     * following carrier, which can contain the only valid PRE at high RPM.
+     * No-fresh and rank-collision paths returned above; neither consumes it. */
+    if (phase_valid && !sample_valid && adc_zcd_blank
+#ifdef HELI_COAST_ON_ZERO
+        && !coast_sample
+#endif
+    ) adc_zcd_blank--;
+#endif
     if (sample_valid && (adc_zcd_blank != 0u)) {
         FD_DECISION(FD_SAMPLE_BLANK);
         /*
@@ -424,10 +494,28 @@ uint8_t getCompOutputSample(uint8_t *level)
          * last stable polarity WITHOUT updating it, so the AM32 zero-cross
          * counter cannot advance on transient noise during this window.
          */
+#ifdef TARGET_FD_M2_STABLE_PRE
+        /* Preserve only observed PRE evidence after a settled, unchanged
+         * aperture. POST, output polarity and feedback stay suppressed. */
+        int32_t margin=(int32_t)bemf-(int32_t)neutral;
+        int32_t directed=rising?margin:-margin;
+        if (fd_m2_pre_allowed && directed < -ADC_ZCD_HYSTERESIS_COUNTS &&
+            bemf>drive_low+16u && bemf+16u<drive_high &&
+            fdM2StablePreTime(group_at-fd_m2_switch_at,group_gap,
+                TIM1->CNT,TIM1->CCR4,TIM1->CCR1,ZCD_SAMPLE_FLOOR,ZCD_ADC_WINDOW_TICKS)) {
+            adc_zcd_before_seen=1u;
+            fdM2CrossingSample(&fd_m2_crossing_time,group_at,directed);
+        }
+#endif
         adc_zcd_blank--;
     } else if (sample_valid) {
         FD_DECISION(FD_SAMPLE_COAST);
         int32_t margin = (int32_t)bemf - (int32_t)neutral;
+#ifdef TARGET_FD_M2_RUN_FIX
+        if (!adc_zcd_reported)
+            fdM2CrossingSample(&fd_m2_crossing_time, DWT->CYCCNT,
+                rising ? margin : -margin);
+#endif
         if (margin > ADC_ZCD_HYSTERESIS_COUNTS) {
             out = 0u; /* COMP minus (phase) is higher than plus (neutral). */
         } else if (margin < -ADC_ZCD_HYSTERESIS_COUNTS) {
@@ -446,6 +534,9 @@ uint8_t getCompOutputSample(uint8_t *level)
     }
 #ifdef TARGET_ADC_ZCD_GUARD
     if (!sample_valid) {
+#ifdef TARGET_FD_M2_RUN_FIX
+        fd_m2_crossing_time = (FdM2CrossingTime){0};
+#endif
         /* An invalid fresh conversion breaks a consecutive confirmation;
          * simply polling again without a conversion does not add a vote. */
         adc_zcd_confirmations = 0u;
@@ -453,6 +544,9 @@ uint8_t getCompOutputSample(uint8_t *level)
 #endif
 
     *level = out;
+#ifdef TARGET_FD_M2_SINE_ADC_CAPTURE
+    fdAdcCaptureSnapshot(va, vb, vc, capture_blank, sample_valid, valid, 0u);
+#endif
 #ifdef TARGET_FD_PIN_SYNC
     if(pin_log){
         if(sample_valid)pin_sample.flags|=FD_SYNC_DRIVE_VALID;
@@ -482,8 +576,29 @@ uint8_t getCompOutputSample(uint8_t *level)
                 .flags=edge_flags});
             fdEdgeCost(DWT->CYCCNT-at);
         }
+#ifdef TARGET_FD_M2_RUNUP_ADC_CAPTURE
+        else if (fdM2RunupAdcKeep(adc_zcd_phase, adc_zcd_decision)) {
+            fdM2RunupAdcStore((FdEdgeSample){.at=edge_read_at,.a=va,.b=vb,.c=vc,.margin=directed,
+                .cnt=TIM1->CNT,.duty=TIM1->CCR1,.trigger=TIM1->CCR4,
+                .reason=adc_zcd_decision,.step=adc_zcd_phase,.flags=edge_flags});
+        }
+#endif
 #endif
     }
+#ifdef TARGET_FD_M2_HANDOFF_CAPTURE
+    else if (fd_m2_handoff.active && !heli_coast_active &&
+             fdM2HandoffKeepAdc(adc_zcd_phase, adc_zcd_decision)) {
+        uint32_t at = DWT->CYCCNT;
+        int16_t directed = rising ? (int32_t)bemf-neutral : (int32_t)neutral-bemf;
+        uint8_t flags = (sample_valid && adc_zcd_decision != FD_SAMPLE_BLANK ? 1u : 0u) |
+                        (rising ? 2u : 0u);
+        fdM2HandoffStore((FdEdgeSample){.at=edge_read_at,.a=va,.b=vb,.c=vc,.margin=directed,
+            .cnt=TIM1->CNT,.duty=TIM1->CCR1,.trigger=TIM1->CCR4,
+            .reason=adc_zcd_decision,.step=adc_zcd_phase,.flags=flags});
+        uint32_t cycles = DWT->CYCCNT - at;
+        if (cycles > fd_m2_handoff.max_cycles) fd_m2_handoff.max_cycles = cycles;
+    }
+#endif
 #endif
 #ifdef TARGET_STARTUP_TRACE
     fdTraceSample(va, vb, vc, (int16_t)((int32_t)bemf - neutral),
@@ -513,11 +628,30 @@ void changeCompInput(void)
     uint32_t primask = __get_PRIMASK();
     __disable_irq();
 #endif
+#ifdef TARGET_FD_M2_RUN_FIX
+    fd_m2_crossing_time = (FdM2CrossingTime){0};
+#endif
     adc_zcd_phase = step;   /* 'step' is the global commutation step (1-6) */
     /* Before the expected edge, raw COMP output equals rising. Seeding this
      * reject state prevents blanking or startup from looking like a crossing. */
     adc_zcd_last_out = (rising != 0) ? 1u : 0u;
     adc_zcd_blank = ADC_ZCD_BLANK_SAMPLES;
+#ifdef TARGET_FD_M2_SINE_ADAPTIVE
+    /* Extra drain only for an actual sector-dependent aperture change.
+     * At high duty all sectors use the same midpoint; keep M1's one group. */
+    if (fd_m2_sine_closed_late &&
+        zcd_ccr4_from_duty((uint16_t)TIM1->CCR1) != TIM1->CCR4)
+        adc_zcd_blank = 2u;
+#endif
+#ifdef TARGET_FD_M2_STABLE_PRE
+    fd_m2_switch_at=DWT->CYCCNT;
+    fd_m2_pre_allowed=adc_zcd_blank==1u && adc_zcd_drive_crossings>=5u &&
+        commutation_interval<polling_mode_changeover &&
+        !LL_ADC_IsActiveFlag_JEOS(ADC1);
+#ifdef HELI_COAST_ON_ZERO
+    if (heli_coast_active) fd_m2_pre_allowed=0u;
+#endif
+#endif
 #ifndef TARGET_FD_ADC_COHERENT
     LL_ADC_ClearFlag_JEOS(ADC1); /* drop a sequence straddling commutation */
 #endif
