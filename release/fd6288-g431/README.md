@@ -10,7 +10,7 @@ FD6288 + STM32G431 定制 AM32 版本。主固件采用 30 ms＋300 ms 双矢量
 
 参数页与当前板上的备份一致：固定 PWM 24 kHz、正弦启动关闭、启动功率 150%、900 KV、14 极、固定进角 7.5°。运行保护保持原门限，自动重试只用于启动阶段。带载急变螺距尚未验证。
 
-[构建参数与 SHA-256](https://github.com/hjgt/AM32/tree/fd6288-g431-final-2026-11-11/release/fd6288-g431)
+[构建参数与 SHA-256](https://github.com/hjgt/AM32/tree/m1-fd6288-g431-final-2026-11-11/release/fd6288-g431)
 
 在仓库根目录使用 Arm GNU Toolchain 15.2.rel1 构建，确保 `arm-none-eabi-gcc` 在 PATH 上：
 

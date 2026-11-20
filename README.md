@@ -4,10 +4,10 @@
 
 | 机型 | GitHub版本 | 行为 |
 |---|---|---|
-| M1 | [2026-11-11已发布版](https://github.com/hjgt/AM32/releases/tag/m1-fd6288-g431-final-2026-11-11) | 原M1发布内容，固件资产不变 |
+| M1 | [2026-11-20 PURE](https://github.com/hjgt/AM32/releases/tag/m1-fd6288-g431-pure-2026-11-20) | 保留11月11日控制，通过总开关关闭调试采集与统计 |
 | M2 | [2026-11-20 PURE](https://github.com/hjgt/AM32/releases/tag/m2-fd6288-g431-pure-2026-11-20) | 500RPM正弦接管，三秒缓启动，高速ADC修复，无调试采集 |
 
-M1默认分支为`m1/main`，M2归档分支为`codex/m2-pure-20261120`。两条发布线独立，M2不替换M1的Latest标记。全部M2发布附件以`M2_`开头。
+M1主分支为`m1-main`，M2主分支为`m2-main`。两条发布线独立，M2不替换M1的Latest标记。全部M2发布附件以`M2_`开头。
 
 ## M2控制与pure含义
 
@@ -20,9 +20,19 @@ M1默认分支为`m1/main`，M2归档分支为`codex/m2-pure-20261120`。两条�
 
 ## 烧录与设置
 
-应用HEX/BIN只覆盖`0x08001000..0x0800f7ff`；保留板上的Bootloader与参数区。固件文件标识为`M2_PURE_FD6288_G431`。回滚基线时将max_ramp恢复160（界面16%/ms）；M2闭环实际使用三秒控制器，该字段不决定三秒上升速度。三秒版每次加载沿用既有M2目标RAM设置；没有在此版本增加自动写参数Flash。
+本Release提供完整三段，各有BIN和HEX：
 
-M1 Release的附件属于M1归档；M2下载请从上表M2链接进入。
+| 区域 | BIN地址 | 长度 | 来源 |
+|---|---|---:|---|
+| Bootloader | `0x08000000` | 4096B | 11月11日PB5 V17，逐字节复制 |
+| M2 PURE应用 | `0x08001000` | 59392B | 从本分支最新发布提交构建 |
+| M2参数页 | `0x0800f800` | 2048B | 原生Ramp试验写入的0.1%/ms完整备份，逐字节复制 |
+
+HEX带绝对地址；BIN须指定表中地址。应用HEX/BIN本身只覆盖应用区。Bootloader和参数作为独立附件提供，源文件与哈希保存在`release/m2-pure/`。参数页`max_ramp`为raw1（界面0.1%/ms），与昨晚试验写入页完全一致；没有重新生成或移植M1参数。M2闭环仍使用三秒控制器，此字段不决定三秒上升速度，补入参数页也不意味着恢复原生Ramp算法。
+
+固件文件标识为`M2_PURE_FD6288_G431`。每次加载仍沿用既有M2目标RAM设置，没有增加自动写参数Flash。
+
+M1 Release的附件属于M1归档；M2下载请从上表M2链接进入。[11月11日历史M1 Release](https://github.com/hjgt/AM32/releases/tag/m1-fd6288-g431-final-2026-11-11)仍保留原tag和固件附件。
 
 ## 构建与检查
 
