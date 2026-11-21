@@ -7,12 +7,12 @@
   "application_build_dir": "obj-fd6288-m2-pure-20261120",
   "application_build_name": "AM32_CUSTOM_FD6288_G431_2.20",
   "bootloader_basename": "M2_BOOTLOADER_PB5_V17",
-  "settings_basename": "M2_SETTINGS_REVERSED_20261121",
+  "settings_basename": "M2_SETTINGS_FORWARD_20261121",
   "bootloader_start": "0x08000000",
   "application_start": "0x08001000",
   "settings_start": "0x0800f800",
   "bootloader_sha256": "4c7ac760fdf9275f0b9a9f56b844a5f509eac17d17c0cd2ab9636519f804ba6d",
-  "settings_sha256": "eefee6e0ed80250eabd0e7f9a33bec814b225bc095feac99bb66ffa948c9d0e0",
+  "settings_sha256": "5a4a83e9f18acf3d2f37d1765461a7bfadab691039230f2f83cfefe8f4d23521",
   "hardware_retest": "pending",
   "programming": "not performed at operator request",
   "diagnostic_switch": "FD6288_M2_PURE",
@@ -21,5 +21,5 @@
   "heli_rise_ms": 3000,
   "settings_max_ramp_raw": 160,
   "settings_max_ramp_percent_per_ms": 16.0,
-  "settings_origin": "Complete 2048-byte readback from operator-configured board on 2026-11-21; reversed=1, auto_advance=0, current limit disabled."
+  "settings_origin": "Based on 2026-11-21 board readback; only direction byte17 restored from 1 to 0 at operator request; auto_advance=0 retained."
 }

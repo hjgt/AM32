@@ -158,4 +158,4 @@ Voodoobrew
 (and many more)
 
 
-2026-11-21 参数附件更新为板上完整读回配置。反向开启，自动进角 raw0（手动进角），电流限制关闭，Ramp rate raw160（16.0%/ms）。M2 仍使用三秒控制器。参数文件为 M2_SETTINGS_REVERSED_20261121.bin/.hex。
+2026-11-21 参数附件基于板上完整读回配置，仅将方向字节从1恢复为0。反向关闭，自动进角 raw0（手动进角），电流限制关闭，Ramp rate raw160（16.0%/ms）。M2 仍使用三秒控制器。参数文件为 M2_SETTINGS_FORWARD_20261121.bin/.hex。
