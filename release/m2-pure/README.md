@@ -52,3 +52,5 @@ node tests/fd6288_m2_pure_equivalence_tests.cjs
 
 M2分支以M1的2026-11-11发布提交为祖先，保留AM32原始历史与GPL-3.0许可。原上游说明见下文。M1标签/分支重命名对照位于`docs/m2-startup/m1-naming-20261120.json`；重命名未改旧Release固件资产。
 
+
+2026-11-21 参数附件更新为板上完整读回配置。反向开启，自动进角 raw0（手动进角），电流限制关闭，Ramp rate raw160（16.0%/ms）。M2 仍使用三秒控制器。参数文件为 M2_SETTINGS_REVERSED_20261121.bin/.hex。
