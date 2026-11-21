@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-21",
+  "reference_tag": "m1-fd6288-g431-final-2026-11-11",
+  "source_base": "34c653a87d48efe510539d9ac74390c4b39cbde0",
+  "compiler": "arm-none-eabi-gcc (Arm GNU Toolchain 15.2.Rel1 (Build arm-15.86)) 15.2.1 20251203",
+  "build_profile": "release/fd6288-g431/build-args.json",
+  "explicit_override": "FD6288_M1_PURE=0",
+  "images": {
+    "bin": {
+      "bytes": 59392,
+      "sha256": "a9808e0890301e39ed930bf47f160127c7a01cf115c40486c7b710f55831939b",
+      "byte_identical_to_release": true
+    },
+    "hex": {
+      "bytes": 116092,
+      "sha256": "7f30d67bda2a7c3d2bdb2dbe59920d83ebe751e252059571f0ead849989a8e2b",
+      "byte_identical_to_release": true
+    }
+  },
+  "hardware_test_performed": false,
+  "reason": "Restore diagnostic machine code after reported lower startup reliability of M1 PURE."
+}

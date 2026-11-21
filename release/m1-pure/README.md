@@ -1,3 +1,5 @@
+> 2026-11-21 已撤回此 PURE 发布。用户实机报告启动成功率下降。M1 改用保留11月11日诊断代码的构建，入口为 python3 tools/scripts/build_m1.py。以下为历史归档说明。
+
 # M1 PURE · FD6288 / STM32G431
 
 M1 主分支是 [`m1-main`](https://github.com/hjgt/AM32/tree/m1-main)。M2 主分支是 [`m2-main`](https://github.com/hjgt/AM32/tree/m2-main)，历史调试分支继续以 `codex/m1-` 区分。
